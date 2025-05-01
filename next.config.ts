@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     // Warning: This allows production builds to successfully complete even with ESLint errors
     ignoreDuringBuilds: true,
   },
-  
+
   async headers() {
     return [
       {
