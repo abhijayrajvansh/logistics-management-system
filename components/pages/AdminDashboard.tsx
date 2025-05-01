@@ -2,7 +2,7 @@
 
 import { DataTable } from '@/app/(protected)/dashboard/orders/data-table';
 import { SectionCards } from '@/components/section-cards';
-import data from '@/lib/data.json';
+// import data from '@/lib/data.json';
 import AnalyticsChart from '../AnalyticsChart';
 import { SiteHeader } from '../site-header';
 

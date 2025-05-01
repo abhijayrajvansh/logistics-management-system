@@ -1,6 +1,5 @@
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import NotificationPanel from './NotificationPanel';
 
 export function SiteHeader({ title }: { title: string }) {
   return (
@@ -10,7 +9,7 @@ export function SiteHeader({ title }: { title: string }) {
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
         <h1 className="text-base p-3 font-medium">{title}</h1>
         <div className="ml-auto flex items-center gap-2 mr-0">
-          <NotificationPanel />
+          {/* <NotificationPanel /> */}
         </div>
       </div>
     </header>
