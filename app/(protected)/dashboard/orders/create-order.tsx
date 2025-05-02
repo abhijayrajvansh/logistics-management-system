@@ -33,7 +33,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     tat: '',
     charge_basis: '',
     docket_id: '',
-    current_location: '',
+    current_location: '<manager-current-location>',
     client_details: '',
     price: '',
     invoice: '',
