@@ -9,27 +9,26 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-import {
-  IconChartBar,
-  IconDashboard,
-  IconFolder,
-  IconListDetails,
-  IconUsers,
-} from '@tabler/icons-react';
-import { CiBoxes } from "react-icons/ci";
 import { usePathname, useRouter } from 'next/navigation';
+import { AiFillDashboard } from "react-icons/ai";
+import { FaBoxesStacked, FaTruck } from "react-icons/fa6";
 
 const navMain = [
   {
     title: 'Dashboard',
     url: '/dashboard',
-    icon: IconDashboard,
+    icon: AiFillDashboard,
   },
   {
     title: 'Orders',
     url: '/dashboard/orders',
-    icon: CiBoxes,
+    icon: FaBoxesStacked,
   },
+  {
+    title: 'Trips',
+    url: '/dashboard/trips',
+    icon: FaTruck,
+  }
   // {
   //   title: 'Team',
   //   url: '/teams',
@@ -59,7 +58,7 @@ export function AdminNavPanel() {
   return (
     <SidebarGroup>
       {/* admin panel */}
-      <SidebarGroupLabel>Main</SidebarGroupLabel>
+      <SidebarGroupLabel>Navigation Panel</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {navMain.map((item) => (

@@ -1,20 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { MdEdit } from 'react-icons/md';
-import { FaRegEye } from 'react-icons/fa';
-import { Button } from '@/components/ui/button';
-import { MdDeleteOutline } from 'react-icons/md';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import UpdateOrderForm from './update-order';
+import { ColumnDef } from '@tanstack/react-table';
+import { useState } from 'react';
+import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
+import UpdateOrderForm from './update-order';
 
 // This type is used to define the shape of our data based on the image schema
 export type Order = {
