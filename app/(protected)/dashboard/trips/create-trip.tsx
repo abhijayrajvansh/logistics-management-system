@@ -35,6 +35,12 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     status: 'unassigned',
   });
 
+  // Keep track of whether the user has manually edited the truck or status
+  const [userOverrides, setUserOverrides] = useState({
+    truck: false,
+    status: false,
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingId, setIsGeneratingId] = useState(true);
 
@@ -59,6 +65,13 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   }, []);
 
   const handleInputChange = (field: string, value: string) => {
+    // If the user manually changes truck or status, mark it as overridden
+    if (field === 'truck') {
+      setUserOverrides((prev) => ({ ...prev, truck: true }));
+    } else if (field === 'status') {
+      setUserOverrides((prev) => ({ ...prev, status: true }));
+    }
+
     setFormData({
       ...formData,
       [field]: value,
@@ -73,8 +86,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         ...formData,
         driver: 'Unassigned',
         driverDetails: null,
-        truck: '',
-        status: 'unassigned',
+        truck: userOverrides.truck ? formData.truck : '', // Keep truck if overridden
+        status: userOverrides.status ? formData.status : 'unassigned', // Keep status if overridden
       });
     } else {
       // Find the selected driver
@@ -84,8 +97,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           ...formData,
           driver: selectedDriver.driverName,
           driverDetails: selectedDriver,
-          truck: selectedDriver.driverTruckNo, // Auto-populate truck field
-          status: 'assigned', // Auto-update status to assigned
+          // Only auto-populate if user hasn't overridden these values
+          truck: userOverrides.truck ? formData.truck : selectedDriver.driverTruckNo,
+          status: userOverrides.status ? formData.status : 'assigned',
         });
       }
     }
@@ -96,20 +110,19 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Create a copy of formData without the driverDetails field
+      const { driverDetails, ...dataToSubmit } = formData;
+
       // Parse and validate form data
       const validatedData = {
-        ...formData,
+        ...dataToSubmit,
         numberOfStops: parseInt(formData.numberOfStops) || 0,
         startDate: new Date(formData.startDate),
-        // Remove driverDetails from the data we send to Firestore
-        driverDetails: undefined,
+        created_at: new Date(),
       };
 
       // Add the trip to Firestore
-      const tripRef = await addDoc(collection(db, 'trips'), {
-        ...validatedData,
-        created_at: new Date(),
-      });
+      const tripRef = await addDoc(collection(db, 'trips'), validatedData);
 
       toast.success('Trip created successfully!', {
         description: `Trip ID: ${formData.tripId}`,
@@ -126,6 +139,12 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         startDate: '',
         truck: '',
         status: 'unassigned',
+      });
+
+      // Reset user overrides
+      setUserOverrides({
+        truck: false,
+        status: false,
       });
 
       // Call onSuccess callback if provided
@@ -220,17 +239,20 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             <Label htmlFor="truck">Truck</Label>
             <Input
               id="truck"
-              placeholder="Auto-assigned from driver"
+              placeholder={
+                formData.driverDetails
+                  ? 'Auto-assigned from driver (can override)'
+                  : 'Enter truck details'
+              }
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
-              disabled={!!formData.driverDetails} // Disable if driver is selected
               required
             />
-            {!!formData.driverDetails && (
+            {/* {!!formData.driverDetails && !userOverrides.truck && (
               <p className="text-xs text-muted-foreground">
-                Auto-assigned from driver's information
+                Auto-assigned from driver's information (you can edit this)
               </p>
-            )}
+            )} */}
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
@@ -261,7 +283,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             <Select
               value={formData.status}
               onValueChange={(value) => handleInputChange('status', value)}
-              disabled={!!formData.driverDetails} // Disable if driver is selected
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select trip status" />
@@ -272,11 +293,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 <SelectItem value="active">Active</SelectItem>
               </SelectContent>
             </Select>
-            {!!formData.driverDetails && (
+            {/* {!!formData.driverDetails && !userOverrides.status && (
               <p className="text-xs text-muted-foreground">
-                Status automatically set to "assigned" when driver is selected
+                Auto-set to "assigned" when driver is selected (you can change this)
               </p>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -290,6 +311,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               const uniqueTripId = await getUniqueVerifiedTripId(db);
               setIsGeneratingId(false);
 
+              // Reset form and user overrides
               setFormData({
                 tripId: uniqueTripId,
                 startingPoint: '',
@@ -300,6 +322,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 startDate: '',
                 truck: '',
                 status: 'unassigned',
+              });
+
+              setUserOverrides({
+                truck: false,
+                status: false,
               });
             }}
           >

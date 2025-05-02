@@ -36,6 +36,12 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     status: '',
   });
 
+  // Keep track of whether the user has manually edited the truck or status
+  const [userOverrides, setUserOverrides] = useState({
+    truck: false,
+    status: false,
+  });
+
   const [docId, setDocId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +122,13 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   }, [isLoading, isLoadingDrivers, formData.driver, drivers]);
 
   const handleInputChange = (field: string, value: string) => {
+    // If the user manually changes truck or status, mark it as overridden
+    if (field === 'truck') {
+      setUserOverrides((prev) => ({ ...prev, truck: true }));
+    } else if (field === 'status') {
+      setUserOverrides((prev) => ({ ...prev, status: true }));
+    }
+
     setFormData({
       ...formData,
       [field]: value,
@@ -130,8 +143,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         ...formData,
         driver: 'Unassigned',
         driverDetails: null,
-        truck: '',
-        status: 'unassigned',
+        truck: userOverrides.truck ? formData.truck : '', // Keep truck if overridden
+        status: userOverrides.status ? formData.status : 'unassigned', // Keep status if overridden
       });
     } else {
       // Find the selected driver
@@ -141,8 +154,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           ...formData,
           driver: selectedDriver.driverName,
           driverDetails: selectedDriver,
-          truck: selectedDriver.driverTruckNo, // Auto-populate truck field
-          status: 'assigned', // Auto-update status to assigned
+          // Only auto-populate if user hasn't overridden these values
+          truck: userOverrides.truck ? formData.truck : selectedDriver.driverTruckNo,
+          status: userOverrides.status ? formData.status : 'assigned',
         });
       }
     }
@@ -159,14 +173,15 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         return;
       }
 
+      // Remove driverDetails from the data by destructuring
+      const { driverDetails, ...dataToSubmit } = formData;
+
       // Parse and validate form data
       const validatedData = {
-        ...formData,
+        ...dataToSubmit,
         numberOfStops: parseInt(formData.numberOfStops) || 0,
         startDate: new Date(formData.startDate),
         updated_at: new Date(),
-        // Remove driverDetails from the data we send to Firestore
-        driverDetails: undefined,
       };
 
       // Update the trip in Firestore using the document ID
@@ -262,17 +277,20 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             <Label htmlFor="truck">Truck</Label>
             <Input
               id="truck"
-              placeholder="Auto-assigned from driver"
+              placeholder={
+                formData.driverDetails
+                  ? 'Auto-assigned from driver (can override)'
+                  : 'Enter truck details'
+              }
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
-              disabled={!!formData.driverDetails} // Disable if driver is selected
               required
             />
-            {!!formData.driverDetails && (
+            {/* {!!formData.driverDetails && !userOverrides.truck && (
               <p className="text-xs text-muted-foreground">
-                Auto-assigned from driver's information
+                Auto-assigned from driver's information (you can edit this)
               </p>
-            )}
+            )} */}
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
@@ -303,7 +321,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             <Select
               value={formData.status}
               onValueChange={(value) => handleInputChange('status', value)}
-              disabled={!!formData.driverDetails} // Disable if driver is selected
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select trip status" />
@@ -315,11 +332,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
-            {!!formData.driverDetails && (
+            {/* {!!formData.driverDetails && !userOverrides.status && (
               <p className="text-xs text-muted-foreground">
-                Status automatically set to "assigned" when driver is selected
+                Auto-set to "assigned" when driver is selected (you can change this)
               </p>
-            )}
+            )} */}
           </div>
         </div>
 
