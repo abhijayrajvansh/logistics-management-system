@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import {
   Select,
   SelectContent,
@@ -41,7 +42,25 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingId, setIsGeneratingId] = useState(true);
   const [selectedShipper, setSelectedShipper] = useState<ShipperData | null>(null);
+
+  // Generate a unique docket ID when the component mounts
+  useEffect(() => {
+    const generateUniqueId = async () => {
+      try {
+        setIsGeneratingId(true);
+        const uniqueDocketId = await getUniqueVerifiedDocketId(db);
+        setFormData((prev) => ({ ...prev, docket_id: uniqueDocketId }));
+      } catch (error) {
+        console.error('Error generating unique docket ID:', error);
+      } finally {
+        setIsGeneratingId(false);
+      }
+    };
+
+    generateUniqueId();
+  }, []);
 
   // Effect to populate form fields when shipper is selected
   useEffect(() => {
@@ -147,6 +166,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               value={formData.docket_id}
               onChange={(e) => handleInputChange('docket_id', e.target.value)}
               required
+              disabled={true}
             />
           </div>
           <div className="space-y-2">
@@ -346,15 +366,30 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 current_location: '',
                 client_details: '',
                 price: '',
-                invoice: '', // Default value for the invoice enum
+                invoice: '',
                 status: '',
               });
               setSelectedShipper(null);
+
+              // Generate a new unique docket ID after reset
+              const generateNewId = async () => {
+                try {
+                  setIsGeneratingId(true);
+                  const uniqueDocketId = await getUniqueVerifiedDocketId(db);
+                  setFormData((prev) => ({ ...prev, docket_id: uniqueDocketId }));
+                } catch (error) {
+                  console.error('Error generating unique docket ID:', error);
+                } finally {
+                  setIsGeneratingId(false);
+                }
+              };
+
+              generateNewId();
             }}
           >
             Reset
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || isGeneratingId}>
             {isSubmitting ? 'Creating Order...' : 'Create Order'}
           </Button>
         </div>
