@@ -74,18 +74,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     generateUniqueId();
   }, []);
 
-  // Update formData.orderIds whenever selectedOrders changes
-  useEffect(() => {
-    const orderIds = selectedOrders.map((order) => order.orderId);
-    // Only update if the orderIds array has actually changed
-    if (JSON.stringify(orderIds) !== JSON.stringify(formData.orderIds)) {
-      setFormData((prev) => ({
-        ...prev,
-        orderIds: orderIds,
-      }));
-    }
-  }, [selectedOrders]);
-
   const handleInputChange = (field: string, value: string) => {
     // If the user manually changes truck or status, mark it as overridden
     if (field === 'truck') {
@@ -132,13 +120,18 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setSelectedOrders((prevSelectedOrders) => {
       const isSelected = prevSelectedOrders.some((o) => o.orderId === order.orderId);
 
-      if (isSelected) {
-        // Remove order if it's already selected
-        return prevSelectedOrders.filter((o) => o.orderId !== order.orderId);
-      } else {
-        // Add order if it's not selected
-        return [...prevSelectedOrders, order];
-      }
+      // Create the new selectedOrders array based on selection/deselection
+      const newSelectedOrders = isSelected
+        ? prevSelectedOrders.filter((o) => o.orderId !== order.orderId)
+        : [...prevSelectedOrders, order];
+      
+      // Update formData.orderIds directly here instead of in a separate useEffect
+      setFormData(prev => ({
+        ...prev,
+        orderIds: newSelectedOrders.map(o => o.orderId)
+      }));
+      
+      return newSelectedOrders;
     });
   };
 
