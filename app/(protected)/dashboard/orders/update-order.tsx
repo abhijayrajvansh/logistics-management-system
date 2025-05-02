@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/firebase/firebase.config';
+import { db } from '@/firebase/database';
 import { shippers, ShipperData } from '@/lib/mock-data';
 
 import { Button } from '@/components/ui/button';
@@ -354,8 +354,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
                 <SelectValue placeholder="Select invoice type" />
               </SelectTrigger>
               <SelectContent>
-              <SelectItem value="paid">paid</SelectItem>
-              <SelectItem value="to pay">to pay</SelectItem>
+                <SelectItem value="paid">paid</SelectItem>
+                <SelectItem value="to pay">to pay</SelectItem>
               </SelectContent>
             </Select>
           </div>

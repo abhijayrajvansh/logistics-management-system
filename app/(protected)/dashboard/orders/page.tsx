@@ -1,7 +1,7 @@
 import { columns, Order } from './columns';
 import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
-import { db } from '@/firebase/firebase.config';
+import { db } from '@/firebase/database';
 import { collection, getDocs } from 'firebase/firestore';
 
 // Helper function to serialize Firestore data

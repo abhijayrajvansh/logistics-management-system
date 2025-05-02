@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/firebase/firebase.config';
+import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -28,19 +28,19 @@ export function DeleteOrderDialog({ orderId, isOpen, onClose, onSuccess }: Delet
 
   const handleDelete = async () => {
     if (!orderId) return;
-    
+
     setIsDeleting(true);
     try {
       // Delete the order document from Firestore
       await deleteDoc(doc(db, 'orders', orderId));
-      
+
       toast.success('Order deleted successfully');
-      
+
       // Call onSuccess callback if provided (for refreshing data)
       if (onSuccess) {
         onSuccess();
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Error deleting order:', error);
@@ -58,8 +58,8 @@ export function DeleteOrderDialog({ orderId, isOpen, onClose, onSuccess }: Delet
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure you want to delete this order?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the order 
-            and remove its data from our servers.
+            This action cannot be undone. This will permanently delete the order and remove its data
+            from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

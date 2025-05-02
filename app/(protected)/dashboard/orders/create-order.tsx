@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
-import { firebaseApp } from '@/firebase/firebase.config';
 import { shippers, ShipperData } from '@/lib/mock-data';
-
+import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -16,10 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
-
-// Initialize Firestore
-const db = getFirestore(firebaseApp);
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
@@ -37,11 +32,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     eway_bill_no: '',
     tat: '',
     charge_basis: '',
-    docket_id: '100026',
-    current_location: 'current_location:user',
+    docket_id: '',
+    current_location: '',
     client_details: '',
     price: '',
-    invoice: '', // Default value for the invoice enum
+    invoice: '',
     status: '',
   });
 
@@ -295,8 +290,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 <SelectValue placeholder="Select order status" />
               </SelectTrigger>
               <SelectContent>
-              <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-              <SelectItem value="Assigned">Assigned</SelectItem>
+                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
+                <SelectItem value="Assigned">Assigned</SelectItem>
               </SelectContent>
             </Select>
           </div>
