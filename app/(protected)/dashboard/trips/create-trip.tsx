@@ -16,11 +16,12 @@ import {
 } from '@/components/ui/select';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import useDrivers, { Driver } from '@/hooks/useDrivers';
-import useOrders, { Order } from '@/hooks/useOrders';
+import useOrders from '@/hooks/useOrders';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Order } from '@/types';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -124,13 +125,13 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       const newSelectedOrders = isSelected
         ? prevSelectedOrders.filter((o) => o.orderId !== order.orderId)
         : [...prevSelectedOrders, order];
-      
+
       // Update formData.orderIds directly here instead of in a separate useEffect
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        orderIds: newSelectedOrders.map(o => o.orderId)
+        orderIds: newSelectedOrders.map((o) => o.orderId),
       }));
-      
+
       return newSelectedOrders;
     });
   };
@@ -379,7 +380,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                       <div className="flex-1 cursor-pointer">
                         <div className="font-medium text-sm flex justify-between">
                           <span>Order ID: {order.docket_id || order.orderId}</span>
-                            <span className="text-muted-foreground">TAT: {new Date(order.tat).toLocaleDateString()}</span>
+                          <span className="text-muted-foreground">
+                            TAT: {new Date(order.tat).toLocaleDateString()}
+                          </span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 mt-1 text-xs">
@@ -401,7 +404,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
                         <div className="flex justify-between mt-1 text-xs text-muted-foreground">
                           <span>Boxes: {order.total_boxes_count || 'N/A'}</span>
-                          <span>Weight: {order.total_order_weight ? `${order.total_order_weight} kg` : 'N/A'}</span>
+                          <span>
+                            Weight:{' '}
+                            {order.total_order_weight ? `${order.total_order_weight} kg` : 'N/A'}
+                          </span>
                         </div>
                       </div>
                     </div>

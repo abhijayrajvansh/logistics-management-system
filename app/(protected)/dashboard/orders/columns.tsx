@@ -12,27 +12,9 @@ import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
+import { Order } from '@/types'; // Import the Order type from your hooks
 
 // This type is used to define the shape of our data based on the image schema
-export type Order = {
-  id: string;
-  shipper_details: string;
-  receiver_details: string;
-  total_boxes_count: number;
-  packing_type: string;
-  dimensions: string;
-  total_order_weight: number;
-  lr_no: string;
-  eway_bill_no: string;
-  tat: Date;
-  charge_basis: string; // Enum type
-  docket_id: string;
-  current_location: string;
-  client_details: string;
-  price: string | number;
-  invoice: string;
-  status: string;
-};
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {

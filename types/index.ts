@@ -9,19 +9,28 @@ export type FirebaseConfig = {
   databaseURL: string;
 }
 
-export type Order = {
-  id: string;
-  shipper_details: string;
-  receiver_details: string;
-  total_boxes_count: number;
-  packing_type: string;
-  dimensions: string;
-  total_order_weight: number;
-  lr_no: string;
-  eway_bill_no: string;
-  tat: string; // ISO string
-  charge_basis: "weight" | "volume" | "box_count"; // example enum values
-  docket_id: string;
-  current_location: string;
+// Order type definition
+export interface Order {
+  orderId: string;
+  docket_id?: string;
+  charge_basis: string;
   client_details: string;
-};
+  created_at: Date;
+  current_location: string;
+  dimensions: string;
+  eway_bill_no: string;
+  invoice: string;
+  lr_no: string;
+  packing_type: string;
+  price: number;
+  receiver_details: string;
+  shipper_details: string;
+  status: string;
+  tat: Date;
+  total_boxes_count: number;
+  total_order_weight: number;
+  updated_at: Date;
+  pickup_location: string;
+  delivery_location: string;
+  customer_name: string;
+}

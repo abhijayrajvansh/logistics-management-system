@@ -25,7 +25,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import useDrivers, { Driver } from '@/hooks/useDrivers';
-import useOrders, { Order } from '@/hooks/useOrders';
+import useOrders from '@/hooks/useOrders';
+import { Order } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -227,13 +228,13 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       const newSelectedOrders = isSelected
         ? prevSelectedOrders.filter((o) => o.orderId !== order.orderId)
         : [...prevSelectedOrders, order];
-      
+
       // Update formData.orderIds directly here instead of in a separate useEffect
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        orderIds: newSelectedOrders.map(o => o.orderId)
+        orderIds: newSelectedOrders.map((o) => o.orderId),
       }));
-      
+
       return newSelectedOrders;
     });
   };
