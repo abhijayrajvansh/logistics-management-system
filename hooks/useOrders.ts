@@ -3,7 +3,7 @@ import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestor
 import { db } from '@/firebase/database';
 import { Order } from '@/types';
 
-export default function useOrders() {
+export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -19,17 +19,13 @@ export default function useOrders() {
         (snapshot) => {
           const fetchedOrders = snapshot.docs.map((doc) => {
             const data = doc.data();
-            return {
-              orderId: doc.id,
-              docket_id: data.docket_id,
-              customer_name: data.customer_name,
-              status: data.status || 'unassigned',
-              pickup_location: data.pickup_location,
-              delivery_location: data.delivery_location,
-              created_at: data.created_at?.toDate() || new Date(),
-              // Map other fields as needed
-              ...data,
+            
+            const orderResponse = {
+              order_id: doc.id,
+              ...data,  
             } as Order;
+            
+            return orderResponse;
           });
 
           setOrders(fetchedOrders);
@@ -59,3 +55,6 @@ export default function useOrders() {
     error,
   };
 }
+
+
+export default useOrders;

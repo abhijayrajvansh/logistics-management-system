@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-
-export type Driver = {
-  id: string;
-  driverId: string;
-  driverName: string;
-  driverTruckNo: string;
-  phoneNumber?: string;
-  licenseNumber?: string;
-  status?: string;
-};
+import { Driver } from '@/types';
 
 export function useDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);

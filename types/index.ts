@@ -9,10 +9,9 @@ export type FirebaseConfig = {
   databaseURL: string;
 }
 
-// Order type definition
 export interface Order {
-  orderId: string;
-  docket_id?: string;
+  order_id: string;
+  docket_id: string;
   charge_basis: string;
   client_details: string;
   created_at: Date;
@@ -30,7 +29,14 @@ export interface Order {
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
-  pickup_location: string;
-  delivery_location: string;
-  customer_name: string;
 }
+
+export type Driver = {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverTruckNo: string;
+  phoneNumber?: string;
+  licenseNumber?: string;
+  status?: string;
+};

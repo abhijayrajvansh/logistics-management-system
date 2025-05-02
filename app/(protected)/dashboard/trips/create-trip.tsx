@@ -15,13 +15,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
-import useDrivers, { Driver } from '@/hooks/useDrivers';
-import useOrders from '@/hooks/useOrders';
+import useDrivers from '@/hooks/useDrivers';
+import {useOrders} from '@/hooks/useOrders';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Order } from '@/types';
+import { Driver } from '@/types';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -389,16 +390,16 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                           <div>
                             <div className="font-semibold">Shipper:</div>
                             <div className="text-muted-foreground">
-                              {order.shipper_details || order.customer_name}
+                              {order.shipper_details || order.client_details}
                             </div>
-                            <div className="text-muted-foreground">{order.pickup_location}</div>
+                            <div className="text-muted-foreground">{order.shipper_details}</div>
                           </div>
                           <div>
                             <div className="font-semibold">Receiver:</div>
                             <div className="text-muted-foreground">
                               {order.receiver_details || 'N/A'}
                             </div>
-                            <div className="text-muted-foreground">{order.delivery_location}</div>
+                            <div className="text-muted-foreground">{order.receiver_details}</div>
                           </div>
                         </div>
 
