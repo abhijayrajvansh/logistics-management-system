@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -14,43 +13,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
+import { toast } from 'sonner';
 
-interface CreateTripFormProps {
+interface UpdateTripFormProps {
+  tripId: string; // This is now the unique tripId, not the document ID
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
+export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormProps) {
   const [formData, setFormData] = useState({
-    tripId: '', // Changed from id to tripId for clarity
+    tripId: '',
     startingPoint: '',
     destination: '',
-    driver: 'Unassigned',
+    driver: '',
     numberOfStops: '',
     startDate: '',
     truck: '',
-    status: 'unassigned',
+    status: '',
   });
 
+  const [docId, setDocId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingId, setIsGeneratingId] = useState(true);
 
-  // Generate a unique trip ID when the component mounts
+  // Fetch trip data on component mount
   useEffect(() => {
-    const generateUniqueId = async () => {
+    const fetchTripData = async () => {
       try {
-        setIsGeneratingId(true);
-        const uniqueTripId = await getUniqueVerifiedTripId(db);
-        setFormData(prev => ({ ...prev, tripId: uniqueTripId }));
+        // First we need to find the document with the given tripId
+        const tripsRef = collection(db, 'trips');
+        const tripQuery = query(tripsRef, where('tripId', '==', tripId));
+        const querySnapshot = await getDocs(tripQuery);
+        
+        if (querySnapshot.empty) {
+          toast.error('Trip not found');
+          if (onCancel) onCancel();
+          return;
+        }
+        
+        // Get the first document that matches (should only be one)
+        const tripDoc = querySnapshot.docs[0];
+        const data = tripDoc.data();
+        setDocId(tripDoc.id);
+
+        // Format date for input field if it exists
+        let formattedStartDate = '';
+        if (data.startDate) {
+          if (data.startDate.toDate) {
+            // Handle Firestore timestamp
+            formattedStartDate = data.startDate.toDate().toISOString().split('T')[0];
+          } else if (data.startDate instanceof Date) {
+            // Handle regular Date object
+            formattedStartDate = data.startDate.toISOString().split('T')[0];
+          } else if (typeof data.startDate === 'string') {
+            // Handle string date
+            formattedStartDate = data.startDate;
+          }
+        }
+
+        setFormData({
+          tripId: data.tripId || tripId,
+          startingPoint: data.startingPoint || '',
+          destination: data.destination || '',
+          driver: data.driver || 'Unassigned',
+          numberOfStops: data.numberOfStops?.toString() || '0',
+          startDate: formattedStartDate,
+          truck: data.truck || '',
+          status: data.status || 'unassigned',
+        });
       } catch (error) {
-        console.error("Error generating unique trip ID:", error);
+        console.error('Error fetching trip:', error);
+        toast.error('Failed to load trip data');
       } finally {
-        setIsGeneratingId(false);
+        setIsLoading(false);
       }
     };
 
-    generateUniqueId();
-  }, []);
+    fetchTripData();
+  }, [tripId, onCancel]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({
@@ -64,53 +105,43 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setIsSubmitting(true);
 
     try {
+      // We need the document ID to update the correct document
+      if (!docId) {
+        toast.error('Cannot update: Document ID not found');
+        return;
+      }
+
       // Parse and validate form data
       const validatedData = {
         ...formData,
         numberOfStops: parseInt(formData.numberOfStops) || 0,
         startDate: new Date(formData.startDate),
+        updated_at: new Date(),
       };
 
-      // Add the trip to Firestore
-      const tripRef = await addDoc(collection(db, 'trips'), {
-        ...validatedData,
-        created_at: new Date(),
-      });
+      // Update the trip in Firestore using the document ID
+      const tripRef = doc(db, 'trips', docId);
+      await updateDoc(tripRef, validatedData);
 
-      toast.success('Trip created successfully!', {
-        description: `Trip ID: ${formData.tripId}`,
-      });
-
-      // Reset form after successful submission
-      setFormData({
-        tripId: '', // Will be regenerated on next form render
-        startingPoint: '',
-        destination: '',
-        driver: 'Unassigned',
-        numberOfStops: '',
-        startDate: '',
-        truck: '',
-        status: 'unassigned',
-      });
+      toast.success('Trip updated successfully!');
 
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
-
-      // Add small delay before refreshing to allow toast to be visible
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error) {
-      console.error('Error creating trip:', error);
-      toast.error('Failed to create trip', {
+      console.error('Error updating trip:', error);
+      toast.error('Failed to update trip', {
         description: 'Please try again',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return <div className="py-8 text-center">Loading trip data...</div>;
+  }
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -120,7 +151,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             <Label htmlFor="tripId">Trip ID</Label>
             <Input
               id="tripId"
-              placeholder="Generating unique ID..."
+              placeholder="Trip ID"
               value={formData.tripId}
               disabled={true}
               className="bg-muted"
@@ -205,37 +236,18 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 <SelectItem value="unassigned">Unassigned</SelectItem>
                 <SelectItem value="assigned">Assigned</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => {
-              // Generate a new unique ID
-              setIsGeneratingId(true);
-              const uniqueTripId = await getUniqueVerifiedTripId(db);
-              setIsGeneratingId(false);
-              
-              setFormData({
-                tripId: uniqueTripId,
-                startingPoint: '',
-                destination: '',
-                driver: 'Unassigned',
-                numberOfStops: '',
-                startDate: '',
-                truck: '',
-                status: 'unassigned',
-              });
-            }}
-          >
-            Reset
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || isGeneratingId}>
-            {isSubmitting ? 'Creating Trip...' : 'Create Trip'}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Updating Trip...' : 'Update Trip'}
           </Button>
         </div>
       </div>
@@ -243,4 +255,4 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   );
 }
 
-export default CreateTripForm;
+export default UpdateTripForm;

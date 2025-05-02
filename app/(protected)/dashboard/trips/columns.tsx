@@ -10,10 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { ColumnDef } from '@tanstack/react-table';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import UpdateTripForm from './update-trip';
+import DeleteTripDialog from './delete-trip';
 
 // This type is used to define the shape of our data
 export type Trip = {
-  id: string;
+  id: string;        // Firestore document ID
+  tripId: string;    // Our custom unique trip ID
   startingPoint: string;
   destination: string;
   driver: string;
@@ -68,30 +71,28 @@ const ActionCell = ({ row }: { row: any }) => {
               Update the trip details below. Click update when you're done.
             </DialogDescription>
           </DialogHeader>
-          {/* Will be implemented later */}
-          {/* <UpdateTripForm
-            tripId={trip.id}
+          <UpdateTripForm
+            tripId={trip.tripId}
             onSuccess={handleUpdateSuccess}
             onCancel={() => setIsEditDialogOpen(false)}
-          /> */}
+          />
         </DialogContent>
       </Dialog>
 
       {/* Delete Trip Dialog */}
-      {/* Will be implemented later */}
-      {/* <DeleteTripDialog
-        tripId={trip.id}
+      <DeleteTripDialog
+        tripId={trip.tripId}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onSuccess={handleDeleteSuccess}
-      /> */}
+      />
     </div>
   );
 };
 
 export const columns: ColumnDef<Trip>[] = [
   {
-    accessorKey: 'id',
+    accessorKey: 'tripId',
     header: 'Trip ID',
   },
   {
