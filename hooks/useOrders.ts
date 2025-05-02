@@ -6,12 +6,26 @@ import { db } from '@/firebase/database';
 export interface Order {
   orderId: string;
   docket_id?: string;
-  customer_name: string;
-  status: string; // 'unassigned', 'assigned', 'delivered', etc.
+  charge_basis: string;
+  client_details: string;
+  created_at: Date;
+  current_location: string;
+  dimensions: string;
+  eway_bill_no: string;
+  invoice: string;
+  lr_no: string;
+  packing_type: string;
+  price: number;
+  receiver_details: string;
+  shipper_details: string;
+  status: string;
+  tat: Date;
+  total_boxes_count: number;
+  total_order_weight: number;
+  updated_at: Date;
   pickup_location: string;
   delivery_location: string;
-  created_at: Date;
-  // Add any other fields that are relevant to your application
+  customer_name: string;
 }
 
 export default function useOrders() {

@@ -76,10 +76,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   // Update formData.orderIds whenever selectedOrders changes
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      orderIds: selectedOrders.map((order) => order.orderId),
-    }));
+    const orderIds = selectedOrders.map((order) => order.orderId);
+    // Only update if the orderIds array has actually changed
+    if (JSON.stringify(orderIds) !== JSON.stringify(formData.orderIds)) {
+      setFormData((prev) => ({
+        ...prev,
+        orderIds: orderIds,
+      }));
+    }
   }, [selectedOrders]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -207,11 +211,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       if (onSuccess) {
         onSuccess();
       }
-
-      // Add small delay before refreshing to allow toast to be visible
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error) {
       console.error('Error creating trip:', error);
       toast.error('Failed to create trip', {
@@ -375,23 +374,43 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                   {availableOrders.map((order) => (
                     <div
                       key={order.orderId}
-                      className="flex items-center space-x-2 p-2 rounded hover:bg-muted"
+                      className="flex items-start space-x-2 p-3 rounded hover:bg-muted border-b border-muted last:border-0"
                       onClick={() => handleOrderSelection(order)}
                     >
                       <Checkbox
                         checked={isOrderSelected(order.orderId)}
                         onCheckedChange={() => handleOrderSelection(order)}
                         id={`order-${order.orderId}`}
+                        className="mt-1"
                       />
-                      <Label
-                        htmlFor={`order-${order.orderId}`}
-                        className="flex-1 cursor-pointer text-sm"
-                      >
-                        <div className="font-medium">Order ID: {order.orderId}</div>
-                        <div className="text-muted-foreground text-xs">
-                          {order.pickup_location} to {order.delivery_location}
+                      <div className="flex-1 cursor-pointer">
+                        <div className="font-medium text-sm flex justify-between">
+                          <span>Order ID: {order.docket_id || order.orderId}</span>
+                            <span className="text-muted-foreground">TAT: {new Date(order.tat).toLocaleDateString()}</span>
                         </div>
-                      </Label>
+
+                        <div className="grid grid-cols-2 gap-2 mt-1 text-xs">
+                          <div>
+                            <div className="font-semibold">Shipper:</div>
+                            <div className="text-muted-foreground">
+                              {order.shipper_details || order.customer_name}
+                            </div>
+                            <div className="text-muted-foreground">{order.pickup_location}</div>
+                          </div>
+                          <div>
+                            <div className="font-semibold">Receiver:</div>
+                            <div className="text-muted-foreground">
+                              {order.receiver_details || 'N/A'}
+                            </div>
+                            <div className="text-muted-foreground">{order.delivery_location}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                          <span>Boxes: {order.total_boxes_count || 'N/A'}</span>
+                          <span>Weight: {order.total_order_weight ? `${order.total_order_weight} kg` : 'N/A'}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
