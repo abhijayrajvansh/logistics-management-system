@@ -6,19 +6,21 @@
 export function createUniqueTripId(prefix: string = 'TR'): string {
   // Get current timestamp
   const timestamp = Date.now();
-  
+
   // Generate a random 3-digit number
-  const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  
+  const randomPart = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
+
   // Take the last 3 digits of the timestamp
   const timestampPart = (timestamp % 1000).toString().padStart(3, '0');
-  
+
   // Combine to create a 6-digit unique ID
   const sixDigitId = timestampPart + randomPart;
-  
+
   // Format the ID to ensure it's exactly 6 digits
   const formattedId = sixDigitId.slice(0, 6);
-  
+
   // Return the ID with optional prefix
   return `${prefix}${formattedId}`;
 }
@@ -31,12 +33,12 @@ export function createUniqueTripId(prefix: string = 'TR'): string {
  */
 export async function doesTripIdExist(db: any, tripId: string): Promise<boolean> {
   const { collection, query, where, getDocs } = await import('firebase/firestore');
-  
+
   try {
     const tripsRef = collection(db, 'trips');
     const q = query(tripsRef, where('tripId', '==', tripId));
     const snapshot = await getDocs(q);
-    
+
     return !snapshot.empty;
   } catch (error) {
     console.error('Error checking if trip ID exists:', error);
@@ -53,12 +55,12 @@ export async function doesTripIdExist(db: any, tripId: string): Promise<boolean>
 export async function getUniqueVerifiedTripId(db: any, prefix: string = 'TR'): Promise<string> {
   let tripId = createUniqueTripId(prefix);
   let exists = await doesTripIdExist(db, tripId);
-  
+
   // If the ID already exists, generate a new one until we find a unique ID
   while (exists) {
     tripId = createUniqueTripId(prefix);
     exists = await doesTripIdExist(db, tripId);
   }
-  
+
   return tripId;
 }

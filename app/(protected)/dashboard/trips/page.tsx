@@ -31,13 +31,13 @@ function serializeData(data: any): any {
   return data;
 }
 
-async function getData(): Promise<{ unassigned: Trip[], active: Trip[], past: Trip[] }> {
+async function getData(): Promise<{ unassigned: Trip[]; active: Trip[]; past: Trip[] }> {
   try {
     const tripsCollection = collection(db, 'trips');
-    
+
     // Get all trips
     const snapshot = await getDocs(tripsCollection);
-    
+
     const unassignedTrips: Trip[] = [];
     const activeTrips: Trip[] = [];
     const pastTrips: Trip[] = [];
@@ -46,7 +46,7 @@ async function getData(): Promise<{ unassigned: Trip[], active: Trip[], past: Tr
       const data = doc.data();
       // Serialize the Firestore data
       const serializedData = serializeData(data);
-      
+
       const trip = {
         id: doc.id,
         // If no tripId exists (for older records), generate one
@@ -77,14 +77,14 @@ async function getData(): Promise<{ unassigned: Trip[], active: Trip[], past: Tr
     return {
       unassigned: unassignedTrips,
       active: activeTrips,
-      past: pastTrips
+      past: pastTrips,
     };
   } catch (error) {
     console.error('Error fetching trips: ', error);
     return {
       unassigned: [],
       active: [],
-      past: []
+      past: [],
     };
   }
 }
@@ -100,7 +100,12 @@ export default async function TripsPage() {
             <div className="flex flex-col lg:flex-row">
               <div className="flex-1"></div>
             </div>
-            <DataTable columns={columns} data={unassigned} activeTripData={active} pastTripData={past} />
+            <DataTable
+              columns={columns}
+              data={unassigned}
+              activeTripData={active}
+              pastTripData={past}
+            />
           </div>
         </div>
       </div>

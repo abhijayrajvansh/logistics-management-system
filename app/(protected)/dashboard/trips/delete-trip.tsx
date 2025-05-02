@@ -34,13 +34,13 @@ export function DeleteTripDialog({ tripId, isOpen, onClose, onSuccess }: DeleteT
       const tripsRef = collection(db, 'trips');
       const tripQuery = query(tripsRef, where('tripId', '==', tripId));
       const querySnapshot = await getDocs(tripQuery);
-      
+
       if (querySnapshot.empty) {
         toast.error('Trip not found');
         onClose();
         return;
       }
-      
+
       // Get the document ID to delete
       const docId = querySnapshot.docs[0].id;
 
