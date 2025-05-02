@@ -14,6 +14,7 @@ import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
 
 // This type is used to define the shape of our data
+
 export type Trip = {
   id: string; // Firestore document ID
   tripId: string; // Our custom unique trip ID

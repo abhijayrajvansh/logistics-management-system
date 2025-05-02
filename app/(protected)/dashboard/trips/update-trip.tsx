@@ -1,7 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +25,11 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import useDrivers, { Driver } from '@/hooks/useDrivers';
+import useOrders, { Order } from '@/hooks/useOrders';
 import { Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface UpdateTripFormProps {
   tripId: string; // This is now the unique tripId, not the document ID
@@ -34,7 +48,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     startDate: '',
     truck: '',
     status: '',
+    orderIds: [] as string[], // Add orderIds array to store selected order IDs
   });
+
+  const [selectedOrders, setSelectedOrders] = useState<Order[]>([]); // Track selected orders
+  const [loadingOrders, setLoadingOrders] = useState(true); // Track loading state for trip orders
 
   // Keep track of whether the user has manually edited the truck or status
   const [userOverrides, setUserOverrides] = useState({
@@ -48,6 +66,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   // Fetch drivers data
   const { drivers, isLoading: isLoadingDrivers, error: driversError } = useDrivers();
+
+  // Fetch orders data
+  const { orders, isLoading: isLoadingOrders, error: ordersError } = useOrders();
 
   // Fetch trip data on component mount
   useEffect(() => {
@@ -94,7 +115,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           startDate: formattedStartDate,
           truck: data.truck || '',
           status: data.status || 'unassigned',
+          orderIds: data.orderIds || [], // Get existing orderIds if any
         });
+
+        // Fetch the orders associated with this trip
+        await fetchTripOrders(data.tripId || tripId);
       } catch (error) {
         console.error('Error fetching trip:', error);
         toast.error('Failed to load trip data');
@@ -105,6 +130,29 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
     fetchTripData();
   }, [tripId, onCancel]);
+
+  // Fetch orders associated with the trip
+  const fetchTripOrders = async (tripId: string) => {
+    try {
+      setLoadingOrders(true);
+      const mappingsRef = collection(db, 'order_trip_mappings');
+      const mappingsQuery = query(mappingsRef, where('tripId', '==', tripId));
+      const mappingsSnapshot = await getDocs(mappingsQuery);
+
+      const orderIds = mappingsSnapshot.docs.map((doc) => doc.data().orderId);
+
+      // Update formData with the order IDs
+      setFormData((prev) => ({
+        ...prev,
+        orderIds,
+      }));
+    } catch (error) {
+      console.error('Error fetching trip orders:', error);
+      toast.error('Failed to load associated orders');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   // Once both trip data and drivers are loaded, find the matching driver
   useEffect(() => {
@@ -120,6 +168,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       }
     }
   }, [isLoading, isLoadingDrivers, formData.driver, drivers]);
+
+  // Update selectedOrders when orders are loaded or formData.orderIds changes
+  useEffect(() => {
+    if (!isLoadingOrders && formData.orderIds.length > 0) {
+      const ordersForTrip = orders.filter((order) => formData.orderIds.includes(order.orderId));
+      setSelectedOrders(ordersForTrip);
+    }
+  }, [isLoadingOrders, formData.orderIds, orders]);
+
+  // Update formData.orderIds whenever selectedOrders changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      orderIds: selectedOrders.map((order) => order.orderId),
+    }));
+  }, [selectedOrders]);
 
   const handleInputChange = (field: string, value: string) => {
     // If the user manually changes truck or status, mark it as overridden
@@ -162,6 +226,31 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     }
   };
 
+  // Handle order selection
+  const handleOrderSelection = (order: Order) => {
+    setSelectedOrders((prevSelectedOrders) => {
+      const isSelected = prevSelectedOrders.some((o) => o.orderId === order.orderId);
+
+      if (isSelected) {
+        // Remove order if it's already selected
+        return prevSelectedOrders.filter((o) => o.orderId !== order.orderId);
+      } else {
+        // Add order if it's not selected
+        return [...prevSelectedOrders, order];
+      }
+    });
+  };
+
+  // Check if an order is selected
+  const isOrderSelected = (orderId: string) => {
+    return selectedOrders.some((order) => order.orderId === orderId);
+  };
+
+  // Filter available orders - for update form, we want to show both unassigned orders and this trip's orders
+  const availableOrders = orders.filter(
+    (order) => order.status === 'Assigned' || formData.orderIds.includes(order.orderId),
+  );
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -188,7 +277,39 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       const tripRef = doc(db, 'trips', docId);
       await updateDoc(tripRef, validatedData);
 
-      toast.success('Trip updated successfully!');
+      // Get current order-trip mappings
+      const mappingsRef = collection(db, 'order_trip_mappings');
+      const mappingsQuery = query(mappingsRef, where('tripId', '==', tripId));
+      const mappingsSnapshot = await getDocs(mappingsQuery);
+
+      // Create a map of existing mappings
+      const existingMappings = new Map();
+      mappingsSnapshot.docs.forEach((doc) => {
+        existingMappings.set(doc.data().orderId, doc.id);
+      });
+
+      // Remove mappings for orders that are no longer selected
+      const removePromises = Array.from(existingMappings.entries())
+        .filter(([orderId]) => !selectedOrders.some((order) => order.orderId === orderId))
+        .map(([_, docId]) => deleteDoc(doc(db, 'order_trip_mappings', docId)));
+
+      // Add mappings for newly selected orders
+      const addPromises = selectedOrders
+        .filter((order) => !existingMappings.has(order.orderId))
+        .map((order) =>
+          addDoc(collection(db, 'order_trip_mappings'), {
+            orderId: order.orderId,
+            tripId: formData.tripId,
+            created_at: new Date(),
+          }),
+        );
+
+      // Execute all mapping updates
+      await Promise.all([...removePromises, ...addPromises]);
+
+      toast.success('Trip updated successfully!', {
+        description: `Trip ID: ${formData.tripId} with ${selectedOrders.length} orders assigned`,
+      });
 
       // Call onSuccess callback if provided
       if (onSuccess) {
@@ -204,7 +325,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     }
   };
 
-  if (isLoading || isLoadingDrivers) {
+  if (isLoading || isLoadingDrivers || isLoadingOrders) {
     return (
       <div className="py-8 text-center">
         <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -215,6 +336,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   if (driversError) {
     toast.error('Failed to load drivers');
+  }
+
+  if (ordersError) {
+    toast.error('Failed to load orders');
   }
 
   return (
@@ -333,12 +458,56 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               </SelectContent>
             </Select>
             {/* {!!formData.driverDetails && !userOverrides.status && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground"></p>
                 Auto-set to "assigned" when driver is selected (you can change this)
               </p>
             )} */}
           </div>
         </div>
+
+        {/* Order selection section */}
+        {!isLoadingOrders && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Associated Orders ({selectedOrders.length})</Label>
+            </div>
+            {availableOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No available orders found.</p>
+            ) : (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Orders</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 py-0">
+                  <ScrollArea className="h-[200px]">
+                    <div className="px-4 py-2 space-y-2">
+                      {availableOrders.map((order) => (
+                        <div
+                          key={order.orderId}
+                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
+                          onClick={() => handleOrderSelection(order)}
+                        >
+                          <Checkbox
+                            checked={isOrderSelected(order.orderId)}
+                            onCheckedChange={() => handleOrderSelection(order)}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {order.orderId} - {order.customer_name || 'Unnamed Customer'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {order.pickup_location} → {order.delivery_location}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={onCancel}>

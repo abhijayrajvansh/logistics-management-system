@@ -16,7 +16,11 @@ import {
 } from '@/components/ui/select';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import useDrivers, { Driver } from '@/hooks/useDrivers';
+import useOrders, { Order } from '@/hooks/useOrders';
 import { Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -33,7 +37,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     startDate: '',
     truck: '',
     status: 'unassigned',
+    orderIds: [] as string[], // Add orderIds array to store selected order IDs
   });
+
+  const [selectedOrders, setSelectedOrders] = useState<Order[]>([]); // Track selected orders as full objects
 
   // Keep track of whether the user has manually edited the truck or status
   const [userOverrides, setUserOverrides] = useState({
@@ -46,6 +53,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   // Fetch drivers data
   const { drivers, isLoading: isLoadingDrivers, error: driversError } = useDrivers();
+
+  // Fetch orders data
+  const { orders, isLoading: isLoadingOrders, error: ordersError } = useOrders();
 
   // Generate a unique trip ID when the component mounts
   useEffect(() => {
@@ -63,6 +73,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
     generateUniqueId();
   }, []);
+
+  // Update formData.orderIds whenever selectedOrders changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      orderIds: selectedOrders.map((order) => order.orderId),
+    }));
+  }, [selectedOrders]);
 
   const handleInputChange = (field: string, value: string) => {
     // If the user manually changes truck or status, mark it as overridden
@@ -105,6 +123,29 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     }
   };
 
+  // Handle order selection
+  const handleOrderSelection = (order: Order) => {
+    setSelectedOrders((prevSelectedOrders) => {
+      const isSelected = prevSelectedOrders.some((o) => o.orderId === order.orderId);
+
+      if (isSelected) {
+        // Remove order if it's already selected
+        return prevSelectedOrders.filter((o) => o.orderId !== order.orderId);
+      } else {
+        // Add order if it's not selected
+        return [...prevSelectedOrders, order];
+      }
+    });
+  };
+
+  // Check if an order is selected
+  const isOrderSelected = (orderId: string) => {
+    return selectedOrders.some((order) => order.orderId === orderId);
+  };
+
+  // Filter available orders based on status (only showing Ready To Transport orders)
+  const availableOrders = orders.filter((order) => order.status === 'Ready To Transport');
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -124,8 +165,19 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       // Add the trip to Firestore
       const tripRef = await addDoc(collection(db, 'trips'), validatedData);
 
+      // Update the status of all selected orders to 'assigned'
+      const updatePromises = selectedOrders.map((order) => {
+        return addDoc(collection(db, 'order_trip_mappings'), {
+          orderId: order.orderId,
+          tripId: formData.tripId,
+          created_at: new Date(),
+        });
+      });
+
+      await Promise.all(updatePromises);
+
       toast.success('Trip created successfully!', {
-        description: `Trip ID: ${formData.tripId}`,
+        description: `Trip ID: ${formData.tripId} with ${selectedOrders.length} orders assigned`,
       });
 
       // Reset form after successful submission
@@ -139,7 +191,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         startDate: '',
         truck: '',
         status: 'unassigned',
+        orderIds: [],
       });
+
+      // Reset selected orders
+      setSelectedOrders([]);
 
       // Reset user overrides
       setUserOverrides({
@@ -168,6 +224,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   if (driversError) {
     toast.error('Failed to load drivers');
+  }
+
+  if (ordersError) {
+    toast.error('Failed to load orders');
   }
 
   return (
@@ -248,11 +308,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
             />
-            {/* {!!formData.driverDetails && !userOverrides.truck && (
-              <p className="text-xs text-muted-foreground">
-                Auto-assigned from driver's information (you can edit this)
-              </p>
-            )} */}
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
@@ -293,13 +348,74 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 <SelectItem value="active">Active</SelectItem>
               </SelectContent>
             </Select>
-            {/* {!!formData.driverDetails && !userOverrides.status && (
-              <p className="text-xs text-muted-foreground">
-                Auto-set to "assigned" when driver is selected (you can change this)
-              </p>
-            )} */}
           </div>
         </div>
+
+        {/* Order Selection Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Select Orders for this Trip</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingOrders ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span>Loading orders...</span>
+              </div>
+            ) : availableOrders.length === 0 ? (
+              <div className="text-center p-4 text-muted-foreground">
+                No unassigned orders available
+              </div>
+            ) : (
+              <ScrollArea className="h-[200px] rounded-md border">
+                <div className="p-4 space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Available Orders ({availableOrders.length})
+                  </div>
+                  {availableOrders.map((order) => (
+                    <div
+                      key={order.orderId}
+                      className="flex items-center space-x-2 p-2 rounded hover:bg-muted"
+                      onClick={() => handleOrderSelection(order)}
+                    >
+                      <Checkbox
+                        checked={isOrderSelected(order.orderId)}
+                        onCheckedChange={() => handleOrderSelection(order)}
+                        id={`order-${order.orderId}`}
+                      />
+                      <Label
+                        htmlFor={`order-${order.orderId}`}
+                        className="flex-1 cursor-pointer text-sm"
+                      >
+                        <div className="font-medium">Order ID: {order.orderId}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {order.pickup_location} to {order.delivery_location}
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Selected Orders: <span className="font-bold">{selectedOrders.length}</span>
+                </span>
+                {selectedOrders.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedOrders([])}
+                  >
+                    Clear Selection
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="flex justify-between">
           <Button
@@ -322,7 +438,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 startDate: '',
                 truck: '',
                 status: 'unassigned',
+                orderIds: [],
               });
+
+              // Reset selected orders
+              setSelectedOrders([]);
 
               setUserOverrides({
                 truck: false,
