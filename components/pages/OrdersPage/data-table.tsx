@@ -83,6 +83,12 @@ export function DataTable<TData, TValue>({
   data: TData[];
 }) {
   const [data, setData] = React.useState(() => initialData);
+
+  // Update data when initialData changes
+  React.useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);

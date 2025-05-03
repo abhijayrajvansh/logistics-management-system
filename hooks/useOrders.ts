@@ -42,6 +42,7 @@ export function useOrders() {
       return () => {
         unsubscribe();
       };
+      
     } catch (err) {
       console.error('Error setting up orders listener:', err);
       setError(err as Error);
