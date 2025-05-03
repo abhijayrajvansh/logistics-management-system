@@ -24,8 +24,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import useDrivers, { Driver } from '@/hooks/useDrivers';
+import useDrivers from '@/hooks/useDrivers';
 import useOrders from '@/hooks/useOrders';
+import { Driver } from '@/types';
 import { Order } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -173,7 +174,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   // Update selectedOrders when orders are loaded or formData.orderIds changes
   useEffect(() => {
     if (!isLoadingOrders && formData.orderIds.length > 0) {
-      const ordersForTrip = orders.filter((order) => formData.orderIds.includes(order.orderId));
+      const ordersForTrip = orders.filter((order) => formData.orderIds.includes(order.order_id));
       setSelectedOrders(ordersForTrip);
     }
   }, [isLoadingOrders, formData.orderIds, orders]);
@@ -222,17 +223,17 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   // Handle order selection
   const handleOrderSelection = (order: Order) => {
     setSelectedOrders((prevSelectedOrders) => {
-      const isSelected = prevSelectedOrders.some((o) => o.orderId === order.orderId);
+      const isSelected = prevSelectedOrders.some((o) => o.order_id === order.order_id);
 
       // Create new selectedOrders array
       const newSelectedOrders = isSelected
-        ? prevSelectedOrders.filter((o) => o.orderId !== order.orderId)
+        ? prevSelectedOrders.filter((o) => o.order_id !== order.order_id)
         : [...prevSelectedOrders, order];
 
       // Update formData.orderIds directly here instead of in a separate useEffect
       setFormData((prev) => ({
         ...prev,
-        orderIds: newSelectedOrders.map((o) => o.orderId),
+        orderIds: newSelectedOrders.map((o) => o.order_id),
       }));
 
       return newSelectedOrders;
@@ -241,12 +242,12 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   // Check if an order is selected
   const isOrderSelected = (orderId: string) => {
-    return selectedOrders.some((order) => order.orderId === orderId);
+    return selectedOrders.some((order) => order.order_id === orderId);
   };
 
   // Filter available orders - for update form, we want to show both unassigned orders and this trip's orders
   const availableOrders = orders.filter(
-    (order) => order.status === 'Assigned' || formData.orderIds.includes(order.orderId),
+    (order) => order.status === 'Assigned' || formData.orderIds.includes(order.order_id),
   );
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -288,15 +289,15 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
       // Remove mappings for orders that are no longer selected
       const removePromises = Array.from(existingMappings.entries())
-        .filter(([orderId]) => !selectedOrders.some((order) => order.orderId === orderId))
+        .filter(([orderId]) => !selectedOrders.some((order) => order.order_id === orderId))
         .map(([_, docId]) => deleteDoc(doc(db, 'order_trip_mappings', docId)));
 
       // Add mappings for newly selected orders
       const addPromises = selectedOrders
-        .filter((order) => !existingMappings.has(order.orderId))
+        .filter((order) => !existingMappings.has(order.order_id))
         .map((order) =>
           addDoc(collection(db, 'order_trip_mappings'), {
-            orderId: order.orderId,
+            orderId: order.order_id,
             tripId: formData.tripId,
             created_at: new Date(),
           }),
@@ -481,20 +482,20 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                     <div className="px-4 py-2 space-y-2">
                       {availableOrders.map((order) => (
                         <div
-                          key={order.orderId}
+                          key={order.order_id}
                           className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
                           onClick={() => handleOrderSelection(order)}
                         >
                           <Checkbox
-                            checked={isOrderSelected(order.orderId)}
+                            checked={isOrderSelected(order.order_id)}
                             onCheckedChange={() => handleOrderSelection(order)}
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium">
-                              {order.orderId} - {order.customer_name || 'Unnamed Customer'}
+                              {order.order_id} - {order.client_details || 'Unnamed Customer'}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {order.pickup_location} → {order.delivery_location}
+                              {order.shipper_details} → {order.receiver_details}
                             </p>
                           </div>
                         </div>
