@@ -1,17 +1,14 @@
 'use client';
 
 import {
-  DndContext,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
-  type UniqueIdentifier,
+  type UniqueIdentifier
 } from '@dnd-kit/core';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove } from '@dnd-kit/sortable';
 import {
   ColumnDef,
@@ -191,13 +188,7 @@ export function DataTable<TData, TValue>({
       >
         {/* ...existing code for table... */}
         <div className="overflow-hidden rounded-lg border ">
-          <DndContext
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
-            id={sortableId}
-          >
+
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-muted">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -234,7 +225,9 @@ export function DataTable<TData, TValue>({
                 )}
               </TableBody>
             </Table>
-          </DndContext>
+
+
+
         </div>
 
         {/* Pagination section */}

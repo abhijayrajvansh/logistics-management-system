@@ -7,12 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Order } from '@/types'; // Import the Order type from your hooks
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
-import { Order } from '@/types'; // Import the Order type from your hooks
 
 // This type is used to define the shape of our data based on the image schema
 
@@ -24,17 +24,13 @@ const ActionCell = ({ row }: { row: any }) => {
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
-    // Refresh the page to show updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    // to add toast success message for update
   };
 
   const handleDeleteSuccess = () => {
     // Refresh the page to show updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+
+    // to add toast success message for delete
   };
 
   return (
@@ -45,9 +41,6 @@ const ActionCell = ({ row }: { row: any }) => {
       >
         <MdEdit size={15} />
       </button>
-      {/* <button className="hover:bg-gray-800 p-1 rounded-lg cursor-pointer border border-gray-500 hover:text-white">
-        <FaRegEye size={15} />
-      </button> */}
       <button
         className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
         onClick={() => setIsDeleteDialogOpen(true)}
@@ -65,7 +58,7 @@ const ActionCell = ({ row }: { row: any }) => {
             </DialogDescription>
           </DialogHeader>
           <UpdateOrderForm
-            orderId={order.id}
+            orderId={order.order_id}
             onSuccess={handleUpdateSuccess}
             onCancel={() => setIsEditDialogOpen(false)}
           />
@@ -74,7 +67,7 @@ const ActionCell = ({ row }: { row: any }) => {
 
       {/* Delete Order Dialog */}
       <DeleteOrderDialog
-        orderId={order.id}
+        orderId={order.order_id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onSuccess={handleDeleteSuccess}
@@ -183,7 +176,9 @@ export const columns: ColumnDef<Order>[] = [
     cell: ({ row }) => {
       const invoice: string = row.getValue('invoice');
       return (
-        <div className={`font-medium ${invoice === 'paid' ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1' : 'text-red-700 bg-red-200 border text-center rounded-lg border-red-500 px-1 text-xs'}`}>
+        <div
+          className={`font-medium ${invoice === 'paid' ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1' : 'text-red-700 bg-red-200 border text-center rounded-lg border-red-500 px-1 text-xs'}`}
+        >
           {invoice}
         </div>
       );

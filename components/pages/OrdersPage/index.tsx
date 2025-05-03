@@ -8,9 +8,8 @@ import useOrders from '@/hooks/useOrders';
 export default function OrdersPage() {
   const { orders, isLoading, error } = useOrders();
 
-  // Transform orders to match table expectations
   const formattedOrders = orders.map((order) => ({
-    id: order.order_id, // Ensure each row has an id field
+    id: order.order_id,
     ...order,
   }));
 

@@ -85,8 +85,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             current_location: data.current_location || '',
             client_details: data.client_details || '',
             price: data.price?.toString() || '',
-            invoice: data.invoice || 'PAID', // Default to PAID if not set
-            status: data.status || 'pending',
+            invoice: data.invoice || '', 
+            status: data.status || '',
           });
 
           // Find and set the selected shipper
@@ -361,7 +361,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        {/* handling location on backend for specific order update wrt to managers */}
+        <div className="grid grid-cols-1 gap-4 hidden">
           <div className="space-y-2">
             <Label htmlFor="current_location">Current Location</Label>
             <Input

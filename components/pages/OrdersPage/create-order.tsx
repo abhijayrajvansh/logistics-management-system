@@ -140,10 +140,15 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         onSuccess();
       }
 
+
       // Add small delay before refreshing to allow toast to be visible
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+    
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 1000);
+
+      // ps: just add toast, no need to refresh - using real time api
+    
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to create order', {

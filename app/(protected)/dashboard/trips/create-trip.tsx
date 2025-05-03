@@ -120,17 +120,17 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   // Handle order selection
   const handleOrderSelection = (order: Order) => {
     setSelectedOrders((prevSelectedOrders) => {
-      const isSelected = prevSelectedOrders.some((o) => o.orderId === order.orderId);
+      const isSelected = prevSelectedOrders.some((o) => o.order_id === order.order_id);
 
       // Create the new selectedOrders array based on selection/deselection
       const newSelectedOrders = isSelected
-        ? prevSelectedOrders.filter((o) => o.orderId !== order.orderId)
+        ? prevSelectedOrders.filter((o) => o.order_id !== order.order_id)
         : [...prevSelectedOrders, order];
 
       // Update formData.orderIds directly here instead of in a separate useEffect
       setFormData((prev) => ({
         ...prev,
-        orderIds: newSelectedOrders.map((o) => o.orderId),
+        orderIds: newSelectedOrders.map((o) => o.order_id),
       }));
 
       return newSelectedOrders;
@@ -139,7 +139,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   // Check if an order is selected
   const isOrderSelected = (orderId: string) => {
-    return selectedOrders.some((order) => order.orderId === orderId);
+    return selectedOrders.some((order) => order.order_id === orderId);
   };
 
   // Filter available orders based on status (only showing Ready To Transport orders)
@@ -167,7 +167,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       // Update the status of all selected orders to 'assigned'
       const updatePromises = selectedOrders.map((order) => {
         return addDoc(collection(db, 'order_trip_mappings'), {
-          orderId: order.orderId,
+          orderId: order.order_id,
           tripId: formData.tripId,
           created_at: new Date(),
         });
@@ -368,19 +368,19 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                   </div>
                   {availableOrders.map((order) => (
                     <div
-                      key={order.orderId}
+                      key={order.order_id}
                       className="flex items-start space-x-2 p-3 rounded hover:bg-muted border-b border-muted last:border-0"
                       onClick={() => handleOrderSelection(order)}
                     >
                       <Checkbox
-                        checked={isOrderSelected(order.orderId)}
+                        checked={isOrderSelected(order.order_id)}
                         onCheckedChange={() => handleOrderSelection(order)}
-                        id={`order-${order.orderId}`}
+                        id={`order-${order.order_id}`}
                         className="mt-1"
                       />
                       <div className="flex-1 cursor-pointer">
                         <div className="font-medium text-sm flex justify-between">
-                          <span>Order ID: {order.docket_id || order.orderId}</span>
+                          <span>Order ID: {order.docket_id || order.order_id}</span>
                           <span className="text-muted-foreground">
                             TAT: {new Date(order.tat).toLocaleDateString()}
                           </span>

@@ -9,7 +9,7 @@ export type FirebaseConfig = {
   databaseURL: string;
 }
 
-export interface Order {
+export type Order = {
   order_id: string;
   docket_id: string;
   charge_basis: string;
