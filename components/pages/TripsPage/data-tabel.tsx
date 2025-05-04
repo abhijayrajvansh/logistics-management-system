@@ -83,7 +83,7 @@ export function DataTable<TData, TValue>({
     (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),
   );
 
-  const activeColumns = columns;
+  const activeColumns = columns.filter((col) => !(col.id === 'actions'));
 
   const pastColumns = columns.filter(
     (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),

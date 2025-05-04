@@ -148,12 +148,14 @@ const ActionCell = ({ row }: { row: any }) => {
       >
         <MdEdit size={15} />
       </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      {trip.type !== 'past' && (
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      )}
 
       {/* Edit Trip Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -173,12 +175,14 @@ const ActionCell = ({ row }: { row: any }) => {
       </Dialog>
 
       {/* Delete Trip Dialog */}
-      <DeleteTripDialog
-        tripId={trip.tripId}
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onSuccess={handleDeleteSuccess}
-      />
+      {trip.type !== 'past' && (
+        <DeleteTripDialog
+          tripId={trip.tripId}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };
