@@ -1,8 +1,8 @@
 'use client';
 
 import { SectionCards } from '@/components/section-cards';
-import AnalyticsChart from '../AnalyticsChart';
-import { SiteHeader } from '../site-header';
+import AnalyticsChart from '../../AnalyticsChart';
+import { SiteHeader } from '../../site-header';
 
 export default function AdminDashboard() {
   return (
@@ -13,9 +13,11 @@ export default function AdminDashboard() {
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div className="flex flex-col lg:flex-row">
               <div className="flex-1">
-                <div className='px-6 lg:px-8 my-5'>
-                  <h1 className='text-3xl font-semibold'>Real Time Analytics</h1>
-                  <p className='text-[14px] text-black/70 mt-1'>analyse all your data in real time.</p>
+                <div className="px-6 lg:px-8 my-5">
+                  <h1 className="text-3xl font-semibold">Real Time Analytics</h1>
+                  <p className="text-[14px] text-black/70 mt-1">
+                    analyse all your data in real time.
+                  </p>
                 </div>
                 <SectionCards />
                 <div className="mt-4">
@@ -23,7 +25,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            {/* <DataTable columns={} data={data} /> */}
           </div>
         </div>
       </div>
