@@ -30,6 +30,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     startingPoint: '',
     destination: '',
     driver: '',
+    driverName: '', // Add this field to store driver name
     numberOfStops: '',
     startDate: '',
     truck: '',
@@ -73,10 +74,14 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           }
         }
 
+        // Find the driver to get their name
+        const selectedDriver = drivers.find(d => d.id === data.driver);
+
         setFormData({
           startingPoint: data.startingPoint || '',
           destination: data.destination || '',
           driver: data.driver || '',
+          driverName: selectedDriver?.driverName || '',
           numberOfStops: data.numberOfStops?.toString() || '',
           startDate: formattedStartDate,
           truck: data.truck || '',
@@ -85,9 +90,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         });
 
         // Find and set the selected driver
-        const driver = drivers.find((d) => d.id === data.driver);
-        if (driver) {
-          setSelectedDriver(driver);
+        if (selectedDriver) {
+          setSelectedDriver(selectedDriver);
         }
       } catch (error) {
         console.error('Error fetching trip:', error);
@@ -109,6 +113,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       setFormData((prev) => ({
         ...prev,
         driver: driver.id,
+        driverName: driver.driverName,
         truck: driver.driverTruckNo || prev.truck,
       }));
     }
@@ -245,7 +250,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={isLoadingDrivers ? 'Loading drivers...' : 'Select a driver'}
+                  placeholder={
+                    isLoadingDrivers
+                      ? 'Loading drivers...'
+                      : formData.driverName || 'Select a driver'
+                  }
                 />
               </SelectTrigger>
               <SelectContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useDrivers } from '@/hooks/useDrivers';
 import {
   Dialog,
   DialogContent,
@@ -203,6 +204,12 @@ export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'driver',
     header: 'Driver',
+    cell: ({ row }) => {
+      const driverId = row.getValue('driver') as string;
+      const { drivers } = useDrivers();
+      const driver = drivers.find(d => d.id === driverId);
+      return <div className="text-left">{driver?.driverName || driverId}</div>;
+    },
   },
   {
     accessorKey: 'numberOfStops',
