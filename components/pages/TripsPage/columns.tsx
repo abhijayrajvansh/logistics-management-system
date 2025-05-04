@@ -207,7 +207,7 @@ export const columns: ColumnDef<Trip>[] = [
     cell: ({ row }) => {
       const driverId = row.getValue('driver') as string;
       const { drivers } = useDrivers();
-      const driver = drivers.find(d => d.id === driverId);
+      const driver = drivers.find((d) => d.id === driverId);
       return <div className="text-left">{driver?.driverName || driverId}</div>;
     },
   },

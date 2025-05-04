@@ -75,7 +75,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         }
 
         // Find the driver to get their name
-        const selectedDriver = drivers.find(d => d.id === data.driver);
+        const selectedDriver = drivers.find((d) => d.id === data.driver);
 
         setFormData({
           startingPoint: data.startingPoint || '',
@@ -131,10 +131,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             newType === 'unassigned'
               ? 'NA'
               : newType === 'active'
-              ? prev.currentStatus === 'NA'
-                ? 'Delivering'
-                : prev.currentStatus
-              : 'NA',
+                ? prev.currentStatus === 'NA'
+                  ? 'Delivering'
+                  : prev.currentStatus
+                : 'NA',
         };
       }
       return {
