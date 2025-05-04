@@ -13,6 +13,59 @@ import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
 import { Trip } from '@/types';
+import { db } from '@/firebase/database';
+import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Create TypeCell component for handling type updates
+const TypeCell = ({ row }: { row: any }) => {
+  const trip = row.original;
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleTypeChange = async (newType: string) => {
+    if (newType === trip.type) return;
+
+    setIsUpdating(true);
+    try {
+      const tripRef = doc(db, 'trips', trip.id);
+
+      // If changing from active to another status, remove currentStatus
+      const updateData: Partial<Trip> = {
+        type: newType,
+        ...(newType !== 'active' && { currentStatus: undefined }),
+      };
+
+      await updateDoc(tripRef, updateData);
+
+      toast.success('Trip type updated successfully');
+    } catch (error) {
+      console.error('Error updating trip type:', error);
+      toast.error('Failed to update trip type');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <Select value={trip.type} onValueChange={handleTypeChange} disabled={isUpdating}>
+      <SelectTrigger className="w-[130px]">
+        <SelectValue placeholder="Select type" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="unassigned">Unassigned</SelectItem>
+        <SelectItem value="active">Active</SelectItem>
+        <SelectItem value="past">Past</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+};
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -142,6 +195,20 @@ export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'type',
     header: 'Type',
+    cell: TypeCell,
+  },
+  {
+    accessorKey: 'currentStatus',
+    header: 'Current Status',
+    cell: ({ row }) => {
+      const type = row.getValue('type') as string;
+      const status = row.getValue('currentStatus') as string | undefined;
+      return type === 'active' ? (
+        <div className="text-left">{status || '-'}</div>
+      ) : (
+        <div className="text-left">-</div>
+      );
+    },
   },
   {
     accessorKey: 'actions',
