@@ -32,7 +32,7 @@ export type Order = {
 }
 
 export type Trip = {
-  id: string;
+  id: string; 
   tripId: string;
   startingPoint: string;
   destination: string;
