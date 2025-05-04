@@ -1,7 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useOrders } from '@/hooks/useOrders';
@@ -18,8 +27,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -48,8 +57,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   // Filter orders that are ready to transport
-  const availableOrders = orders.filter(order => 
-    order.status === 'Ready To Transport' || selectedOrderIds.includes(order.order_id)
+  const availableOrders = orders.filter(
+    (order) => order.status === 'Ready To Transport' || selectedOrderIds.includes(order.order_id),
   );
 
   // Fetch trip data and associated orders on component mount
@@ -141,8 +150,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   };
 
   const handleOrderSelection = (orderId: string, isSelected: boolean) => {
-    setSelectedOrderIds(prev => 
-      isSelected ? [...prev, orderId] : prev.filter(id => id !== orderId)
+    setSelectedOrderIds((prev) =>
+      isSelected ? [...prev, orderId] : prev.filter((id) => id !== orderId),
     );
   };
 
@@ -390,7 +399,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                     <Checkbox
                       id={order.order_id}
                       checked={selectedOrderIds.includes(order.order_id)}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleOrderSelection(order.order_id, checked as boolean)
                       }
                     />

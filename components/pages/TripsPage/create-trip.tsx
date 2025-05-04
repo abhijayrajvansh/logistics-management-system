@@ -18,8 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useOrders } from '@/hooks/useOrders';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -77,7 +77,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   }, [selectedDriver]);
 
   // Filter orders that are ready to transport
-  const availableOrders = orders.filter(order => order.status === 'Ready To Transport');
+  const availableOrders = orders.filter((order) => order.status === 'Ready To Transport');
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
@@ -85,8 +85,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   };
 
   const handleOrderSelection = (orderId: string, isSelected: boolean) => {
-    setSelectedOrderIds(prev => 
-      isSelected ? [...prev, orderId] : prev.filter(id => id !== orderId)
+    setSelectedOrderIds((prev) =>
+      isSelected ? [...prev, orderId] : prev.filter((id) => id !== orderId),
     );
   };
 
@@ -363,7 +363,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                     <Checkbox
                       id={order.order_id}
                       checked={selectedOrderIds.includes(order.order_id)}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleOrderSelection(order.order_id, checked as boolean)
                       }
                     />
