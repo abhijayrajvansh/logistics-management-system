@@ -7,7 +7,7 @@ export type FirebaseConfig = {
   appId: string;
   measurementId: string;
   databaseURL: string;
-}
+};
 
 export type Order = {
   order_id: string;
@@ -29,10 +29,10 @@ export type Order = {
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
-}
+};
 
 export type Trip = {
-  id: string; 
+  id: string;
   tripId: string;
   startingPoint: string;
   destination: string;
@@ -41,8 +41,8 @@ export type Trip = {
   startDate: Date;
   truck: string;
   type: string;
+  currentStatus?: 'Delivering' | 'Returning'; // Optional because it's only relevant for active trips
 };
-
 
 export type Driver = {
   id: string;

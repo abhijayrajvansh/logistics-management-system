@@ -35,6 +35,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     startDate: '',
     truck: '',
     type: 'unassigned',
+    currentStatus: undefined,
   });
 
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -76,10 +77,18 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: field === 'numberOfStops' ? parseInt(value) || 0 : value,
-    }));
+    setFormData((prev) => {
+      const updates: Partial<typeof formData> = {
+        [field]: value,
+      };
+
+      // Reset currentStatus when type changes to non-active
+      if (field === 'type' && value !== 'active') {
+        updates.currentStatus = undefined;
+      }
+
+      return { ...prev, ...updates };
+    });
   };
 
   const resetForm = () => {
@@ -92,6 +101,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       startDate: '',
       truck: '',
       type: 'unassigned',
+      currentStatus: undefined,
     });
     setSelectedDriver(null);
 
@@ -116,6 +126,13 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       toast.error('Please select a driver');
       return;
     }
+
+    // Validate currentStatus for active trips
+    if (formData.type === 'active' && !formData.currentStatus) {
+      toast.error('Please select a current status for active trip');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -272,6 +289,25 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {formData.type === 'active' && (
+            <div className="space-y-2">
+              <Label htmlFor="currentStatus">Current Status</Label>
+              <Select
+                value={formData.currentStatus}
+                onValueChange={(value) => handleInputChange('currentStatus', value)}
+                required={formData.type === 'active'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select current status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Delivering">Delivering</SelectItem>
+                  <SelectItem value="Returning">Returning</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}

@@ -40,6 +40,7 @@ export function useTrips() {
               startDate: serializedData.startDate,
               truck: serializedData.truck,
               type: serializedData.type || 'unassigned',
+              currentStatus: serializedData.currentStatus || undefined,
             };
 
             // Categorize trips based on type

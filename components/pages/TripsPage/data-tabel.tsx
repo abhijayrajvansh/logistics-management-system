@@ -248,19 +248,14 @@ export function DataTable<TData, TValue>({
   );
 
   return (
-    <Tabs defaultValue="unassigned" className="flex w-full flex-col justify-start gap-6">
-      {/* Header with tabs */}
+    <div className="flex w-full flex-col gap-8">
+      {/* Header */}
       <div className="flex justify-between px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-semibold">Manage Trips</h1>
           <p className="text-[14px] text-black/70 mt-1">
             Create, view and manage your trips at ease.
           </p>
-          <TabsList className="mt-4">
-            <TabsTrigger value="unassigned">Unassigned Trips</TabsTrigger>
-            <TabsTrigger value="active">Active Trips</TabsTrigger>
-            <TabsTrigger value="past">Past Trips</TabsTrigger>
-          </TabsList>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -276,35 +271,31 @@ export function DataTable<TData, TValue>({
                 Fill out the form below to create a new trip. Click submit when you're done.
               </DialogDescription>
             </DialogHeader>
-            {/* Use the CreateTripForm component */}
             <CreateTripForm onSuccess={handleTripSuccess} />
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Unassigned Trips Table */}
-      <TabsContent
-        value="unassigned"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      {/* Unassigned Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Unassigned Trips</h2>
         {renderTable(table)}
         {renderPagination(table)}
-      </TabsContent>
+      </div>
 
-      {/* Active Trips Table */}
-      <TabsContent
-        value="active"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      {/* Active Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Active Trips</h2>
         {renderTable(activeTripsTable)}
         {renderPagination(activeTripsTable)}
-      </TabsContent>
+      </div>
 
-      {/* Past Trips Table */}
-      <TabsContent value="past" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+      {/* Past Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Past Trips</h2>
         {renderTable(pastTripsTable)}
         {renderPagination(pastTripsTable)}
-      </TabsContent>
-    </Tabs>
+      </div>
+    </div>
   );
 }
