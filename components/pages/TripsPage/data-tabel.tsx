@@ -1,16 +1,5 @@
 'use client';
 
-import {
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove } from '@dnd-kit/sortable';
 import {
@@ -62,9 +51,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// Import the CreateTripForm component
 import { CreateTripForm } from './create-trip';
-import { Trip } from './columns';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -78,6 +65,12 @@ export function DataTable<TData, TValue>({
   pastTripData?: TData[];
 }) {
   const [data, setData] = React.useState(() => initialData);
+
+  // Update data when initialData changes
+  React.useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -87,19 +80,6 @@ export function DataTable<TData, TValue>({
     pageSize: 10,
   });
   const [dialogOpen, setDialogOpen] = React.useState(false);
-
-  const sortableId = React.useId();
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
-  );
-
-  // Update to use data with unknown structure
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map((item: any, index) => item.id || index) || [],
-    [data],
-  );
 
   const table = useReactTable({
     data,
@@ -151,85 +131,46 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
-    }
-  }
-
   const handleTripSuccess = () => {
-    // Close the dialog after successful trip creation
     setDialogOpen(false);
-
-    // Trigger a data refresh - we should implement a proper data fetching mechanism
-    // This could be calling a function passed from the parent component
-    // For example, if using React Query or a custom hook:
-    // refetchTripData();
-
-    // For now, let's use a simple approach to avoid the issue:
-    // Add a small delay before updating state to prevent Maximum update depth error
-    setTimeout(() => {
-      // This timeout prevents React from entering an infinite update loop
-      // In a production app, you would use a proper state management solution like
-      // React Query, SWR, or Redux to handle data fetching and updates
-      console.log('Trip created successfully, data should be refreshed');
-
-      // If the parent component passed a refetch function:
-      // if (refetchTrips) {
-      //   refetchTrips();
-      // }
-    }, 0);
   };
 
   const renderTable = (tableInstance: any) => (
     <div className="overflow-hidden rounded-lg border">
-      <DndContext
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-        sensors={sensors}
-        id={sortableId}
-      >
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-muted">
-            {tableInstance.getHeaderGroups().map((headerGroup: any) => (
-              <TableRow key={headerGroup.id} className="text-[13px]">
-                {headerGroup.headers.map((header: any) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+      <Table>
+        <TableHeader className="sticky top-0 z-10 bg-muted">
+          {tableInstance.getHeaderGroups().map((headerGroup: any) => (
+            <TableRow key={headerGroup.id} className="text-[13px]">
+              {headerGroup.headers.map((header: any) => (
+                <TableHead key={header.id} colSpan={header.colSpan}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody className="**:data-[slot=table-cell]:first:w-8 text-[12px]">
+          {tableInstance.getRowModel().rows?.length ? (
+            tableInstance.getRowModel().rows.map((row: any) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell: any) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody className="**:data-[slot=table-cell]:first:w-8 text-[12px]">
-            {tableInstance.getRowModel().rows?.length ? (
-              tableInstance.getRowModel().rows.map((row: any) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell: any) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 

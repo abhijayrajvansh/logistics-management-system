@@ -23,16 +23,11 @@ const ActionCell = ({ row }: { row: any }) => {
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
     // Refresh the page to show updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
   };
 
   const handleDeleteSuccess = () => {
     // Refresh the page to show updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    // add toast message
   };
 
   return (
@@ -143,6 +138,10 @@ export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'truck',
     header: 'Truck',
+  },
+  {
+    accessorKey: 'type',
+    header: 'Type',
   },
   {
     accessorKey: 'actions',

@@ -40,7 +40,7 @@ export type Trip = {
   numberOfStops: number;
   startDate: Date;
   truck: string;
-  status: string;
+  type: string;
 };
 
 

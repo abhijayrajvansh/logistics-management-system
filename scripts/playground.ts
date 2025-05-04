@@ -1,71 +1,68 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/database';
+import { Trip } from "../types";
+import { db } from "../firebase/database";
+import { collection, addDoc } from "firebase/firestore";
 
-/**
- * Function to add sample drivers to the Firestore database
- */
-async function addSampleDrivers() {
-  try {
-    console.log('Adding sample drivers to the database...');
+const addSampleTripsToFirestore = async (): Promise<void> => {
+  const trips = [
+    {
+      tripId: "TRIP001234",
+      startingPoint: "New York",
+      destination: "Los Angeles",
+      driver: "John Doe",
+      numberOfStops: 3,
+      startDate: new Date("2025-05-01"),
+      truck: "Truck A",
+      type: "active",
+    },
+    {
+      tripId: "TRIP00224",
+      startingPoint: "Chicago",
+      destination: "Houston",
+      driver: "Jane Smith",
+      numberOfStops: 2,
+      startDate: new Date("2025-04-25"),
+      truck: "Truck B",
+      type: "past",
+    },
+    {
+      tripId: "TRIP003243",
+      startingPoint: "San Francisco",
+      destination: "Seattle",
+      driver: "Mike Johnson",
+      numberOfStops: 1,
+      startDate: new Date("2025-05-03"),
+      truck: "Truck C",
+      type: "unassigned",
+    },
+    {
+      tripId: "TRIP004234",
+      startingPoint: "Miami",
+      destination: "Atlanta",
+      driver: "Emily Davis",
+      numberOfStops: 4,
+      startDate: new Date("2025-05-02"),
+      truck: "Truck D",
+      type: "unassigned",
+    },
+    {
+      tripId: "TRIP005324",
+      startingPoint: "Dallas",
+      destination: "Denver",
+      driver: "Chris Brown",
+      numberOfStops: 3,
+      startDate: new Date("2025-04-30"),
+      truck: "Truck E",
+      type: "unassigned",
+    },
+  ];
 
-    const driversCollection = collection(db, 'drivers');
+  const tripsCollection = collection(db, "trips");
 
-    // Sample driver data
-    const sampleDrivers = [
-      {
-        driverId: 'DRV001',
-        driverName: 'John Smith',
-        driverTruckNo: 'TRK-1234',
-        phoneNumber: '+91 9876543210',
-        licenseNumber: 'DL-12345678',
-        joinDate: new Date(),
-      },
-      {
-        driverId: 'DRV002',
-        driverName: 'David Johnson',
-        driverTruckNo: 'TRK-5678',
-        phoneNumber: '+91 8765432109',
-        licenseNumber: 'DL-87654321',
-        joinDate: new Date(),
-      },
-      {
-        driverId: 'DRV003',
-        driverName: 'Michael Wilson',
-        driverTruckNo: 'TRK-9012',
-        phoneNumber: '+91 7654321098',
-        licenseNumber: 'DL-43219876',
-        joinDate: new Date(),
-      },
-    ];
-
-    // Check if drivers already exist to avoid duplicates
-    const snapshot = await getDocs(driversCollection);
-    const existingDriverIds = snapshot.docs.map((doc) => doc.data().driverId);
-
-    for (const driver of sampleDrivers) {
-      // Only add the driver if the ID doesn't already exist
-      if (!existingDriverIds.includes(driver.driverId)) {
-        await addDoc(driversCollection, {
-          ...driver,
-          createdAt: new Date(),
-        });
-        console.log(`Added driver: ${driver.driverName} (${driver.driverId})`);
-      } else {
-        console.log(`Driver ${driver.driverId} already exists, skipping...`);
-      }
-    }
-
-    console.log('Sample drivers added successfully!');
-  } catch (error) {
-    console.error('Error adding sample drivers:', error);
+  for (const trip of trips) {
+    await addDoc(tripsCollection, trip);
   }
-}
 
-/**
- * Execute the function
- * Uncomment the line below to run the function when executing this script
- */
-addSampleDrivers();
+  console.log("Sample trips added to Firestore.");
+};
 
-// export { addSampleDrivers };
+addSampleTripsToFirestore();

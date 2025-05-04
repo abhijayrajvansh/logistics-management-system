@@ -2,9 +2,10 @@
 
 import React from 'react';
 import useOrders from '@/hooks/useOrders';
+import useTrips from '@/hooks/useTrips';
 
 const Playground = () => {
-  const { orders, isLoading, error } = useOrders();
+  const { activeTrips, unassignedTrips, pastTrips, isLoading, error } = useTrips();
   return (
     <div>
       {isLoading ? (
@@ -12,7 +13,7 @@ const Playground = () => {
       ) : error ? (
         <p>Error: {error.message}</p>
       ) : (
-        <p>{JSON.stringify(orders)}</p>
+        <p>{JSON.stringify(unassignedTrips)}</p>
       )}
     </div>
   );
