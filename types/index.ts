@@ -53,3 +53,9 @@ export type Driver = {
   licenseNumber?: string;
   status?: string;
 };
+
+export type TripOrders = {
+  tripId: string;
+  orderIds: string[];
+  updatedAt: Date;
+};

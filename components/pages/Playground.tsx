@@ -1,11 +1,9 @@
 'use client';
 
-import React from 'react';
 import useOrders from '@/hooks/useOrders';
-import useTrips from '@/hooks/useTrips';
 
 const Playground = () => {
-  const { activeTrips, unassignedTrips, pastTrips, isLoading, error } = useTrips();
+  const { orders, isLoading, error } = useOrders();
   return (
     <div>
       {isLoading ? (
@@ -13,7 +11,7 @@ const Playground = () => {
       ) : error ? (
         <p>Error: {error.message}</p>
       ) : (
-        <p>{JSON.stringify(unassignedTrips)}</p>
+        <p>{JSON.stringify(orders)}</p>
       )}
     </div>
   );

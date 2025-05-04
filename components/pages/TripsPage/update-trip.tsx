@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
+import { useOrders } from '@/hooks/useOrders';
 import { Driver } from '@/types';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -26,6 +29,8 @@ interface UpdateTripFormProps {
 
 export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormProps) {
   const { drivers, isLoading: isLoadingDrivers } = useDrivers();
+  const { orders, isLoading: isLoadingOrders } = useOrders();
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     startingPoint: '',
     destination: '',
@@ -42,7 +47,12 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  // Fetch trip data on component mount
+  // Filter orders that are ready to transport
+  const availableOrders = orders.filter(order => 
+    order.status === 'Ready To Transport' || selectedOrderIds.includes(order.order_id)
+  );
+
+  // Fetch trip data and associated orders on component mount
   useEffect(() => {
     const fetchTripData = async () => {
       try {
@@ -89,6 +99,17 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           currentStatus: data.currentStatus || '',
         });
 
+        // Fetch associated orders
+        const tripOrdersRef = collection(db, 'trip_orders');
+        const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
+        const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+
+        if (!tripOrdersSnapshot.empty) {
+          const tripOrdersDoc = tripOrdersSnapshot.docs[0];
+          const tripOrdersData = tripOrdersDoc.data();
+          setSelectedOrderIds(tripOrdersData.orderIds || []);
+        }
+
         // Find and set the selected driver
         if (selectedDriver) {
           setSelectedDriver(selectedDriver);
@@ -117,6 +138,12 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         truck: driver.driverTruckNo || prev.truck,
       }));
     }
+  };
+
+  const handleOrderSelection = (orderId: string, isSelected: boolean) => {
+    setSelectedOrderIds(prev => 
+      isSelected ? [...prev, orderId] : prev.filter(id => id !== orderId)
+    );
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -181,6 +208,29 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       // Update the trip in Firestore
       const tripDoc = querySnapshot.docs[0];
       await updateDoc(doc(db, 'trips', tripDoc.id), validatedData);
+
+      // Update trip_orders
+      const tripOrdersRef = collection(db, 'trip_orders');
+      const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
+      const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+
+      if (tripOrdersSnapshot.empty) {
+        // Create new trip_orders document if there are selected orders
+        if (selectedOrderIds.length > 0) {
+          await addDoc(collection(db, 'trip_orders'), {
+            tripId,
+            orderIds: selectedOrderIds,
+            updatedAt: new Date(),
+          });
+        }
+      } else {
+        // Update existing trip_orders document
+        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
+        await updateDoc(doc(db, 'trip_orders', tripOrdersDoc.id), {
+          orderIds: selectedOrderIds,
+          updatedAt: new Date(),
+        });
+      }
 
       toast.success('Trip updated successfully!');
 
@@ -323,6 +373,38 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               </Select>
             </div>
           )}
+        </div>
+
+        {/* Add this section before the buttons */}
+        <div className="space-y-4">
+          <Label>Select Orders for this Trip</Label>
+          <ScrollArea className="h-[200px] border rounded-md p-4">
+            {isLoadingOrders ? (
+              <div className="text-center py-4">Loading orders...</div>
+            ) : availableOrders.length === 0 ? (
+              <div className="text-center py-4">No orders available</div>
+            ) : (
+              <div className="space-y-2">
+                {availableOrders.map((order) => (
+                  <div key={order.order_id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={order.order_id}
+                      checked={selectedOrderIds.includes(order.order_id)}
+                      onCheckedChange={(checked) => 
+                        handleOrderSelection(order.order_id, checked as boolean)
+                      }
+                    />
+                    <label
+                      htmlFor={order.order_id}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {order.docket_id} - {order.shipper_details} to {order.receiver_details}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
         </div>
 
         <div className="flex justify-between">

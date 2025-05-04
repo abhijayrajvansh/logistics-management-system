@@ -17,6 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useOrders } from '@/hooks/useOrders';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -24,6 +27,8 @@ interface CreateTripFormProps {
 
 export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const { drivers, isLoading: isLoadingDrivers, error: driverError } = useDrivers();
+  const { orders, isLoading: isLoadingOrders } = useOrders();
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   // Define form data with proper types matching the Trip interface
   const [formData, setFormData] = useState<Omit<Trip, 'id' | 'startDate'> & { startDate: string }>({
@@ -71,9 +76,18 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     }
   }, [selectedDriver]);
 
+  // Filter orders that are ready to transport
+  const availableOrders = orders.filter(order => order.status === 'Ready To Transport');
+
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     setSelectedDriver(driver || null);
+  };
+
+  const handleOrderSelection = (orderId: string, isSelected: boolean) => {
+    setSelectedOrderIds(prev => 
+      isSelected ? [...prev, orderId] : prev.filter(id => id !== orderId)
+    );
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string | number) => {
@@ -115,6 +129,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       currentStatus: 'NA', // Reset to 'NA'
     });
     setSelectedDriver(null);
+    setSelectedOrderIds([]);
 
     // Generate a new unique trip ID
     const generateNewId = async () => {
@@ -160,6 +175,15 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         ...validatedData,
         created_at: new Date(),
       });
+
+      // Create trip_orders document if there are selected orders
+      if (selectedOrderIds.length > 0) {
+        await addDoc(collection(db, 'trip_orders'), {
+          tripId: formData.tripId,
+          orderIds: selectedOrderIds,
+          updatedAt: new Date(),
+        });
+      }
 
       toast.success('Trip created successfully!', {
         description: `Trip ID: ${validatedData.tripId}`,
@@ -322,6 +346,38 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               </Select>
             </div>
           )}
+        </div>
+
+        {/* Add this section after the last form field group and before the buttons */}
+        <div className="space-y-4">
+          <Label>Select Orders for this Trip</Label>
+          <ScrollArea className="h-[200px] border rounded-md p-4">
+            {isLoadingOrders ? (
+              <div className="text-center py-4">Loading orders...</div>
+            ) : availableOrders.length === 0 ? (
+              <div className="text-center py-4">No orders ready for transport</div>
+            ) : (
+              <div className="space-y-2">
+                {availableOrders.map((order) => (
+                  <div key={order.order_id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={order.order_id}
+                      checked={selectedOrderIds.includes(order.order_id)}
+                      onCheckedChange={(checked) => 
+                        handleOrderSelection(order.order_id, checked as boolean)
+                      }
+                    />
+                    <label
+                      htmlFor={order.order_id}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {order.docket_id} - {order.shipper_details} to {order.receiver_details}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
         </div>
 
         {/* Buttons */}
