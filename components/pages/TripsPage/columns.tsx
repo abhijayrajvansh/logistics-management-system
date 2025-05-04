@@ -5,9 +5,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { ColumnDef } from '@tanstack/react-table';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import UpdateTripForm from './update-trip';
@@ -28,23 +31,28 @@ import {
 const TypeCell = ({ row }: { row: any }) => {
   const trip = row.original;
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<'Delivering' | 'Returning' | null>(
+    trip.currentStatus || null,
+  );
 
-  const handleTypeChange = async (newType: string) => {
-    if (newType === trip.type) return;
-
+  const updateTripType = async (
+    newType: string,
+    currentStatus?: 'Delivering' | 'Returning' | null,
+  ) => {
     setIsUpdating(true);
     try {
       const tripRef = doc(db, 'trips', trip.id);
 
-      // If changing from active to another status, remove currentStatus
-      const updateData: Partial<Trip> = {
+      // Always include currentStatus in the update
+      const updateData = {
         type: newType,
-        ...(newType !== 'active' && { currentStatus: undefined }),
+        currentStatus: newType === 'active' ? currentStatus : null,
       };
 
       await updateDoc(tripRef, updateData);
-
       toast.success('Trip type updated successfully');
+      setShowStatusDialog(false);
     } catch (error) {
       console.error('Error updating trip type:', error);
       toast.error('Failed to update trip type');
@@ -53,17 +61,66 @@ const TypeCell = ({ row }: { row: any }) => {
     }
   };
 
+  const handleTypeChange = async (newType: string) => {
+    if (newType === trip.type) return;
+
+    if (newType === 'active') {
+      setShowStatusDialog(true);
+    } else {
+      await updateTripType(newType);
+    }
+  };
+
   return (
-    <Select value={trip.type} onValueChange={handleTypeChange} disabled={isUpdating}>
-      <SelectTrigger className="w-[130px]">
-        <SelectValue placeholder="Select type" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="unassigned">Unassigned</SelectItem>
-        <SelectItem value="active">Active</SelectItem>
-        <SelectItem value="past">Past</SelectItem>
-      </SelectContent>
-    </Select>
+    <>
+      <Select value={trip.type} onValueChange={handleTypeChange} disabled={isUpdating}>
+        <SelectTrigger className="w-[130px]">
+          <SelectValue placeholder="Select type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="unassigned">Unassigned</SelectItem>
+          <SelectItem value="active">Active</SelectItem>
+          <SelectItem value="past">Past</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Set Trip Status</DialogTitle>
+            <DialogDescription>Select the current status for this active trip.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Current Status</Label>
+              <Select
+                value={selectedStatus || ''}
+                onValueChange={(value: 'Delivering' | 'Returning') => setSelectedStatus(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select current status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Delivering">Delivering</SelectItem>
+                  <SelectItem value="Returning">Returning</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => updateTripType('active', selectedStatus)}
+              disabled={!selectedStatus}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

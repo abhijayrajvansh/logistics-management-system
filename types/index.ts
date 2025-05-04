@@ -40,8 +40,8 @@ export type Trip = {
   numberOfStops: number;
   startDate: Date;
   truck: string;
-  type: string;
-  currentStatus?: 'Delivering' | 'Returning'; // Optional because it's only relevant for active trips
+  type: 'unassigned' | 'active' | 'past';
+  currentStatus?: 'Delivering' | 'Returning' | 'NA';
 };
 
 export type Driver = {

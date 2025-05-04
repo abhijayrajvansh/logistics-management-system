@@ -35,7 +35,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     startDate: '',
     truck: '',
     type: 'unassigned',
-    currentStatus: undefined,
+    currentStatus: 'NA', // Default to 'NA' for new trips
   });
 
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -76,18 +76,29 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setSelectedDriver(driver || null);
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | number) => {
     setFormData((prev) => {
-      const updates: Partial<typeof formData> = {
+      if (field === 'type') {
+        // Handle type change and set appropriate currentStatus
+        const newType = value as 'unassigned' | 'active' | 'past';
+        return {
+          ...prev,
+          type: newType,
+          currentStatus:
+            newType === 'unassigned'
+              ? 'NA'
+              : newType === 'active'
+                ? prev.currentStatus === 'NA'
+                  ? 'Delivering'
+                  : prev.currentStatus
+                : 'NA',
+        };
+      }
+      // Handle all other fields
+      return {
+        ...prev,
         [field]: value,
       };
-
-      // Reset currentStatus when type changes to non-active
-      if (field === 'type' && value !== 'active') {
-        updates.currentStatus = undefined;
-      }
-
-      return { ...prev, ...updates };
     });
   };
 
@@ -101,7 +112,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       startDate: '',
       truck: '',
       type: 'unassigned',
-      currentStatus: undefined,
+      currentStatus: 'NA', // Reset to 'NA'
     });
     setSelectedDriver(null);
 
@@ -128,8 +139,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     }
 
     // Validate currentStatus for active trips
-    if (formData.type === 'active' && !formData.currentStatus) {
-      toast.error('Please select a current status for active trip');
+    if (formData.type === 'active' && formData.currentStatus === 'NA') {
+      toast.error('Please select a valid status (Delivering or Returning) for active trip');
       return;
     }
 
@@ -141,6 +152,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         ...formData,
         startDate: new Date(formData.startDate),
         numberOfStops: Number(formData.numberOfStops),
+        currentStatus: formData.currentStatus,
       };
 
       // Add the trip to Firestore
@@ -295,7 +307,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               <Label htmlFor="currentStatus">Current Status</Label>
               <Select
                 value={formData.currentStatus}
-                onValueChange={(value) => handleInputChange('currentStatus', value)}
+                onValueChange={(value: 'Delivering' | 'Returning') =>
+                  handleInputChange('currentStatus', value)
+                }
                 required={formData.type === 'active'}
               >
                 <SelectTrigger>

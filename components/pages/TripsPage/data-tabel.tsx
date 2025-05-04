@@ -81,9 +81,15 @@ export function DataTable<TData, TValue>({
   });
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
+  // Create column sets for different table types
+  const activeTripsColumns = columns;
+  const unassignedAndPastColumns = columns.filter(
+    (col) => 'accessorKey' in col && col.accessorKey !== 'currentStatus',
+  );
+
   const table = useReactTable({
     data,
-    columns,
+    columns: unassignedAndPastColumns, // Use filtered columns for unassigned trips
     state: {
       sorting,
       columnVisibility,
@@ -109,7 +115,7 @@ export function DataTable<TData, TValue>({
   // Create separate tables for active and past trips
   const activeTripsTable = useReactTable({
     data: activeTripData,
-    columns,
+    columns: activeTripsColumns, // Use all columns including currentStatus
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -121,7 +127,7 @@ export function DataTable<TData, TValue>({
 
   const pastTripsTable = useReactTable({
     data: pastTripData,
-    columns,
+    columns: unassignedAndPastColumns, // Use filtered columns for past trips
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
