@@ -12,20 +12,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
-
-// This type is used to define the shape of our data
-
-export type Trip = {
-  id: string; // Firestore document ID
-  tripId: string; // Our custom unique trip ID
-  startingPoint: string;
-  destination: string;
-  driver: string;
-  numberOfStops: number;
-  startDate: Date;
-  truck: string;
-  status: string;
-};
+import { Trip } from '@/types';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {

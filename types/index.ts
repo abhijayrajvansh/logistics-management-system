@@ -31,6 +31,19 @@ export type Order = {
   updated_at: Date;
 }
 
+export type Trip = {
+  id: string; // Firestore document ID
+  tripId: string; // Our custom unique trip ID
+  startingPoint: string;
+  destination: string;
+  driver: string;
+  numberOfStops: number;
+  startDate: Date;
+  truck: string;
+  status: string;
+};
+
+
 export type Driver = {
   id: string;
   driverId: string;
