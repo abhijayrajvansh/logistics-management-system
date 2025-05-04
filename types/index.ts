@@ -32,8 +32,8 @@ export type Order = {
 }
 
 export type Trip = {
-  id: string; // Firestore document ID
-  tripId: string; // Our custom unique trip ID
+  id: string;
+  tripId: string;
   startingPoint: string;
   destination: string;
   driver: string;
