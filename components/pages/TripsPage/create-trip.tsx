@@ -32,7 +32,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     destination: '',
     driver: '',
     numberOfStops: 0,
-    startDate: '',
+    startDate: new Date().toISOString().split('T')[0], // Set default to current date
     truck: '',
     type: 'unassigned',
     currentStatus: 'NA', // Default to 'NA' for new trips
