@@ -1,7 +1,5 @@
 'use client';
 
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { arrayMove } from '@dnd-kit/sortable';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -50,7 +48,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateTripForm } from './create-trip';
 
 export function DataTable<TData, TValue>({
@@ -81,15 +78,21 @@ export function DataTable<TData, TValue>({
   });
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  // Create column sets for different table types
-  const activeTripsColumns = columns;
-  const unassignedAndPastColumns = columns.filter(
-    (col) => 'accessorKey' in col && col.accessorKey !== 'currentStatus',
+  // Create separate column sets for each table type
+  const unassignedColumns = columns.filter(
+    (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),
   );
 
+  const activeColumns = columns;
+
+  const pastColumns = columns.filter(
+    (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),
+  );
+
+  // Update table definitions with specific columns
   const table = useReactTable({
     data,
-    columns: unassignedAndPastColumns, // Use filtered columns for unassigned trips
+    columns: unassignedColumns, // Use filtered columns for unassigned trips
     state: {
       sorting,
       columnVisibility,
@@ -115,7 +118,7 @@ export function DataTable<TData, TValue>({
   // Create separate tables for active and past trips
   const activeTripsTable = useReactTable({
     data: activeTripData,
-    columns: activeTripsColumns, // Use all columns including currentStatus
+    columns: activeColumns, // Use all columns including currentStatus
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -127,7 +130,7 @@ export function DataTable<TData, TValue>({
 
   const pastTripsTable = useReactTable({
     data: pastTripData,
-    columns: unassignedAndPastColumns, // Use filtered columns for past trips
+    columns: pastColumns, // Use filtered columns for past trips
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
