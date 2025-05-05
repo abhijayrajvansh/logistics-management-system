@@ -383,6 +383,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                     >
                       {order.docket_id} - {order.shipper_details} to {order.receiver_details}
                     </label>
+                    {/* add more feilds here... like tat, number of boxes and weight */}
                   </div>
                 ))}
               </div>
