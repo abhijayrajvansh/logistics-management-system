@@ -39,8 +39,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <AdminNavPanel />
-        <UserNavDocuments />
-        <ControlNavPanel className="mt-auto" />
+        <UserNavDocuments className='hidden'/>
+        <ControlNavPanel className="mt-auto hidden" />
       </SidebarContent>
       <SidebarFooter>
         <UserNavProfile />

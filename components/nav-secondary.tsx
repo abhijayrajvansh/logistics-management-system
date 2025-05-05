@@ -29,7 +29,7 @@ const navSecondary = [
 
 export function ControlNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
-    <SidebarGroup {...props} className='hidden'>
+    <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
           {navSecondary.map((item) => (

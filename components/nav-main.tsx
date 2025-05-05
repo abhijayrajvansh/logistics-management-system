@@ -51,12 +51,12 @@ const navMain = [
   // },
 ];
 
-export function AdminNavPanel() {
+export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const router = useRouter();
   const pathname = usePathname();
 
   return (
-    <SidebarGroup>
+    <SidebarGroup {...props}>
       {/* admin panel */}
       <SidebarGroupLabel>Navigation Panel</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
