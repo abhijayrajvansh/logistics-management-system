@@ -186,11 +186,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         });
 
         // Update status of each selected order to 'Assigned'
-        const orderPromises = selectedOrderIds.map(orderId =>
+        const orderPromises = selectedOrderIds.map((orderId) =>
           updateDoc(doc(db, 'orders', orderId), {
             status: 'Assigned',
-            updated_at: new Date()
-          })
+            updated_at: new Date(),
+          }),
         );
         await Promise.all(orderPromises);
       }

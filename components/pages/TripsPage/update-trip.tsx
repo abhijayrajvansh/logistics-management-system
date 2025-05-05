@@ -223,6 +223,37 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
       const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
 
+      let previousOrderIds: string[] = [];
+      
+      if (!tripOrdersSnapshot.empty) {
+        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
+        previousOrderIds = tripOrdersDoc.data().orderIds || [];
+      }
+
+      // Find orders to add and remove
+      const ordersToAdd = selectedOrderIds.filter(id => !previousOrderIds.includes(id));
+      const ordersToRemove = previousOrderIds.filter(id => !selectedOrderIds.includes(id));
+
+      // Update orders being added to 'Assigned' status
+      const addPromises = ordersToAdd.map(orderId =>
+        updateDoc(doc(db, 'orders', orderId), {
+          status: 'Assigned',
+          updated_at: new Date()
+        })
+      );
+
+      // Update orders being removed to 'Ready To Transport' status
+      const removePromises = ordersToRemove.map(orderId =>
+        updateDoc(doc(db, 'orders', orderId), {
+          status: 'Ready To Transport',
+          updated_at: new Date()
+        })
+      );
+
+      // Wait for all order status updates to complete
+      await Promise.all([...addPromises, ...removePromises]);
+
+      // Update or create trip_orders document
       if (tripOrdersSnapshot.empty) {
         // Create new trip_orders document if there are selected orders
         if (selectedOrderIds.length > 0) {
