@@ -11,6 +11,7 @@ import { IoIosWarning } from 'react-icons/io';
 import { IconLoader } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import env from '@/constants';
 
 interface FormData {
   email: string;
@@ -33,7 +34,7 @@ export function LoginForm({
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await login.mutate(formData);
+      await login.mutate({ email: formData.email + env.USERID_EMAIL, password: formData.password });
       router.push('/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
@@ -63,14 +64,13 @@ export function LoginForm({
             <div className="flex flex-col gap-5">
               <div className="grid gap-2">
                 <Label className="text-base" htmlFor="email">
-                  Email
+                  User ID
                 </Label>
                 <Input
                   className="py-5 hover:border-black transition-all ease-in-out"
                   id="email"
                   name="email"
-                  type="email"
-                  placeholder="you@example.com"
+                  placeholder="123456"
                   required
                   disabled={login.isPending}
                   value={formData.email}

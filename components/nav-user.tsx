@@ -36,6 +36,11 @@ export function UserNavProfile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const getUsername = (email: string | null | undefined) => {
+    if (!email) return '';
+    return email.split('@')[0];
+  };
+
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
@@ -65,7 +70,8 @@ export function UserNavProfile() {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
+                <span className="text-black truncate text-xs">{user?.displayName}</span>
+                <span className="text-muted-foreground truncate text-xs">ID: {getUsername(user?.email)}</span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -84,7 +90,8 @@ export function UserNavProfile() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
+                <span className="text-black truncate text-xs">{user?.displayName}</span>
+                  <span className="text-muted-foreground truncate text-xs">ID: {getUsername(user?.email)}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
