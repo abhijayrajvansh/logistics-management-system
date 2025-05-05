@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -178,11 +178,21 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
+        // Add trip_orders document
         await addDoc(collection(db, 'trip_orders'), {
           tripId: formData.tripId,
           orderIds: selectedOrderIds,
           updatedAt: new Date(),
         });
+
+        // Update status of each selected order to 'Assigned'
+        const orderPromises = selectedOrderIds.map(orderId =>
+          updateDoc(doc(db, 'orders', orderId), {
+            status: 'Assigned',
+            updated_at: new Date()
+          })
+        );
+        await Promise.all(orderPromises);
       }
 
       toast.success('Trip created successfully!', {
