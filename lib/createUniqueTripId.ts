@@ -1,3 +1,6 @@
+import { db } from '@/firebase/database';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 /**
  * Generates a unique 6-digit trip ID with an optional prefix
  * @param prefix Optional prefix for the trip ID (e.g., "TR" for Trip)
@@ -32,8 +35,6 @@ export function createUniqueTripId(prefix: string = 'TR'): string {
  * @returns Promise that resolves to true if the ID exists, false otherwise
  */
 export async function doesTripIdExist(db: any, tripId: string): Promise<boolean> {
-  const { collection, query, where, getDocs } = await import('firebase/firestore');
-
   try {
     const tripsRef = collection(db, 'trips');
     const q = query(tripsRef, where('tripId', '==', tripId));
