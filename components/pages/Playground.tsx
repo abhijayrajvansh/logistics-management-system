@@ -1,20 +1,35 @@
 'use client';
 
-import useOrders from '@/hooks/useOrders';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
-const Playground = () => {
-  const { orders, isLoading, error } = useOrders();
+export default function Playground() {
+  const showToasts = () => {
+    // Success toast (green)
+    toast.success('Operation successful', {
+      description: 'The action was completed successfully',
+    });
+
+    // Warning toast (yellow)
+    setTimeout(() => {
+      toast.warning('Warning message', {
+        description: 'Please review this information',
+      });
+    }, 1000);
+
+    // Error toast (red)
+    setTimeout(() => {
+      toast.error('Error occurred', {
+        description: 'Something went wrong',
+      });
+    }, 2000); 
+  };
+
   return (
-    <div>
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>Error: {error.message}</p>
-      ) : (
-        <p>{JSON.stringify(orders)}</p>
-      )}
+    <div className="flex flex-col gap-4 items-start">
+      <Button variant="outline" onClick={showToasts}>
+        Show All Toasts
+      </Button>
     </div>
   );
-};
-
-export default Playground;
+}

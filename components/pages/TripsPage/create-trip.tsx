@@ -48,20 +48,20 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const [isGeneratingId, setIsGeneratingId] = useState(true);
 
   // Generate a unique trip ID when the component mounts
+  const generateUniqueId = async () => {
+    try {
+      setIsGeneratingId(true);
+      const uniqueTripId = await getUniqueVerifiedTripId(db, 'TR');
+      setFormData((prev) => ({ ...prev, tripId: uniqueTripId }));
+    } catch (error) {
+      console.error('Error generating unique trip ID:', error);
+      toast.error('Failed to generate Trip ID');
+    } finally {
+      setIsGeneratingId(false);
+    }
+  };
+  
   useEffect(() => {
-    const generateUniqueId = async () => {
-      try {
-        setIsGeneratingId(true);
-        const uniqueTripId = await getUniqueVerifiedTripId(db, 'TR');
-        setFormData((prev) => ({ ...prev, tripId: uniqueTripId }));
-      } catch (error) {
-        console.error('Error generating unique trip ID:', error);
-        toast.error('Failed to generate Trip ID');
-      } finally {
-        setIsGeneratingId(false);
-      }
-    };
-
     generateUniqueId();
   }, []);
 
