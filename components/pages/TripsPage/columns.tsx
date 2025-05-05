@@ -133,12 +133,7 @@ const ActionCell = ({ row }: { row: any }) => {
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
-    // Refresh the page to show updated data
-  };
 
-  const handleDeleteSuccess = () => {
-    // Refresh the page to show updated data
-    // add toast message
   };
 
   return (
@@ -181,13 +176,14 @@ const ActionCell = ({ row }: { row: any }) => {
           tripId={trip.tripId}
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
-          onSuccess={handleDeleteSuccess}
         />
       )}
     </div>
   );
 };
 
+// columns definition for the trips table
+// exporting headless cols
 export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'tripId',

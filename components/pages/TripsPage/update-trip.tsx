@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   doc,
   getDoc,
@@ -61,80 +61,80 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     (order) => order.status === 'Ready To Transport' || selectedOrderIds.includes(order.order_id),
   );
 
+  const fetchTripData = useCallback(async () => {
+    try {
+      const tripsRef = collection(db, 'trips');
+      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
+      const querySnapshot = await getDocs(tripQuery);
+
+      if (querySnapshot.empty) {
+        toast.error('Trip not found');
+        onCancel?.();
+        return;
+      }
+
+      const tripDoc = querySnapshot.docs[0];
+      const data = tripDoc.data();
+
+      // Format date for input field if it exists
+      let formattedStartDate = '';
+      if (data.startDate) {
+        if (data.startDate.toDate) {
+          // Handle Firestore timestamp
+          formattedStartDate = data.startDate.toDate().toISOString().split('T')[0];
+        } else if (data.startDate instanceof Date) {
+          // Handle regular Date object
+          formattedStartDate = data.startDate.toISOString().split('T')[0];
+        } else if (typeof data.startDate === 'string') {
+          // Handle string date
+          formattedStartDate = data.startDate;
+        }
+      }
+
+      // Find the driver to get their name
+      const selectedDriver = drivers.find((d) => d.id === data.driver);
+
+      setFormData({
+        startingPoint: data.startingPoint || '',
+        destination: data.destination || '',
+        driver: data.driver || '',
+        driverName: selectedDriver?.driverName || '',
+        numberOfStops: data.numberOfStops?.toString() || '',
+        startDate: formattedStartDate,
+        truck: data.truck || '',
+        type: data.type || '',
+        currentStatus: data.currentStatus || '',
+      });
+
+      // Fetch associated orders
+      const tripOrdersRef = collection(db, 'trip_orders');
+      const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
+      const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+
+      if (!tripOrdersSnapshot.empty) {
+        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
+        const tripOrdersData = tripOrdersDoc.data();
+        setSelectedOrderIds(tripOrdersData.orderIds || []);
+      }
+
+      // Find and set the selected driver
+      if (selectedDriver) {
+        setSelectedDriver(selectedDriver);
+      }
+    } catch (error) {
+      console.error('Error fetching trip:', error);
+      toast.error('Failed to load trip data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tripId, onCancel, drivers]);
+
   // Fetch trip data and associated orders on component mount
   useEffect(() => {
-    const fetchTripData = async () => {
-      try {
-        const tripsRef = collection(db, 'trips');
-        const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-        const querySnapshot = await getDocs(tripQuery);
-
-        if (querySnapshot.empty) {
-          toast.error('Trip not found');
-          onCancel?.();
-          return;
-        }
-
-        const tripDoc = querySnapshot.docs[0];
-        const data = tripDoc.data();
-
-        // Format date for input field if it exists
-        let formattedStartDate = '';
-        if (data.startDate) {
-          if (data.startDate.toDate) {
-            // Handle Firestore timestamp
-            formattedStartDate = data.startDate.toDate().toISOString().split('T')[0];
-          } else if (data.startDate instanceof Date) {
-            // Handle regular Date object
-            formattedStartDate = data.startDate.toISOString().split('T')[0];
-          } else if (typeof data.startDate === 'string') {
-            // Handle string date
-            formattedStartDate = data.startDate;
-          }
-        }
-
-        // Find the driver to get their name
-        const selectedDriver = drivers.find((d) => d.id === data.driver);
-
-        setFormData({
-          startingPoint: data.startingPoint || '',
-          destination: data.destination || '',
-          driver: data.driver || '',
-          driverName: selectedDriver?.driverName || '',
-          numberOfStops: data.numberOfStops?.toString() || '',
-          startDate: formattedStartDate,
-          truck: data.truck || '',
-          type: data.type || '',
-          currentStatus: data.currentStatus || '',
-        });
-
-        // Fetch associated orders
-        const tripOrdersRef = collection(db, 'trip_orders');
-        const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
-        const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
-
-        if (!tripOrdersSnapshot.empty) {
-          const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-          const tripOrdersData = tripOrdersDoc.data();
-          setSelectedOrderIds(tripOrdersData.orderIds || []);
-        }
-
-        // Find and set the selected driver
-        if (selectedDriver) {
-          setSelectedDriver(selectedDriver);
-        }
-      } catch (error) {
-        console.error('Error fetching trip:', error);
-        toast.error('Failed to load trip data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (drivers.length > 0) {
       fetchTripData();
     }
-  }, [tripId, onCancel, drivers]);
+  }, [drivers, fetchTripData]);
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
