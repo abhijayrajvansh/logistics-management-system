@@ -5,7 +5,7 @@ import {
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
-import { auth } from '@/firebase';
+import { auth } from '@/firebase/auth';
 
 interface UseAuthReturn {
   login: {

@@ -27,7 +27,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { auth } from '@/firebase';
+import { auth } from '@/firebase/auth';
 import { signOut } from 'firebase/auth';
 
 export function UserNavProfile() {
