@@ -103,7 +103,7 @@ export function UserNavProfile() {
               </DropdownMenuItem>
               <DropdownMenuItem disabled>
                 <IconMail className="mr-2" />
-                Mails
+                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

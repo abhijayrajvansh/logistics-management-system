@@ -48,11 +48,21 @@ export type Driver = {
   id: string;
   driverId: string;
   driverName: string;
-  driverTruckNo: string;
+  status?: "Active" | "Inactive" | "OnLeave" | "OnTrip" | "Suspended" | "Deleted" | "Stuck";
   phoneNumber?: string;
-  licenseNumber?: string;
-  status?: string;
+  languages: string[];
+  driverTruckId?: string;
+  driverDocuments?: DriverDocuments;
 };
+
+export type DriverDocuments = {
+  aadhar: string;
+  dob: Date;
+  license: string;
+  insurance: string;
+  medicalCertificate: string;
+  panCard: string;
+}
 
 export type TripOrders = {
   tripId: string;

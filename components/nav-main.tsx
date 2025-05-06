@@ -11,7 +11,7 @@ import {
 
 import { usePathname, useRouter } from 'next/navigation';
 import { AiFillDashboard } from "react-icons/ai";
-import { FaBoxesStacked, FaTruck } from "react-icons/fa6";
+import { FaBoxesStacked, FaTruck, FaUsersGear } from "react-icons/fa6";
 
 const navMain = [
   {
@@ -28,27 +28,12 @@ const navMain = [
     title: 'Trips',
     url: '/dashboard/trips',
     icon: FaTruck,
-  }
-  // {
-  //   title: 'Team',
-  //   url: '/teams',
-  //   icon: IconUsers,
-  // },
-  // {
-  //   title: 'Lifecycle',
-  //   url: '#',
-  //   icon: IconListDetails,
-  // },
-  // {
-  //   title: 'Analytics',
-  //   url: '#',
-  //   icon: IconChartBar,
-  // },
-  // {
-  //   title: 'Projects',
-  //   url: '#',
-  //   icon: IconFolder,
-  // },
+  },
+  {
+    title: 'Drivers',
+    url: '/dashboard/drivers',
+    icon: FaUsersGear,
+  },
 ];
 
 export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
