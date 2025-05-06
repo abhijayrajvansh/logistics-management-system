@@ -56,12 +56,15 @@ export type Driver = {
 };
 
 export type DriverDocuments = {
-  aadhar: string;
+  aadhar_front: string;
+  aadhar_back: string;
+  aadhar_number: string;
   dob: Date;
+  dob_certificate: string;
   license: string;
-  insurance: string;
+  license_number: string;
+  license_expiry: Date;
   medicalCertificate: string;
-  panCard: string;
   status: 'Verified' | 'Pending';
 };
 

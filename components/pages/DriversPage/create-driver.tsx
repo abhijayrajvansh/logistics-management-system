@@ -25,21 +25,24 @@ interface CreateDriverFormProps {
 
 export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
     driverTruckId: '',
     status: 'Active' as Driver['status'],
     driverDocuments: {
-      aadhar: '',
+      aadhar_front: '',
+      aadhar_back: '',
+      aadhar_number: '',
       dob: new Date(),
+      dob_certificate: '',
       license: '',
-      insurance: '',
+      license_number: '',
+      license_expiry: new Date(),
       medicalCertificate: '',
-      panCard: '',
       status: 'Pending' as DriverDocuments['status'],
-    } as DriverDocuments,
+    },
   });
 
   const handleLanguageChange = (value: string) => {
@@ -60,7 +63,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           driverDocuments: {
             ...prev.driverDocuments,
             [documentField]: value,
-          },
+          } as DriverDocuments,
         };
       }
       return {
@@ -101,12 +104,15 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         driverTruckId: '',
         status: 'Inactive',
         driverDocuments: {
-          aadhar: '',
+          aadhar_front: '',
+          aadhar_back: '',
+          aadhar_number: '',
           dob: new Date(),
+          dob_certificate: '',
           license: '',
-          insurance: '',
+          license_number: '',
+          license_expiry: new Date(),
           medicalCertificate: '',
-          panCard: '',
           status: 'Pending',
         },
       });
@@ -145,11 +151,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="language">Languages</Label>
             <Select onValueChange={handleLanguageChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select languages" />
               </SelectTrigger>
               <SelectContent>
@@ -189,39 +195,69 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
               onChange={(e) => handleInputChange('driverTruckId', e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            value={formData.status || 'Inactive'}
-            onValueChange={(value) => handleInputChange('status', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select driver status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-              <SelectItem value="OnLeave">On Leave</SelectItem>
-              <SelectItem value="OnTrip">On Trip</SelectItem>
-              <SelectItem value="Suspended">Suspended</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2 w-full">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status || 'Inactive'}
+              onValueChange={(value) => handleInputChange('status', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select driver status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+                <SelectItem value="OnLeave">On Leave</SelectItem>
+                <SelectItem value="OnTrip">On Trip</SelectItem>
+                <SelectItem value="Suspended">Suspended</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadhar">Aadhar Card</Label>
+              <Label htmlFor="aadhar_front">Aadhar Card Front</Label>
               <Input
-                id="aadhar"
+                id="aadhar_front"
                 type="file"
                 accept="image/*,.pdf"
+                required
                 onChange={(e) => {
-                  handleInputChange('driverDocuments.aadhar', e.target.files?.[0]?.name || '');
+                  if (e.target.files?.[0]) {
+                    const url = URL.createObjectURL(e.target.files[0]);
+                    handleInputChange('driverDocuments.aadhar_front', url);
+                  }
                 }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="aadhar_back">Aadhar Card Back</Label>
+              <Input
+                id="aadhar_back"
+                type="file"
+                accept="image/*,.pdf"
+                required
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const url = URL.createObjectURL(e.target.files[0]);
+                    handleInputChange('driverDocuments.aadhar_back', url);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="aadhar_number">Aadhar Number</Label>
+              <Input
+                id="aadhar_number"
+                placeholder="Enter Aadhar number"
+                required
+                value={formData.driverDocuments?.aadhar_number}
+                onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
               />
             </div>
 
@@ -231,21 +267,43 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="license"
                 type="file"
                 accept="image/*,.pdf"
+                required
                 onChange={(e) => {
-                  handleInputChange('driverDocuments.license', e.target.files?.[0]?.name || '');
+                  if (e.target.files?.[0]) {
+                    const url = URL.createObjectURL(e.target.files[0]);
+                    handleInputChange('driverDocuments.license', url);
+                  }
                 }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="insurance">Insurance</Label>
+              <Label htmlFor="license_number">License Number</Label>
               <Input
-                id="insurance"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  handleInputChange('driverDocuments.insurance', e.target.files?.[0]?.name || '');
-                }}
+                id="license_number"
+                placeholder="Enter license number"
+                required
+                value={formData.driverDocuments?.license_number}
+                onChange={(e) =>
+                  handleInputChange('driverDocuments.license_number', e.target.value)
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="license_expiry">License Expiry Date</Label>
+              <Input
+                id="license_expiry"
+                type="date"
+                required
+                onChange={(e) =>
+                  handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
+                }
+                value={
+                  formData.driverDocuments?.license_expiry instanceof Date
+                    ? formData.driverDocuments.license_expiry.toISOString().split('T')[0]
+                    : ''
+                }
               />
             </div>
 
@@ -255,23 +313,12 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="medicalCertificate"
                 type="file"
                 accept="image/*,.pdf"
+                required
                 onChange={(e) => {
-                  handleInputChange(
-                    'driverDocuments.medicalCertificate',
-                    e.target.files?.[0]?.name || '',
-                  );
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="panCard">PAN Card</Label>
-              <Input
-                id="panCard"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  handleInputChange('driverDocuments.panCard', e.target.files?.[0]?.name || '');
+                  if (e.target.files?.[0]) {
+                    const url = URL.createObjectURL(e.target.files[0]);
+                    handleInputChange('driverDocuments.medicalCertificate', url);
+                  }
                 }}
               />
             </div>
@@ -281,9 +328,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
               <Input
                 id="dob"
                 type="date"
+                required
                 onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
                 value={
-                  formData.driverDocuments.dob instanceof Date
+                  formData.driverDocuments?.dob instanceof Date
                     ? formData.driverDocuments.dob.toISOString().split('T')[0]
                     : ''
                 }
@@ -291,12 +339,28 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="dob_certificate">DOB Certificate</Label>
+              <Input
+                id="dob_certificate"
+                type="file"
+                accept="image/*,.pdf"
+                required
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const url = URL.createObjectURL(e.target.files[0]);
+                    handleInputChange('driverDocuments.dob_certificate', url);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="documentStatus">Document Status</Label>
               <Select
-                value={formData.driverDocuments.status}
+                value={formData.driverDocuments?.status}
                 onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select document status" />
                 </SelectTrigger>
                 <SelectContent>
