@@ -155,7 +155,7 @@ const ActionCell = ({ row }: { row: any }) => {
 
       {/* Edit Trip Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent >
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Trip</DialogTitle>
             <DialogDescription>

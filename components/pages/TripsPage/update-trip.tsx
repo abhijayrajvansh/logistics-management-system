@@ -144,7 +144,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         ...prev,
         driver: driver.id,
         driverName: driver.driverName,
-        truck: driver.driverTruckNo || prev.truck,
+        truck: driver.driverTruckId || prev.truck,
       }));
     }
   };
@@ -350,7 +350,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               <SelectContent>
                 {drivers.map((driver) => (
                   <SelectItem key={driver.id} value={driver.id}>
-                    {driver.driverName} ({driver.driverTruckNo || 'No Truck Assigned'})
+                    {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
                   </SelectItem>
                 ))}
               </SelectContent>
