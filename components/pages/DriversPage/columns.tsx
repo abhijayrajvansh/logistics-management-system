@@ -88,30 +88,30 @@ export const columns: ColumnDef<Driver>[] = [
         </div>
       );
     },
-    },
-    {
+  },
+  {
     accessorKey: 'phoneNumber',
     header: 'Phone',
-    },
-    {
+  },
+  {
     accessorKey: 'driverDocuments',
     header: 'Documents Status',
     cell: ({ row }) => {
-      const docs = row.getValue('driverDocuments') as Driver['driverDocuments'] || undefined;
+      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || undefined;
       const status = docs?.status || 'Pending';
       return (
-      <Badge
-        variant="outline"
-        className={`text-xs ${
-        status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}
-      >
-        {status}
-      </Badge>
+        <Badge
+          variant="outline"
+          className={`text-xs ${
+            status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {status}
+        </Badge>
       );
     },
-    },
-    {
+  },
+  {
     accessorKey: 'actions',
     header: () => <div className="text-center">Actions</div>,
     id: 'actions',

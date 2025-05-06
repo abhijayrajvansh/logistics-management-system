@@ -48,7 +48,7 @@ export type Driver = {
   id: string;
   driverId: string;
   driverName: string;
-  status: "Active" | "Inactive" | "OnLeave" | "OnTrip" | "Suspended" | "Deleted" | "Stuck";
+  status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber?: string;
   languages: string[];
   driverTruckId?: string;
@@ -62,8 +62,8 @@ export type DriverDocuments = {
   insurance: string;
   medicalCertificate: string;
   panCard: string;
-  status: "Verified" | "Pending";
-}
+  status: 'Verified' | 'Pending';
+};
 
 export type TripOrders = {
   tripId: string;

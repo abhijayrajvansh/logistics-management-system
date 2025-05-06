@@ -16,6 +16,7 @@ import { Driver, DriverDocuments } from '@/types';
 import { db } from '@/firebase/database';
 import { collection, addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
+import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -74,8 +75,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     setIsSubmitting(true);
 
     try {
-      // Generate a unique driver ID
-      const driverId = 'DRV' + Date.now().toString().slice(-6);
+      // Generate a unique numeric driver ID
+      const driverId = await getUniqueVerifiedDriverId(db);
 
       const driverData = {
         driverId,
