@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Driver } from '@/types';
+import { Driver, DriverDocuments } from '@/types';
 import { db } from '@/firebase/database';
 import { collection, addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     phoneNumber: '',
     languages: [] as string[],
     driverTruckId: '',
-    status: 'Inactive' as Driver['status'],
+    status: 'Active' as Driver['status'],
     driverDocuments: {
       aadhar: '',
       dob: new Date(),
@@ -37,7 +37,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       insurance: '',
       medicalCertificate: '',
       panCard: '',
-    },
+      status: 'Pending' as DriverDocuments['status'],
+    } as DriverDocuments,
   });
 
   const handleLanguageChange = (value: string) => {
@@ -76,8 +77,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       // Generate a unique driver ID
       const driverId = 'DRV' + Date.now().toString().slice(-6);
 
-      const driverData: Driver = {
-        id: '', // Will be set by Firestore
+      const driverData = {
         driverId,
         ...formData,
       };
@@ -106,6 +106,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           insurance: '',
           medicalCertificate: '',
           panCard: '',
+          status: 'Pending',
         },
       });
     } catch (error) {
@@ -154,7 +155,6 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 <SelectItem value="English">English</SelectItem>
                 <SelectItem value="Hindi">Hindi</SelectItem>
                 <SelectItem value="Punjabi">Punjabi</SelectItem>
-                <SelectItem value="Gujarati">Gujarati</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex gap-2 mt-2">
@@ -167,7 +167,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                       const newLanguages = formData.languages.filter((_, i) => i !== index);
                       setFormData((prev) => ({
                         ...prev,
-                        language: newLanguages,
+                        languages: newLanguages,
                       }));
                     }}
                     className="text-muted-foreground hover:text-foreground"
@@ -287,6 +287,22 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                     : ''
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="documentStatus">Document Status</Label>
+              <Select
+                value={formData.driverDocuments.status}
+                onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select document status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Verified">Verified</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

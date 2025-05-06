@@ -1,29 +1,10 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { useState } from 'react';
+import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Payment } from './data-json';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Driver } from '@/types';
 
 // Create a component for the actions cell to manage edit dialog state
@@ -81,28 +62,8 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Name',
   },
   {
-    accessorKey: 'phoneNumber',
-    header: 'Phone',
-  },
-  {
-    accessorKey: 'language',
-    header: 'Languages',
-    cell: ({ row }) => {
-      const languages: string[] = row.getValue('language') || [];
-      return (
-        <div className="flex gap-1">
-          {languages.map((lang, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
-              {lang}
-            </Badge>
-          ))}
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: 'driverTruckId',
-    header: 'Truck ID',
+    header: 'Assigned Truck',
   },
   {
     accessorKey: 'status',
@@ -113,6 +74,44 @@ export const columns: ColumnDef<Driver>[] = [
     },
   },
   {
+    accessorKey: 'languages',
+    header: 'Languages',
+    cell: ({ row }) => {
+      const languages: string[] = row.getValue('languages') || [];
+      return (
+        <div className="flex gap-1">
+          {languages.map((lang, index) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {lang}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+    },
+    {
+    accessorKey: 'phoneNumber',
+    header: 'Phone',
+    },
+    {
+    accessorKey: 'driverDocuments',
+    header: 'Documents Status',
+    cell: ({ row }) => {
+      const docs = row.getValue('driverDocuments') as Driver['driverDocuments'] || undefined;
+      const status = docs?.status || 'Pending';
+      return (
+      <Badge
+        variant="outline"
+        className={`text-xs ${
+        status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}
+      >
+        {status}
+      </Badge>
+      );
+    },
+    },
+    {
     accessorKey: 'actions',
     header: () => <div className="text-center">Actions</div>,
     id: 'actions',

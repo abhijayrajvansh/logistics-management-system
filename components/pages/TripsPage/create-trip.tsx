@@ -71,7 +71,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       setFormData((prevData) => ({
         ...prevData,
         driver: selectedDriver.id,
-        truck: selectedDriver.driverTruckNo || '',
+        truck: selectedDriver.driverTruckId || '',
       }));
     }
   }, [selectedDriver]);
@@ -270,14 +270,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               <SelectContent>
                 {driverError && (
                   <SelectItem value="error" disabled>
-                    {driverError}
+                    {driverError.message}
                   </SelectItem>
                 )}
                 {!isLoadingDrivers &&
                   !driverError &&
                   drivers.map((driver) => (
                     <SelectItem key={driver.id} value={driver.id}>
-                      {driver.driverName} ({driver.driverTruckNo || 'No Truck Assigned'})
+                      {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
                     </SelectItem>
                   ))}
               </SelectContent>

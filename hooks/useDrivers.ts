@@ -26,7 +26,7 @@ export function useDrivers() {
               driverName: data.driverName || '',
               status: data.status || 'Inactive',
               phoneNumber: data.phoneNumber || '',
-              languages: data.language || [],
+              languages: Array.isArray(data.languages) ? data.languages : [],
               driverTruckId: data.driverTruckId || '',
               driverDocuments: data.driverDocuments || {
                 aadhar: '',
