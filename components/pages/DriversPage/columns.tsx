@@ -7,7 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Driver } from '@/types';
 import { UpdateDriverForm } from './update-driver';
 import { DeleteDriverDialog } from './delete-driver';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row, table }: { row: any; table: any }) => {
@@ -42,7 +48,13 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Update Driver Details</DialogTitle>
+            <DialogDescription>
+              Make changes to the driver information below. Click update when you're done.
+            </DialogDescription>
+          </DialogHeader>
           <UpdateDriverForm
             driverId={driver.id}
             onSuccess={handleSuccess}
