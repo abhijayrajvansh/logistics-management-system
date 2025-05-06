@@ -27,6 +27,14 @@ interface CreateDriverFormProps {
 export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
+  // Add validation state for required documents
+  const [validDocuments, setValidDocuments] = useState<{ [key: string]: boolean }>({
+    aadhar_front: false,
+    aadhar_back: false,
+    license: false,
+    medicalCertificate: false,
+    dob_certificate: false,
+  });
   const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
     driverName: '',
     phoneNumber: '',
@@ -46,6 +54,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       status: 'Pending' as DriverDocuments['status'],
     },
   });
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
   const handleLanguageChange = (value: string) => {
     setFormData((prev) => ({
@@ -77,15 +87,57 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
 
   const handleFileChange = (field: string, file: File | null) => {
     if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${field} file size exceeds 5MB limit`);
+        // Clear the file from state and mark as invalid
+        setDocumentFiles((prev) => {
+          const updated = { ...prev };
+          delete updated[field];
+          return updated;
+        });
+        setValidDocuments((prev) => ({
+          ...prev,
+          [field]: false,
+        }));
+        return;
+      }
+      // File is valid, update states
       setDocumentFiles((prev) => ({
         ...prev,
         [field]: file,
       }));
+      setValidDocuments((prev) => ({
+        ...prev,
+        [field]: true,
+      }));
+    } else {
+      // No file selected, clear states
+      setDocumentFiles((prev) => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+      setValidDocuments((prev) => ({
+        ...prev,
+        [field]: false,
+      }));
     }
+  };
+
+  // Check if all required documents are valid
+  const areAllDocumentsValid = () => {
+    return Object.values(validDocuments).every((isValid) => isValid);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all required documents are present and valid
+    if (!areAllDocumentsValid()) {
+      toast.error('All documents are required and must be under 5MB');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -94,16 +146,17 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
 
       // Upload all documents and get their download URLs
       const documentUploads = await Promise.all([
-        documentFiles.aadhar_front &&
-          uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front'),
-        documentFiles.aadhar_back &&
-          uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back'),
-        documentFiles.license && uploadDriverDocument(documentFiles.license, driverId, 'license'),
-        documentFiles.medicalCertificate &&
-          uploadDriverDocument(documentFiles.medicalCertificate, driverId, 'medical_certificate'),
-        documentFiles.dob_certificate &&
-          uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate'),
+        uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front'),
+        uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back'),
+        uploadDriverDocument(documentFiles.license, driverId, 'license'),
+        uploadDriverDocument(documentFiles.medicalCertificate, driverId, 'medical_certificate'),
+        uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate'),
       ]);
+
+      // If any document upload failed, stop the submission
+      if (documentUploads.some((url) => !url)) {
+        throw new Error('Failed to upload one or more documents');
+      }
 
       const [
         aadhar_front_url,
@@ -111,7 +164,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         license_url,
         medical_certificate_url,
         dob_certificate_url,
-      ] = await Promise.all(documentUploads.filter(Boolean));
+      ] = documentUploads;
 
       const driverData = {
         driverId,
@@ -159,7 +212,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       setDocumentFiles({});
     } catch (error) {
       console.error('Error creating driver:', error);
-      toast.error('Failed to create driver');
+      toast.error(error instanceof Error ? error.message : 'Failed to create driver');
     } finally {
       setIsSubmitting(false);
     }
@@ -260,7 +313,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadhar_front">Aadhar Card Front</Label>
+              <Label htmlFor="aadhar_front">
+                Aadhar Card Front (Max 5MB)
+                {!validDocuments.aadhar_front && <span className="text-red-500 ml-1 text-xl">*</span>}
+              </Label>
               <Input
                 id="aadhar_front"
                 type="file"
@@ -269,13 +325,18 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileChange('aadhar_front', e.target.files[0]);
+                  } else {
+                    handleFileChange('aadhar_front', null);
                   }
                 }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="aadhar_back">Aadhar Card Back</Label>
+              <Label htmlFor="aadhar_back">
+                Aadhar Card Back (Max 5MB)
+                {!validDocuments.aadhar_back && <span className="text-red-500 ml-1 text-xl">*</span>}
+              </Label>
               <Input
                 id="aadhar_back"
                 type="file"
@@ -284,6 +345,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileChange('aadhar_back', e.target.files[0]);
+                  } else {
+                    handleFileChange('aadhar_back', null);
                   }
                 }}
               />
@@ -301,7 +364,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="license">Driving License</Label>
+              <Label htmlFor="license">
+                Driving License (Max 5MB)
+                {!validDocuments.license && <span className="text-red-500 ml-1 text-xl">*</span>}
+              </Label>
               <Input
                 id="license"
                 type="file"
@@ -310,6 +376,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileChange('license', e.target.files[0]);
+                  } else {
+                    handleFileChange('license', null);
                   }
                 }}
               />
@@ -346,7 +414,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="medicalCertificate">Medical Certificate</Label>
+              <Label htmlFor="medicalCertificate">
+                Medical Certificate (Max 5MB)
+                {!validDocuments.medicalCertificate && <span className="text-red-500 ml-1 text-xl">*</span>}
+              </Label>
               <Input
                 id="medicalCertificate"
                 type="file"
@@ -355,6 +426,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileChange('medicalCertificate', e.target.files[0]);
+                  } else {
+                    handleFileChange('medicalCertificate', null);
                   }
                 }}
               />
@@ -376,7 +449,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dob_certificate">DOB Certificate</Label>
+              <Label htmlFor="dob_certificate">
+                DOB Certificate (Max 5MB)
+                {!validDocuments.dob_certificate && <span className="text-red-500 ml-1 text-xl">*</span>}
+              </Label>
               <Input
                 id="dob_certificate"
                 type="file"
@@ -385,6 +461,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileChange('dob_certificate', e.target.files[0]);
+                  } else {
+                    handleFileChange('dob_certificate', null);
                   }
                 }}
               />
@@ -412,7 +490,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !areAllDocumentsValid()}>
             {isSubmitting ? 'Creating...' : 'Create Driver'}
           </Button>
         </div>
