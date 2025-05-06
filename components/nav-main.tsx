@@ -11,7 +11,7 @@ import {
 
 import { usePathname, useRouter } from 'next/navigation';
 import { AiFillDashboard } from "react-icons/ai";
-import { FaBoxesStacked, FaTruck, FaUsersGear } from "react-icons/fa6";
+import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
 
 const navMain = [
   {
@@ -27,7 +27,7 @@ const navMain = [
   {
     title: 'Trips',
     url: '/dashboard/trips',
-    icon: FaTruck,
+    icon: FaLocationDot,
   },
   {
     title: 'Drivers',

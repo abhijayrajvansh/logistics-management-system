@@ -3,31 +3,62 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
-
 import { Badge } from '@/components/ui/badge';
 import { Driver } from '@/types';
+import { UpdateDriverForm } from './update-driver';
+import { DeleteDriverDialog } from './delete-driver';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 // Create a component for the actions cell to manage edit dialog state
-const ActionCell = ({ row }: { row: any }) => {
+const ActionCell = ({ row, table }: { row: any; table: any }) => {
   const driver = row.original;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  const handleSuccess = () => {
+    // Close dialogs
+    setIsEditDialogOpen(false);
+    setIsDeleteDialogOpen(false);
+    // Refresh the table data
+    table.options.meta?.revalidate?.();
+  };
+
   return (
-    <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
-    </div>
+    <>
+      <div className="text-center space-x-2">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <UpdateDriverForm
+            driverId={driver.id}
+            onSuccess={handleSuccess}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <DeleteDriverDialog
+        driverId={driver.id}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onSuccess={handleSuccess}
+      />
+    </>
   );
 };
 
@@ -116,5 +147,8 @@ export const columns: ColumnDef<Driver>[] = [
     header: () => <div className="text-center">Actions</div>,
     id: 'actions',
     cell: ActionCell,
+    meta: {
+      className: 'text-center',
+    },
   },
 ];
