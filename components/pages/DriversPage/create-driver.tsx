@@ -17,6 +17,7 @@ import { db } from '@/firebase/database';
 import { collection, addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
+import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -25,6 +26,7 @@ interface CreateDriverFormProps {
 
 export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
   const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
     driverName: '',
     phoneNumber: '',
@@ -73,6 +75,15 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     });
   };
 
+  const handleFileChange = (field: string, file: File | null) => {
+    if (file) {
+      setDocumentFiles((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -81,9 +92,38 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       // Generate a unique numeric driver ID
       const driverId = await getUniqueVerifiedDriverId(db);
 
+      // Upload all documents and get their download URLs
+      const documentUploads = await Promise.all([
+        documentFiles.aadhar_front &&
+          uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front'),
+        documentFiles.aadhar_back &&
+          uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back'),
+        documentFiles.license && uploadDriverDocument(documentFiles.license, driverId, 'license'),
+        documentFiles.medicalCertificate &&
+          uploadDriverDocument(documentFiles.medicalCertificate, driverId, 'medical_certificate'),
+        documentFiles.dob_certificate &&
+          uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate'),
+      ]);
+
+      const [
+        aadhar_front_url,
+        aadhar_back_url,
+        license_url,
+        medical_certificate_url,
+        dob_certificate_url,
+      ] = await Promise.all(documentUploads.filter(Boolean));
+
       const driverData = {
         driverId,
         ...formData,
+        driverDocuments: {
+          ...formData.driverDocuments,
+          aadhar_front: aadhar_front_url || '',
+          aadhar_back: aadhar_back_url || '',
+          license: license_url || '',
+          medicalCertificate: medical_certificate_url || '',
+          dob_certificate: dob_certificate_url || '',
+        },
       };
 
       // Add the driver to Firestore
@@ -116,6 +156,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           status: 'Pending',
         },
       });
+      setDocumentFiles({});
     } catch (error) {
       console.error('Error creating driver:', error);
       toast.error('Failed to create driver');
@@ -227,8 +268,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 required
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.aadhar_front', url);
+                    handleFileChange('aadhar_front', e.target.files[0]);
                   }
                 }}
               />
@@ -243,8 +283,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 required
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.aadhar_back', url);
+                    handleFileChange('aadhar_back', e.target.files[0]);
                   }
                 }}
               />
@@ -270,8 +309,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 required
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.license', url);
+                    handleFileChange('license', e.target.files[0]);
                   }
                 }}
               />
@@ -316,8 +354,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 required
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.medicalCertificate', url);
+                    handleFileChange('medicalCertificate', e.target.files[0]);
                   }
                 }}
               />
@@ -347,8 +384,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 required
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.dob_certificate', url);
+                    handleFileChange('dob_certificate', e.target.files[0]);
                   }
                 }}
               />
