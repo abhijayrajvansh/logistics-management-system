@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
 import {
   Select,
   SelectContent,
@@ -22,9 +23,17 @@ interface CreateOrderFormProps {
 }
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
-  const { clients, isLoading } = useClients();
+  const { clients, isLoading: isLoadingClients } = useClients();
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+
+  // Add state for tracking selected dropdown values
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+
   const [formData, setFormData] = useState({
+    receiver_name: '',
     receiver_details: '',
+    receiver_contact: '',
     total_boxes_count: '',
     dimensions: '',
     total_order_weight: '',
@@ -60,6 +69,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   }, []);
 
   const handleClientChange = (clientId: string) => {
+    setSelectedClient(clientId);
     const selectedClient = clients.find((client) => client.id === clientId);
     if (selectedClient) {
       // Handle Firestore timestamp format
@@ -86,6 +96,19 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         ...prev,
         client_details: selectedClient.clientName,
         tat: tatDate,
+      }));
+    }
+  };
+
+  const handleReceiverChange = (receiverId: string) => {
+    setSelectedReceiver(receiverId);
+    const selectedReceiver = receivers.find((receiver) => receiver.id === receiverId);
+    if (selectedReceiver) {
+      setFormData((prev) => ({
+        ...prev,
+        receiver_name: selectedReceiver.receiverName,
+        receiver_details: selectedReceiver.receiverDetails,
+        receiver_contact: selectedReceiver.receiverContact,
       }));
     }
   };
@@ -123,13 +146,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
       // Reset form after successful submission
       setFormData({
+        receiver_name: '',
         receiver_details: '',
+        receiver_contact: '',
         total_boxes_count: '',
-
         dimensions: '',
         total_order_weight: '',
         lr_no: '',
-
         tat: '',
         charge_basis: '',
         docket_id: '',
@@ -179,14 +202,44 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="client">Client</Label>
-            <Select disabled={isLoading} onValueChange={handleClientChange}>
+            <Select
+              disabled={isLoadingClients}
+              onValueChange={handleClientChange}
+              value={selectedClient}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder={isLoading ? 'Loading clients...' : 'Select a client'} />
+                <SelectValue
+                  placeholder={isLoadingClients ? 'Loading clients...' : 'Select a client'}
+                />
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.clientName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="receiver">Receiver</Label>
+            <Select
+              disabled={isLoadingReceivers}
+              onValueChange={handleReceiverChange}
+              value={selectedReceiver}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={isLoadingReceivers ? 'Loading receivers...' : 'Select a receiver'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {receivers.map((receiver) => (
+                  <SelectItem key={receiver.id} value={receiver.id}>
+                    {receiver.receiverName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -200,6 +253,16 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               placeholder="Enter receiver details"
               value={formData.receiver_details}
               onChange={(e) => handleInputChange('receiver_details', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiver_contact">Receiver Contact</Label>
+            <Input
+              id="receiver_contact"
+              placeholder="Enter receiver contact"
+              value={formData.receiver_contact}
+              onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
               required
             />
           </div>
@@ -329,14 +392,19 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             type="button"
             variant="outline"
             onClick={() => {
-              setFormData({
-                receiver_details: '',
-                total_boxes_count: '',
+              // Reset selected dropdown states
+              setSelectedClient('');
+              setSelectedReceiver('');
 
+              // Reset form data
+              setFormData({
+                receiver_name: '',
+                receiver_details: '',
+                receiver_contact: '',
+                total_boxes_count: '',
                 dimensions: '',
                 total_order_weight: '',
                 lr_no: '',
-
                 tat: '',
                 charge_basis: '',
                 docket_id: '',
