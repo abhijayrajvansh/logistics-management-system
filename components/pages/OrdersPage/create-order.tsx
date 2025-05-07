@@ -106,7 +106,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
   const calculatePrice = (client: any, boxesCount: string, weight: string) => {
     if (!client?.rateCard) {
-      console.log('No rate card found for client:', client);
       return;
     }
 
@@ -117,7 +116,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       // Calculate price based on boxes
       const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
       calculatedPrice = parseInt(boxesCount) * pricePerBox;
-      console.log('Per Boxes calculation:', { boxesCount, pricePerBox, calculatedPrice });
+
     } else if (chargeBasis === 'By Weight' && weight) {
       // Calculate price based on weight
       const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
@@ -129,7 +128,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       if (calculatedPrice < minPriceWeight) {
         calculatedPrice = minPriceWeight;
       }
-      console.log('By Weight calculation:', { weight, pricePerKg, minPriceWeight, calculatedPrice });
+
     }
 
     setFormData(prev => ({
