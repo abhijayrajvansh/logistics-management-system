@@ -86,8 +86,24 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Client',
   },
   {
+    accessorKey: 'receiver_name',
+    header: 'Receiver Name',
+  },
+  {
     accessorKey: 'receiver_details',
     header: 'Receiver Details',
+    cell: ({ row }) => {
+      const details: string = row.getValue('receiver_details');
+      return (
+        <div className='overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]'>
+          {details}
+        </div>
+      );
+    }
+  },
+  {
+    accessorKey: 'receiver_contact',
+    header: 'Receiver Contact',
   },
   {
     accessorKey: 'total_boxes_count',

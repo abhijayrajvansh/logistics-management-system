@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { shippers, ShipperData } from '@/lib/mock-data';
+import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
+import { Client, ReceiverDetails } from '@/types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +28,9 @@ interface UpdateOrderFormProps {
 
 export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFormProps) {
   const [formData, setFormData] = useState({
+    receiver_name: '',
     receiver_details: '',
+    receiver_contact: '',
     total_boxes_count: '',
     dimensions: '',
     total_order_weight: '',
@@ -40,9 +45,15 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     status: '',
   });
 
+  const { clients, isLoading: isLoadingClients } = useClients();
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedShipper, setSelectedShipper] = useState<ShipperData | null>(null);
+  const [isManualClientEntry, setIsManualClientEntry] = useState(false);
+  const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedReceiver, setSelectedReceiver] = useState<string>('');
 
   // Fetch order data on component mount
   useEffect(() => {
@@ -56,19 +67,18 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           let formattedTat = '';
           if (data.tat) {
             if (data.tat.toDate) {
-              // Handle Firestore timestamp
               formattedTat = data.tat.toDate().toISOString().split('T')[0];
             } else if (data.tat instanceof Date) {
-              // Handle regular Date object
               formattedTat = data.tat.toISOString().split('T')[0];
             } else if (typeof data.tat === 'string') {
-              // Handle string date
               formattedTat = data.tat;
             }
           }
 
           setFormData({
+            receiver_name: data.receiver_name || '',
             receiver_details: data.receiver_details || '',
+            receiver_contact: data.receiver_contact || '',
             total_boxes_count: data.total_boxes_count?.toString() || '',
             dimensions: data.dimensions || '',
             total_order_weight: data.total_order_weight?.toString() || '',
@@ -83,10 +93,21 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             status: data.status || '',
           });
 
-          // Find and set the selected shipper
-          const shipper = shippers.find((s) => s.name === data.shipper_details);
-          if (shipper) {
-            setSelectedShipper(shipper);
+          // Set selected client and receiver based on existing data
+          const client = clients.find((c: Client) => c.clientName === data.client_details);
+          if (client) {
+            setSelectedClient(client.id);
+          } else {
+            setIsManualClientEntry(true);
+          }
+
+          const receiver = receivers.find(
+            (r: ReceiverDetails) => r.receiverName === data.receiver_name,
+          );
+          if (receiver) {
+            setSelectedReceiver(receiver.id);
+          } else {
+            setIsManualReceiverEntry(true);
           }
         } else {
           toast.error('Order not found');
@@ -101,28 +122,59 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     };
 
     fetchOrderData();
-  }, [orderId, onCancel]);
+  }, [orderId, onCancel, clients, receivers]);
 
-  const handleShipperChange = (shipperId: string) => {
-    const shipper = shippers.find((s) => s.id === shipperId);
-    if (shipper) {
-      setSelectedShipper(shipper);
+  const handleClientChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualClientEntry(true);
+      setSelectedClient('');
       setFormData((prev) => ({
         ...prev,
-        shipper_details: shipper.name,
-        receiver_details: shipper.defaultReceiverDetails,
-        tat: prev.tat || shipper.defaultTAT,
-        charge_basis: shipper.defaultChargeBasis,
-        client_details: shipper.clientDetails,
+        client_details: '',
       }));
+    } else {
+      setIsManualClientEntry(false);
+      setSelectedClient(value);
+      const client = clients.find((c: Client) => c.id === value);
+      if (client) {
+        setFormData((prev) => ({
+          ...prev,
+          client_details: client.clientName,
+        }));
+      }
+    }
+  };
+
+  const handleReceiverChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualReceiverEntry(true);
+      setSelectedReceiver('');
+      setFormData((prev) => ({
+        ...prev,
+        receiver_name: '',
+        receiver_details: '',
+        receiver_contact: '',
+      }));
+    } else {
+      setIsManualReceiverEntry(false);
+      setSelectedReceiver(value);
+      const receiver = receivers.find((r: ReceiverDetails) => r.id === value);
+      if (receiver) {
+        setFormData((prev) => ({
+          ...prev,
+          receiver_name: receiver.receiverName,
+          receiver_details: receiver.receiverDetails,
+          receiver_contact: receiver.receiverContact,
+        }));
+      }
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [field]: value,
-    });
+    }));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -146,7 +198,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
       toast.success('Order updated successfully!');
 
-      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
@@ -180,31 +231,103 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="client_details">Client Details</Label>
-            <Input
-              id="client_details"
-              placeholder="Enter client details"
-              value={formData.client_details}
-              onChange={(e) => handleInputChange('client_details', e.target.value)}
-              required
-            />
+            <Label htmlFor="client">Client</Label>
+            {!isManualClientEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingClients}
+                  onValueChange={handleClientChange}
+                  value={selectedClient}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={isLoadingClients ? 'Loading clients...' : 'Select a client'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New Client</SelectItem>
+                    {clients.map((client: Client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.clientName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter client name"
+                  value={formData.client_details}
+                  onChange={(e) => handleInputChange('client_details', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
+                  size="icon"
+                  onClick={() => {
+                    setIsManualClientEntry(false);
+                    setSelectedClient('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="receiver">Receiver</Label>
+            {!isManualReceiverEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingReceivers}
+                  onValueChange={handleReceiverChange}
+                  value={selectedReceiver}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        isLoadingReceivers ? 'Loading receivers...' : 'Select a receiver'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New Receiver</SelectItem>
+                    {receivers.map((receiver: ReceiverDetails) => (
+                      <SelectItem key={receiver.id} value={receiver.id}>
+                        {receiver.receiverName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter receiver name"
+                  value={formData.receiver_name}
+                  onChange={(e) => handleInputChange('receiver_name', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
+                  size="icon"
+                  onClick={() => {
+                    setIsManualReceiverEntry(false);
+                    setSelectedReceiver('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="shipper_details">Shipper Details</Label>
-            <Select value={selectedShipper?.id || ''} onValueChange={handleShipperChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a shipper" />
-              </SelectTrigger>
-              <SelectContent>
-                {shippers.map((shipper) => (
-                  <SelectItem key={shipper.id} value={shipper.id}>
-                    {shipper.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
             <Input
@@ -212,6 +335,16 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               placeholder="Enter receiver details"
               value={formData.receiver_details}
               onChange={(e) => handleInputChange('receiver_details', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiver_contact">Receiver Contact</Label>
+            <Input
+              id="receiver_contact"
+              placeholder="Enter receiver contact"
+              value={formData.receiver_contact}
+              onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
               required
             />
           </div>
