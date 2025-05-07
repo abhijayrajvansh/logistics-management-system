@@ -14,9 +14,9 @@ export type User = {
   email: string;
   password: string;
   displayName: string;
-  role: "admin" | "manager" | "driver";
+  role: 'admin' | 'manager' | 'driver';
   createdAt: Date;
-}
+};
 
 export type Order = {
   order_id: string;
@@ -51,13 +51,11 @@ export type Trip = {
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
 };
 
-
 export type TripOrders = {
   tripId: string;
   orderIds: string[];
   updatedAt: Date;
 };
-
 
 export type Driver = {
   id: string;
@@ -81,4 +79,19 @@ export type DriverDocuments = {
   license_expiry: Date;
   medicalCertificate: string;
   status: 'Verified' | 'Pending';
+};
+
+export type Client = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientDetails: string;
+  current_tat: Date;
+  rateCard: ClientRateCard;
+};
+
+export type ClientRateCard = {
+  preferance: 'By Weight' | 'Per Boxes';
+  pricePerPref: number;
+  minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };
