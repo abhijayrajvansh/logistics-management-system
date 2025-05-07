@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { AiFillDashboard } from "react-icons/ai";
 import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
 import { FaHandshake } from "react-icons/fa6";
+import { RiUserReceived2Fill } from "react-icons/ri";
 
 const navMain = [
   {
@@ -39,6 +40,11 @@ const navMain = [
     title: 'Clients',
     url: '/dashboard/clients',
     icon: FaHandshake,
+  },
+  {
+    title: 'Receivers',
+    url: '/dashboard/receivers',
+    icon: RiUserReceived2Fill,
   },
 ];
 
