@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { getUniqueVerifiedReceiverId } from '@/lib/createUniqueReceiverId';
 
 interface CreateReceiverFormProps {
   onSuccess?: () => void;
@@ -34,7 +35,7 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
 
     try {
       // Generate a unique receiver ID
-      const receiverId = `RCV${Date.now().toString(36).toUpperCase()}`;
+      const receiverId = await getUniqueVerifiedReceiverId(db);
 
       // Add the receiver to Firestore
       const receiverRef = await addDoc(collection(db, 'receivers'), {
