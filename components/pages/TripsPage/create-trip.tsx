@@ -60,7 +60,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       setIsGeneratingId(false);
     }
   };
-  
+
   useEffect(() => {
     generateUniqueId();
   }, []);
@@ -165,7 +165,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         numberOfStops: Number(formData.numberOfStops),
         currentStatus: formData.currentStatus,
         driver: selectedDriver?.id || 'Not Assigned',
-        truck: selectedDriver?.driverTruckId || 'Not Assigned'
+        truck: selectedDriver?.driverTruckId || 'Not Assigned',
       };
 
       // Add the trip to Firestore
@@ -398,10 +398,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           >
             Reset
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || isGeneratingId || isLoadingDrivers}
-          >
+          <Button type="submit" disabled={isSubmitting || isGeneratingId || isLoadingDrivers}>
             {isSubmitting ? 'Creating Trip...' : 'Create Trip'}
           </Button>
         </div>
