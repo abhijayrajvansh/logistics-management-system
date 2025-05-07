@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  images: {
+    domains: ['firebasestorage.googleapis.com'],
+  },
+
   async headers() {
     return [
       {
