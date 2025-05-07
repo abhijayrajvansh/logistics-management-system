@@ -1,12 +1,14 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { Badge } from '@/components/ui/badge';
 import { Driver } from '@/types';
 import { UpdateDriverForm } from './update-driver';
 import { DeleteDriverDialog } from './delete-driver';
+import { db } from '@/firebase/database';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -95,10 +97,46 @@ const StatusBadge = ({ status }: { status: string }) => {
   return <Badge className={`${getStatusColor(status)} border px-2 py-1`}>{status}</Badge>;
 };
 
+// Add PasswordCell component
+const PasswordCell = ({ driverId }: { driverId: string }) => {
+  const [password, setPassword] = useState<string>('Loading...');
+
+  const fetchPassword = useCallback(async () => {
+    try {
+      const userDocRef = doc(db, 'users', driverId);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        setPassword(userData.password);
+      } else {
+        setPassword('Not found');
+      }
+    } catch (error) {
+      console.error('Error fetching password:', error);
+      setPassword('Error');
+    }
+  }, [driverId]);
+
+  useEffect(() => {
+    fetchPassword();
+  }, [fetchPassword]);
+
+  return <span className="text-sm text-gray-500">{password}</span>;
+};
+
 export const columns: ColumnDef<Driver>[] = [
   {
     accessorKey: 'driverId',
     header: 'Driver ID',
+  },
+  {
+    accessorKey: 'password',
+    header: 'Password',
+    cell: ({ row }) => {
+      const driverId: string = row.original.id;
+      return <PasswordCell driverId={driverId} />;
+    },
   },
   {
     accessorKey: 'driverName',
