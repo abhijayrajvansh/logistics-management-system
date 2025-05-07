@@ -30,7 +30,6 @@ export type Order = {
   lr_no: string;
   price: number;
   receiver_details: string;
-  shipper_details: string;
   status: string;
   tat: Date;
   total_boxes_count: number;

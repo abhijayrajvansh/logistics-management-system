@@ -24,7 +24,6 @@ interface CreateOrderFormProps {
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading } = useClients();
   const [formData, setFormData] = useState({
-    shipper_details: '',
     receiver_details: '',
     total_boxes_count: '',
     dimensions: '',
@@ -66,7 +65,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       // Handle Firestore timestamp format
       const tatValue = selectedClient.current_tat;
       let tatDate = '';
-      
+
       try {
         if (tatValue) {
           // Handle Firestore Timestamp
@@ -82,11 +81,10 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       } catch (error) {
         console.error('Error formatting TAT date:', error);
       }
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
         client_details: selectedClient.clientName,
-        shipper_details: `${selectedClient.clientName}\n${selectedClient.clientDetails}`,
         tat: tatDate,
       }));
     }
@@ -125,7 +123,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
       // Reset form after successful submission
       setFormData({
-        shipper_details: '',
         receiver_details: '',
         total_boxes_count: '',
 
@@ -196,16 +193,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="shipper_details">Shipper Details</Label>
-            <Input
-              id="shipper_details"
-              placeholder="Shipper details will auto-populate from client selection"
-              value={formData.shipper_details}
-              onChange={(e) => handleInputChange('shipper_details', e.target.value)}
-              required
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
             <Input
@@ -343,7 +330,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             variant="outline"
             onClick={() => {
               setFormData({
-                shipper_details: '',
                 receiver_details: '',
                 total_boxes_count: '',
 
