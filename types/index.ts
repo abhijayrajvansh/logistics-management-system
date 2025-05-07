@@ -9,6 +9,15 @@ export type FirebaseConfig = {
   databaseURL: string;
 };
 
+export type User = {
+  userId: string;
+  email: string;
+  password: string;
+  displayName: string;
+  role: "admin" | "manager" | "driver";
+  createdAt: Date;
+}
+
 export type Order = {
   order_id: string;
   docket_id: string;
@@ -44,6 +53,14 @@ export type Trip = {
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
 };
 
+
+export type TripOrders = {
+  tripId: string;
+  orderIds: string[];
+  updatedAt: Date;
+};
+
+
 export type Driver = {
   id: string;
   driverId: string;
@@ -66,10 +83,4 @@ export type DriverDocuments = {
   license_expiry: Date;
   medicalCertificate: string;
   status: 'Verified' | 'Pending';
-};
-
-export type TripOrders = {
-  tripId: string;
-  orderIds: string[];
-  updatedAt: Date;
 };

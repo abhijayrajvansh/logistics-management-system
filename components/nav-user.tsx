@@ -71,7 +71,9 @@ export function UserNavProfile() {
 
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="text-black truncate text-xs">{user?.displayName}</span>
-                <span className="text-muted-foreground truncate text-xs">ID: {getUsername(user?.email)}</span>
+                <span className="text-muted-foreground truncate text-xs">
+                  ID: {getUsername(user?.email)}
+                </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -90,8 +92,10 @@ export function UserNavProfile() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="text-black truncate text-xs">{user?.displayName}</span>
-                  <span className="text-muted-foreground truncate text-xs">ID: {getUsername(user?.email)}</span>
+                  <span className="text-black truncate text-xs">{user?.displayName}</span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    ID: {getUsername(user?.email)}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
