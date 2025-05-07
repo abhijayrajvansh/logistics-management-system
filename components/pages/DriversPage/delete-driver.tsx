@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,8 +31,20 @@ export function DeleteDriverDialog({ driverId, isOpen, onClose, onSuccess }: Del
 
     setIsDeleting(true);
     try {
-      // Delete the driver document from Firestore
-      await deleteDoc(doc(db, 'drivers', driverId));
+      // First get the driver document to find the corresponding user document
+      const driverRef = doc(db, 'drivers', driverId);
+      const driverDoc = await getDoc(driverRef);
+
+      if (!driverDoc.exists()) {
+        throw new Error('Driver not found');
+      }
+
+      // Delete from users collection (using same ID as driver document)
+      const userRef = doc(db, 'users', driverId);
+      await deleteDoc(userRef);
+
+      // Delete from drivers collection
+      await deleteDoc(driverRef);
 
       toast.success('Driver deleted successfully');
 
@@ -45,7 +57,7 @@ export function DeleteDriverDialog({ driverId, isOpen, onClose, onSuccess }: Del
     } catch (error) {
       console.error('Error deleting driver:', error);
       toast.error('Failed to delete driver', {
-        description: 'Please try again later',
+        description: error instanceof Error ? error.message : 'Please try again later',
       });
     } finally {
       setIsDeleting(false);

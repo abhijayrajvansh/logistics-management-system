@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
 
 interface UpdateDriverFormProps {
   driverId: string;
@@ -46,6 +47,16 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
+  // Add validation state for required documents
+  const [validDocuments, setValidDocuments] = useState<{ [key: string]: boolean }>({
+    aadhar_front: false,
+    aadhar_back: false,
+    license: false,
+    medicalCertificate: false,
+    dob_certificate: false,
+  });
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
   useEffect(() => {
     const fetchDriverData = async () => {
@@ -108,15 +119,98 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     });
   };
 
+  const handleFileChange = (field: string, file: File | null) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${field} file size exceeds 5MB limit`);
+        // Clear the file from state and mark as invalid
+        setDocumentFiles((prev) => {
+          const updated = { ...prev };
+          delete updated[field];
+          return updated;
+        });
+        setValidDocuments((prev) => ({
+          ...prev,
+          [field]: false,
+        }));
+        return;
+      }
+      // File is valid, update states
+      setDocumentFiles((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+      setValidDocuments((prev) => ({
+        ...prev,
+        [field]: true,
+      }));
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Update the driver in Firestore
+      let updatedDocuments = { ...formData.driverDocuments };
+
+      // Upload any new documents that were added
+      const documentUploadPromises = [];
+
+      if (documentFiles.aadhar_front) {
+        documentUploadPromises.push(
+          uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front').then((url) => {
+            if (url) updatedDocuments.aadhar_front = url;
+          }),
+        );
+      }
+
+      if (documentFiles.aadhar_back) {
+        documentUploadPromises.push(
+          uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back').then((url) => {
+            if (url) updatedDocuments.aadhar_back = url;
+          }),
+        );
+      }
+
+      if (documentFiles.license) {
+        documentUploadPromises.push(
+          uploadDriverDocument(documentFiles.license, driverId, 'license').then((url) => {
+            if (url) updatedDocuments.license = url;
+          }),
+        );
+      }
+
+      if (documentFiles.medicalCertificate) {
+        documentUploadPromises.push(
+          uploadDriverDocument(
+            documentFiles.medicalCertificate,
+            driverId,
+            'medical_certificate',
+          ).then((url) => {
+            if (url) updatedDocuments.medicalCertificate = url;
+          }),
+        );
+      }
+
+      if (documentFiles.dob_certificate) {
+        documentUploadPromises.push(
+          uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate').then(
+            (url) => {
+              if (url) updatedDocuments.dob_certificate = url;
+            },
+          ),
+        );
+      }
+
+      // Wait for all document uploads to complete
+      await Promise.all(documentUploadPromises);
+
+      // Update the driver in Firestore with new document URLs
       const driverRef = doc(db, 'drivers', driverId);
       await updateDoc(driverRef, {
         ...formData,
+        driverDocuments: updatedDocuments,
         updated_at: new Date(),
       });
 
@@ -241,8 +335,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 accept="image/*,.pdf"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.aadhar_front', url);
+                    handleFileChange('aadhar_front', e.target.files[0]);
                   }
                 }}
               />
@@ -259,8 +352,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 accept="image/*,.pdf"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.aadhar_back', url);
+                    handleFileChange('aadhar_back', e.target.files[0]);
                   }
                 }}
               />
@@ -288,8 +380,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 accept="image/*,.pdf"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.license', url);
+                    handleFileChange('license', e.target.files[0]);
                   }
                 }}
               />
@@ -336,8 +427,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 accept="image/*,.pdf"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.medicalCertificate', url);
+                    handleFileChange('medicalCertificate', e.target.files[0]);
                   }
                 }}
               />
@@ -369,8 +459,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 accept="image/*,.pdf"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    const url = URL.createObjectURL(e.target.files[0]);
-                    handleInputChange('driverDocuments.dob_certificate', url);
+                    handleFileChange('dob_certificate', e.target.files[0]);
                   }
                 }}
               />
