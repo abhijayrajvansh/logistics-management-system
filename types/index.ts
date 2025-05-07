@@ -29,6 +29,7 @@ export type Order = {
   invoice: string;
   lr_no: string;
   price: number;
+  proof_of_delivery: ProofOfDelivery | 'NA';
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
@@ -38,6 +39,10 @@ export type Order = {
   total_order_weight: number;
   updated_at: Date;
 };
+
+export type ProofOfDelivery = {
+  photo: string;
+}
 
 export type Trip = {
   id: string;

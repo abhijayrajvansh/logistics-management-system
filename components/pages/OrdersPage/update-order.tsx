@@ -45,6 +45,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     status: '',
   });
 
+  // Add state to store the existing proof_of_delivery value
+  const [existingProofOfDelivery, setExistingProofOfDelivery] = useState<string>('NA');
+
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
 
@@ -62,6 +65,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         const orderDoc = await getDoc(doc(db, 'orders', orderId));
         if (orderDoc.exists()) {
           const data = orderDoc.data();
+
+          // Store existing proof_of_delivery separately
+          setExistingProofOfDelivery(data.proof_of_delivery || 'NA');
 
           // Format date for input field if it exists
           let formattedTat = '';
@@ -190,6 +196,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         price: formData.price ? parseFloat(formData.price) : 0,
         tat: new Date(formData.tat),
         updated_at: new Date(),
+        proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
       };
 
       // Update the order in Firestore

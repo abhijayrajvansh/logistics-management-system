@@ -198,13 +198,12 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         total_order_weight: parseInt(formData.total_order_weight),
         price: formData.price ? parseFloat(formData.price) : 0,
         tat: new Date(formData.tat),
+        proof_of_delivery: 'NA',
+        created_at: new Date(),
       };
 
       // Add the order to Firestore
-      const orderRef = await addDoc(collection(db, 'orders'), {
-        ...validatedData,
-        created_at: new Date(),
-      });
+      const orderRef = await addDoc(collection(db, 'orders'), validatedData);
 
       toast.success('Order created successfully!', {
         description: `Docket ID: ${formData.docket_id}`,
@@ -300,7 +299,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 />
                 <Button
                   type="button"
-                  className='bg-red-500 hover:bg-red-400 text-white cursor-pointer'
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
                   size="icon"
                   onClick={() => {
                     setIsManualClientEntry(false);
@@ -351,7 +350,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 />
                 <Button
                   type="button"
-                  className='bg-red-500 hover:bg-red-400 text-white cursor-pointer'
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
                   size="icon"
                   onClick={() => {
                     setIsManualReceiverEntry(false);
