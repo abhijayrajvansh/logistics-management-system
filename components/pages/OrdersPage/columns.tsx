@@ -102,10 +102,6 @@ export const columns: ColumnDef<Order>[] = [
     },
   },
   {
-    accessorKey: 'packing_type',
-    header: 'Packing Type',
-  },
-  {
     accessorKey: 'dimensions',
     header: 'Dimensions',
   },
@@ -120,10 +116,6 @@ export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: 'lr_no',
     header: 'LR No',
-  },
-  {
-    accessorKey: 'eway_bill_no',
-    header: 'E-way Bill No',
   },
   {
     accessorKey: 'tat',

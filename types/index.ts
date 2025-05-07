@@ -26,10 +26,8 @@ export type Order = {
   created_at: Date;
   current_location: string;
   dimensions: string;
-  eway_bill_no: string;
   invoice: string;
   lr_no: string;
-  packing_type: string;
   price: number;
   receiver_details: string;
   shipper_details: string;

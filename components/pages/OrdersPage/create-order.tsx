@@ -26,11 +26,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     shipper_details: '',
     receiver_details: '',
     total_boxes_count: '',
-    packing_type: '',
     dimensions: '',
     total_order_weight: '',
     lr_no: '',
-    eway_bill_no: '',
     tat: '',
     charge_basis: '',
     docket_id: '',
@@ -119,11 +117,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         shipper_details: '',
         receiver_details: '',
         total_boxes_count: '',
-        packing_type: '',
+
         dimensions: '',
         total_order_weight: '',
         lr_no: '',
-        eway_bill_no: '',
+
         tat: '',
         charge_basis: '',
         docket_id: '',
@@ -163,7 +161,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     <form onSubmit={handleFormSubmit}>
       <div className="grid gap-6 py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="space-y-2">
             <Label htmlFor="docket_id">Docket ID</Label>
             <Input
               id="docket_id"
@@ -174,6 +172,17 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               disabled={true}
             />
           </div>
+        <div className="space-y-2">
+            <Label htmlFor="client_details">Client Details</Label>
+            <Input
+              id="client_details"
+              placeholder="Enter client details"
+              value={formData.client_details}
+              onChange={(e) => handleInputChange('client_details', e.target.value)}
+              required
+            />
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="shipper_details">Shipper Details</Label>
             <Select value={selectedShipper?.id || ''} onValueChange={handleShipperChange}>
@@ -199,16 +208,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="client_details">Client Details</Label>
-            <Input
-              id="client_details"
-              placeholder="Enter client details"
-              value={formData.client_details}
-              onChange={(e) => handleInputChange('client_details', e.target.value)}
-              required
-            />
-          </div>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -223,16 +223,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="packing_type">Packing Type</Label>
-            <Input
-              id="packing_type"
-              placeholder="Enter packing type"
-              value={formData.packing_type}
-              onChange={(e) => handleInputChange('packing_type', e.target.value)}
-              required
-            />
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="dimensions">Dimensions</Label>
             <Input
@@ -264,16 +255,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               placeholder="Enter LR number"
               value={formData.lr_no}
               onChange={(e) => handleInputChange('lr_no', e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="eway_bill_no">E-way Bill Number</Label>
-            <Input
-              id="eway_bill_no"
-              placeholder="Enter e-way bill number"
-              value={formData.eway_bill_no}
-              onChange={(e) => handleInputChange('eway_bill_no', e.target.value)}
               required
             />
           </div>
@@ -360,11 +341,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 shipper_details: '',
                 receiver_details: '',
                 total_boxes_count: '',
-                packing_type: '',
+
                 dimensions: '',
                 total_order_weight: '',
                 lr_no: '',
-                eway_bill_no: '',
+
                 tat: '',
                 charge_basis: '',
                 docket_id: '',
