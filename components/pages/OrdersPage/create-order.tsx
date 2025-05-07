@@ -96,8 +96,46 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         ...prev,
         client_details: selectedClient.clientName,
         tat: tatDate,
+        charge_basis: selectedClient.rateCard.preferance,
       }));
+
+      // Calculate initial price if we have the necessary values
+      calculatePrice(selectedClient, formData.total_boxes_count, formData.total_order_weight);
     }
+  };
+
+  const calculatePrice = (client: any, boxesCount: string, weight: string) => {
+    if (!client?.rateCard) {
+      console.log('No rate card found for client:', client);
+      return;
+    }
+
+    const chargeBasis = client.rateCard.preferance;
+    let calculatedPrice = 0;
+
+    if (chargeBasis === 'Per Boxes' && boxesCount) {
+      // Calculate price based on boxes
+      const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      calculatedPrice = parseInt(boxesCount) * pricePerBox;
+      console.log('Per Boxes calculation:', { boxesCount, pricePerBox, calculatedPrice });
+    } else if (chargeBasis === 'By Weight' && weight) {
+      // Calculate price based on weight
+      const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      const minPriceWeight = parseFloat(client.rateCard.minPriceWeight?.toString() || '0');
+      
+      calculatedPrice = parseInt(weight) * pricePerKg;
+      
+      // If calculated price is less than minimum price weight, use minimum price weight
+      if (calculatedPrice < minPriceWeight) {
+        calculatedPrice = minPriceWeight;
+      }
+      console.log('By Weight calculation:', { weight, pricePerKg, minPriceWeight, calculatedPrice });
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      price: calculatedPrice > 0 ? calculatedPrice.toString() : ''
+    }));
   };
 
   const handleReceiverChange = (receiverId: string) => {
@@ -114,10 +152,20 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [field]: value,
-    });
+    }));
+
+    // Recalculate price when boxes count or weight changes
+    if ((field === 'total_boxes_count' || field === 'total_order_weight') && selectedClient) {
+      const client = clients.find((c) => c.id === selectedClient);
+      calculatePrice(
+        client,
+        field === 'total_boxes_count' ? value : formData.total_boxes_count,
+        field === 'total_order_weight' ? value : formData.total_order_weight,
+      );
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
