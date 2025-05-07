@@ -191,6 +191,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="shipper_details">Shipper Details</Label>
             <Select value={selectedShipper?.id || ''} onValueChange={handleShipperChange}>
@@ -240,9 +241,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="total_order_weight">Total Weight (kg)</Label>
             <Input
@@ -254,6 +252,24 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="charge_basis">Charge Basis</Label>
+            <Select
+              value={formData.charge_basis}
+              onValueChange={(value) => handleInputChange('charge_basis', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select charge basis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="By Weight">By Weight</SelectItem>
+                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="lr_no">LR Number</Label>
             <Input
@@ -264,9 +280,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="tat">TAT (Turn Around Time)</Label>
             <Input
@@ -277,39 +290,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="charge_basis">Charge Basis</Label>
-            <Select
-              value={formData.charge_basis}
-              onValueChange={(value) => handleInputChange('charge_basis', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select charge basis" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Order Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleInputChange('status', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select order status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-                <SelectItem value="Assigned">Assigned</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="price">Price</Label>
             <Input
@@ -327,12 +310,27 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               value={formData.invoice}
               onValueChange={(value) => handleInputChange('invoice', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select invoice type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="paid">paid</SelectItem>
                 <SelectItem value="to pay">to pay</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Order Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleInputChange('status', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select order status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
+                <SelectItem value="Assigned">Assigned</SelectItem>
               </SelectContent>
             </Select>
           </div>
