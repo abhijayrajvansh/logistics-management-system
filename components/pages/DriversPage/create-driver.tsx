@@ -18,6 +18,8 @@ import { collection, addDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
+import { createUserWebhook } from '@/firebase/auth/createUserWebhook';
+import env from '@/constants';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -181,12 +183,23 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
 
       // Add the driver to Firestore
       const driversRef = collection(db, 'drivers');
-      await addDoc(driversRef, {
+      const driverDocRef = await addDoc(driversRef, {
         ...driverData,
         created_at: new Date(),
       });
 
-      // createUserWebhook 
+      // Generate random 6-digit password
+      const randomPassword = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Create user credentials
+      await createUserWebhook({
+        userId: driverDocRef.id, // Using Firestore generated ID
+        email: `${driverId}${env.USERID_EMAIL}`,
+        password: randomPassword,
+        displayName: formData.driverName,
+        role: 'driver',
+        createdAt: new Date(),
+      });
 
       toast.success('Driver Onboarded successfully');
       onSuccess?.();
@@ -317,7 +330,9 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="aadhar_front">
                 Aadhar Card Front (Max 5MB)
-                {!validDocuments.aadhar_front && <span className="text-red-500 ml-1 text-xl">*</span>}
+                {!validDocuments.aadhar_front && (
+                  <span className="text-red-500 ml-1 text-xl">*</span>
+                )}
               </Label>
               <Input
                 id="aadhar_front"
@@ -337,7 +352,9 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="aadhar_back">
                 Aadhar Card Back (Max 5MB)
-                {!validDocuments.aadhar_back && <span className="text-red-500 ml-1 text-xl">*</span>}
+                {!validDocuments.aadhar_back && (
+                  <span className="text-red-500 ml-1 text-xl">*</span>
+                )}
               </Label>
               <Input
                 id="aadhar_back"
@@ -418,7 +435,9 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="medicalCertificate">
                 Medical Certificate (Max 5MB)
-                {!validDocuments.medicalCertificate && <span className="text-red-500 ml-1 text-xl">*</span>}
+                {!validDocuments.medicalCertificate && (
+                  <span className="text-red-500 ml-1 text-xl">*</span>
+                )}
               </Label>
               <Input
                 id="medicalCertificate"
@@ -453,7 +472,9 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="dob_certificate">
                 DOB Certificate (Max 5MB)
-                {!validDocuments.dob_certificate && <span className="text-red-500 ml-1 text-xl">*</span>}
+                {!validDocuments.dob_certificate && (
+                  <span className="text-red-500 ml-1 text-xl">*</span>
+                )}
               </Label>
               <Input
                 id="dob_certificate"
