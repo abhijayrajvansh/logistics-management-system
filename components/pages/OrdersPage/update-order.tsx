@@ -25,7 +25,6 @@ interface UpdateOrderFormProps {
 
 export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFormProps) {
   const [formData, setFormData] = useState({
-    shipper_details: '',
     receiver_details: '',
     total_boxes_count: '',
     dimensions: '',
@@ -69,7 +68,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           }
 
           setFormData({
-            shipper_details: data.shipper_details || '',
             receiver_details: data.receiver_details || '',
             total_boxes_count: data.total_boxes_count?.toString() || '',
             dimensions: data.dimensions || '',

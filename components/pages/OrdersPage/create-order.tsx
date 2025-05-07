@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
 import {
   Select,
   SelectContent,
@@ -22,10 +23,18 @@ interface CreateOrderFormProps {
 }
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
-  const { clients, isLoading } = useClients();
+  const { clients, isLoading: isLoadingClients } = useClients();
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+
+  const [isManualClientEntry, setIsManualClientEntry] = useState(false);
+  const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+
   const [formData, setFormData] = useState({
-    shipper_details: '',
+    receiver_name: '',
     receiver_details: '',
+    receiver_contact: '',
     total_boxes_count: '',
     dimensions: '',
     total_order_weight: '',
@@ -60,43 +69,121 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     generateUniqueId();
   }, []);
 
-  const handleClientChange = (clientId: string) => {
-    const selectedClient = clients.find((client) => client.id === clientId);
-    if (selectedClient) {
-      // Handle Firestore timestamp format
-      const tatValue = selectedClient.current_tat;
-      let tatDate = '';
-      
-      try {
-        if (tatValue) {
-          // Handle Firestore Timestamp
-          if (typeof tatValue === 'object' && tatValue !== null && 'seconds' in tatValue) {
-            const timestamp = tatValue as { seconds: number };
-            tatDate = new Date(timestamp.seconds * 1000).toISOString().split('T')[0];
-          }
-          // Handle regular Date object
-          else if (tatValue instanceof Date) {
-            tatDate = tatValue.toISOString().split('T')[0];
-          }
-        }
-      } catch (error) {
-        console.error('Error formatting TAT date:', error);
-      }
-      
-      setFormData(prev => ({
+  const handleClientChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualClientEntry(true);
+      setSelectedClient('');
+      setFormData((prev) => ({
         ...prev,
-        client_details: selectedClient.clientName,
-        shipper_details: `${selectedClient.clientName}\n${selectedClient.clientDetails}`,
-        tat: tatDate,
+        client_details: '',
       }));
+    } else {
+      setIsManualClientEntry(false);
+      setSelectedClient(value);
+      const client = clients.find((c) => c.id === value);
+      if (client) {
+        let tatDate = '';
+        try {
+          if (client.current_tat) {
+            // Handle Firestore Timestamp
+            if (
+              typeof client.current_tat === 'object' &&
+              client.current_tat !== null &&
+              'seconds' in client.current_tat
+            ) {
+              const timestamp = client.current_tat as { seconds: number };
+              tatDate = new Date(timestamp.seconds * 1000).toISOString().split('T')[0];
+            }
+            // Handle regular Date object
+            else if (client.current_tat instanceof Date) {
+              tatDate = client.current_tat.toISOString().split('T')[0];
+            }
+          }
+        } catch (error) {
+          console.error('Error formatting TAT date:', error);
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          client_details: client.clientName,
+          tat: tatDate,
+          charge_basis: client.rateCard.preferance,
+        }));
+      }
+    }
+  };
+
+  const calculatePrice = (client: any, boxesCount: string, weight: string) => {
+    if (!client?.rateCard) {
+      return;
+    }
+
+    const chargeBasis = client.rateCard.preferance;
+    let calculatedPrice = 0;
+
+    if (chargeBasis === 'Per Boxes' && boxesCount) {
+      // Calculate price based on boxes
+      const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      calculatedPrice = parseInt(boxesCount) * pricePerBox;
+    } else if (chargeBasis === 'By Weight' && weight) {
+      // Calculate price based on weight
+      const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      const minPriceWeight = parseFloat(client.rateCard.minPriceWeight?.toString() || '0');
+
+      calculatedPrice = parseInt(weight) * pricePerKg;
+
+      // If calculated price is less than minimum price weight, use minimum price weight
+      if (calculatedPrice < minPriceWeight) {
+        calculatedPrice = minPriceWeight;
+      }
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      price: calculatedPrice > 0 ? calculatedPrice.toString() : '',
+    }));
+  };
+
+  const handleReceiverChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualReceiverEntry(true);
+      setSelectedReceiver('');
+      setFormData((prev) => ({
+        ...prev,
+        receiver_name: '',
+        receiver_details: '',
+        receiver_contact: '',
+      }));
+    } else {
+      setIsManualReceiverEntry(false);
+      setSelectedReceiver(value);
+      const receiver = receivers.find((r) => r.id === value);
+      if (receiver) {
+        setFormData((prev) => ({
+          ...prev,
+          receiver_name: receiver.receiverName,
+          receiver_details: receiver.receiverDetails,
+          receiver_contact: receiver.receiverContact,
+        }));
+      }
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [field]: value,
-    });
+    }));
+
+    // Recalculate price when boxes count or weight changes
+    if ((field === 'total_boxes_count' || field === 'total_order_weight') && selectedClient) {
+      const client = clients.find((c) => c.id === selectedClient);
+      calculatePrice(
+        client,
+        field === 'total_boxes_count' ? value : formData.total_boxes_count,
+        field === 'total_order_weight' ? value : formData.total_order_weight,
+      );
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -125,14 +212,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
       // Reset form after successful submission
       setFormData({
-        shipper_details: '',
+        receiver_name: '',
         receiver_details: '',
+        receiver_contact: '',
         total_boxes_count: '',
-
         dimensions: '',
         total_order_weight: '',
         lr_no: '',
-
         tat: '',
         charge_basis: '',
         docket_id: '',
@@ -182,30 +268,102 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="client">Client</Label>
-            <Select disabled={isLoading} onValueChange={handleClientChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={isLoading ? 'Loading clients...' : 'Select a client'} />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.clientName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isManualClientEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingClients}
+                  onValueChange={handleClientChange}
+                  value={selectedClient}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={isLoadingClients ? 'Loading clients...' : 'Select a client'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New Client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.clientName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter client name"
+                  value={formData.client_details}
+                  onChange={(e) => handleInputChange('client_details', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className='bg-red-500 hover:bg-red-400 text-white cursor-pointer'
+                  size="icon"
+                  onClick={() => {
+                    setIsManualClientEntry(false);
+                    setSelectedClient('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="receiver">Receiver</Label>
+            {!isManualReceiverEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingReceivers}
+                  onValueChange={handleReceiverChange}
+                  value={selectedReceiver}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        isLoadingReceivers ? 'Loading receivers...' : 'Select a receiver'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New Receiver</SelectItem>
+                    {receivers.map((receiver) => (
+                      <SelectItem key={receiver.id} value={receiver.id}>
+                        {receiver.receiverName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter receiver name"
+                  value={formData.receiver_name}
+                  onChange={(e) => handleInputChange('receiver_name', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className='bg-red-500 hover:bg-red-400 text-white cursor-pointer'
+                  size="icon"
+                  onClick={() => {
+                    setIsManualReceiverEntry(false);
+                    setSelectedReceiver('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="shipper_details">Shipper Details</Label>
-            <Input
-              id="shipper_details"
-              placeholder="Shipper details will auto-populate from client selection"
-              value={formData.shipper_details}
-              onChange={(e) => handleInputChange('shipper_details', e.target.value)}
-              required
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
             <Input
@@ -213,6 +371,16 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               placeholder="Enter receiver details"
               value={formData.receiver_details}
               onChange={(e) => handleInputChange('receiver_details', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiver_contact">Receiver Contact</Label>
+            <Input
+              id="receiver_contact"
+              placeholder="Enter receiver contact"
+              value={formData.receiver_contact}
+              onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
               required
             />
           </div>
@@ -342,15 +510,19 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             type="button"
             variant="outline"
             onClick={() => {
-              setFormData({
-                shipper_details: '',
-                receiver_details: '',
-                total_boxes_count: '',
+              // Reset selected dropdown states
+              setSelectedClient('');
+              setSelectedReceiver('');
 
+              // Reset form data
+              setFormData({
+                receiver_name: '',
+                receiver_details: '',
+                receiver_contact: '',
+                total_boxes_count: '',
                 dimensions: '',
                 total_order_weight: '',
                 lr_no: '',
-
                 tat: '',
                 charge_basis: '',
                 docket_id: '',

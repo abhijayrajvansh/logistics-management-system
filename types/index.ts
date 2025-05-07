@@ -29,8 +29,9 @@ export type Order = {
   invoice: string;
   lr_no: string;
   price: number;
+  receiver_name: string;
   receiver_details: string;
-  shipper_details: string;
+  receiver_contact: string;
   status: string;
   tat: Date;
   total_boxes_count: number;
@@ -95,3 +96,11 @@ export type ClientRateCard = {
   pricePerPref: number;
   minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };
+
+export type ReceiverDetails = {
+  id: string;
+  receiverId: string;
+  receiverName: string;
+  receiverDetails: string;
+  receiverContact: string;
+}

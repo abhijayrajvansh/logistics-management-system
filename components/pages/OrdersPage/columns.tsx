@@ -86,10 +86,6 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Client',
   },
   {
-    accessorKey: 'shipper_details',
-    header: 'Shipper Details',
-  },
-  {
     accessorKey: 'receiver_details',
     header: 'Receiver Details',
   },
