@@ -148,12 +148,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDriver) {
-      toast.error('Please select a driver');
-      return;
-    }
 
-    // Validate currentStatus for active trips
+    // Only validate currentStatus for active trips
     if (formData.type === 'active' && formData.currentStatus === 'NA') {
       toast.error('Please select a valid status (Delivering or Returning) for active trip');
       return;
@@ -168,6 +164,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         startDate: new Date(formData.startDate),
         numberOfStops: Number(formData.numberOfStops),
         currentStatus: formData.currentStatus,
+        driver: selectedDriver?.id || 'Not Assigned',
+        truck: selectedDriver?.driverTruckId || 'Not Assigned'
       };
 
       // Add the trip to Firestore
@@ -290,7 +288,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               placeholder="Enter truck number (or select driver)"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
-              required
             />
           </div>
           <div className="space-y-2">
@@ -403,7 +400,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || isGeneratingId || isLoadingDrivers || !selectedDriver}
+            disabled={isSubmitting || isGeneratingId || isLoadingDrivers}
           >
             {isSubmitting ? 'Creating Trip...' : 'Create Trip'}
           </Button>
