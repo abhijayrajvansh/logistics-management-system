@@ -15,7 +15,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { FaTruck } from 'react-icons/fa';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -25,7 +24,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <a href="/dashboard">
-                <span className="text-base font-semibold text-xl">Jaiz Logistics.</span>
+                <div className='flex items-center gap-2'>
+                  <img
+                    src="/logo/jaiz-logistics-logo.png"
+                    alt="jaiz-logistics-logo"
+                    className="h-8 rounded-lg"
+                  />
+                  <span className="text-base font-medium text-lg">Jaiz Logistics Inc.</span>
+                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -33,8 +39,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <AdminNavPanel />
-        <UserNavDocuments />
-        <ControlNavPanel className="mt-auto" />
+        <UserNavDocuments className='hidden'/>
+        <ControlNavPanel className="mt-auto hidden" />
       </SidebarContent>
       <SidebarFooter>
         <UserNavProfile />

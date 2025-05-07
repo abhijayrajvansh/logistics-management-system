@@ -39,12 +39,12 @@ const documents = [
   },
 ];
 
-export function UserNavDocuments() {
+export function UserNavDocuments({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   // const { isMobile } = useSidebar();
   const pathname = usePathname();
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden hidden">
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden" {...props}>
       <SidebarGroupLabel>Documents</SidebarGroupLabel>
       <SidebarMenu>
         {documents.map((item) => (

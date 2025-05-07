@@ -1,19 +1,6 @@
 'use client';
 
 import {
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from '@dnd-kit/core';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { arrayMove } from '@dnd-kit/sortable';
-import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
@@ -61,10 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// Import the CreateTripForm component
 import { CreateTripForm } from './create-trip';
-import { Trip } from './columns';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -78,6 +62,12 @@ export function DataTable<TData, TValue>({
   pastTripData?: TData[];
 }) {
   const [data, setData] = React.useState(() => initialData);
+
+  // Update data when initialData changes
+  React.useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -88,22 +78,21 @@ export function DataTable<TData, TValue>({
   });
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const sortableId = React.useId();
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
+  // Create separate column sets for each table type
+  const unassignedColumns = columns.filter(
+    (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),
   );
 
-  // Update to use data with unknown structure
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map((item: any, index) => item.id || index) || [],
-    [data],
+  const activeColumns = columns.filter((col) => !(col.id === 'actions'));
+
+  const pastColumns = columns.filter(
+    (col) => !('accessorKey' in col && col.accessorKey === 'currentStatus'),
   );
 
+  // Update table definitions with specific columns
   const table = useReactTable({
     data,
-    columns,
+    columns: unassignedColumns, // Use filtered columns for unassigned trips
     state: {
       sorting,
       columnVisibility,
@@ -129,7 +118,7 @@ export function DataTable<TData, TValue>({
   // Create separate tables for active and past trips
   const activeTripsTable = useReactTable({
     data: activeTripData,
-    columns,
+    columns: activeColumns, // Use all columns including currentStatus
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -141,7 +130,7 @@ export function DataTable<TData, TValue>({
 
   const pastTripsTable = useReactTable({
     data: pastTripData,
-    columns,
+    columns: pastColumns, // Use filtered columns for past trips
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -151,85 +140,46 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
-    }
-  }
-
   const handleTripSuccess = () => {
-    // Close the dialog after successful trip creation
     setDialogOpen(false);
-
-    // Trigger a data refresh - we should implement a proper data fetching mechanism
-    // This could be calling a function passed from the parent component
-    // For example, if using React Query or a custom hook:
-    // refetchTripData();
-
-    // For now, let's use a simple approach to avoid the issue:
-    // Add a small delay before updating state to prevent Maximum update depth error
-    setTimeout(() => {
-      // This timeout prevents React from entering an infinite update loop
-      // In a production app, you would use a proper state management solution like
-      // React Query, SWR, or Redux to handle data fetching and updates
-      console.log('Trip created successfully, data should be refreshed');
-
-      // If the parent component passed a refetch function:
-      // if (refetchTrips) {
-      //   refetchTrips();
-      // }
-    }, 0);
   };
 
   const renderTable = (tableInstance: any) => (
     <div className="overflow-hidden rounded-lg border">
-      <DndContext
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-        sensors={sensors}
-        id={sortableId}
-      >
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-muted">
-            {tableInstance.getHeaderGroups().map((headerGroup: any) => (
-              <TableRow key={headerGroup.id} className="text-[13px]">
-                {headerGroup.headers.map((header: any) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+      <Table>
+        <TableHeader className="sticky top-0 z-10 bg-muted">
+          {tableInstance.getHeaderGroups().map((headerGroup: any) => (
+            <TableRow key={headerGroup.id} className="text-[13px]">
+              {headerGroup.headers.map((header: any) => (
+                <TableHead key={header.id} colSpan={header.colSpan}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody className="**:data-[slot=table-cell]:first:w-8 text-[12px]">
+          {tableInstance.getRowModel().rows?.length ? (
+            tableInstance.getRowModel().rows.map((row: any) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell: any) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody className="**:data-[slot=table-cell]:first:w-8 text-[12px]">
-            {tableInstance.getRowModel().rows?.length ? (
-              tableInstance.getRowModel().rows.map((row: any) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell: any) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 
@@ -307,19 +257,14 @@ export function DataTable<TData, TValue>({
   );
 
   return (
-    <Tabs defaultValue="unassigned" className="flex w-full flex-col justify-start gap-6">
-      {/* Header with tabs */}
+    <div className="flex w-full flex-col gap-8">
+      {/* Header */}
       <div className="flex justify-between px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-semibold">Manage Trips</h1>
           <p className="text-[14px] text-black/70 mt-1">
             Create, view and manage your trips at ease.
           </p>
-          <TabsList className="mt-4">
-            <TabsTrigger value="unassigned">Unassigned Trips</TabsTrigger>
-            <TabsTrigger value="active">Active Trips</TabsTrigger>
-            <TabsTrigger value="past">Past Trips</TabsTrigger>
-          </TabsList>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -335,35 +280,31 @@ export function DataTable<TData, TValue>({
                 Fill out the form below to create a new trip. Click submit when you're done.
               </DialogDescription>
             </DialogHeader>
-            {/* Use the CreateTripForm component */}
             <CreateTripForm onSuccess={handleTripSuccess} />
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Unassigned Trips Table */}
-      <TabsContent
-        value="unassigned"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      {/* Unassigned Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Unassigned Trips</h2>
         {renderTable(table)}
         {renderPagination(table)}
-      </TabsContent>
+      </div>
 
-      {/* Active Trips Table */}
-      <TabsContent
-        value="active"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      {/* Active Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Active Trips</h2>
         {renderTable(activeTripsTable)}
         {renderPagination(activeTripsTable)}
-      </TabsContent>
+      </div>
 
-      {/* Past Trips Table */}
-      <TabsContent value="past" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+      {/* Past Trips Section */}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Past Trips</h2>
         {renderTable(pastTripsTable)}
         {renderPagination(pastTripsTable)}
-      </TabsContent>
-    </Tabs>
+      </div>
+    </div>
   );
 }

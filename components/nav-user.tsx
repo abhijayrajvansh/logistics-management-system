@@ -6,9 +6,10 @@ import {
   IconLogout,
   IconMail,
   IconUserCircle,
-  IconUserFilled
+  IconUserFilled,
 } from '@tabler/icons-react';
-
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -26,12 +27,32 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-// import { useLogout } from '@/hooks/useAuth';
+import { auth } from '@/firebase/auth';
+import { signOut } from 'firebase/auth';
 
 export function UserNavProfile() {
   const { isMobile } = useSidebar();
-  // const logout = useLogout();
   const { user } = useAuth();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const getUsername = (email: string | null | undefined) => {
+    if (!email) return '';
+    return email.split('@')[0];
+  };
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      setIsLoggingOut(true);
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -43,15 +64,16 @@ export function UserNavProfile() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                {/* <AvatarImage src={user?.avatar} alt={user?.name} /> */}
                 <AvatarFallback className="rounded">
-                  <IconUserFilled size={25}/>
+                  <IconUserFilled size={25} />
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="grid flex-1 text-left text-sm leading-tight">
-                {/* <span className="truncate font-medium">{user?.name}</span> */}
-                <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
+                <span className="text-black truncate text-xs">{user?.displayName}</span>
+                <span className="text-muted-foreground truncate text-xs">
+                  ID: {getUsername(user?.email)}
+                </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -65,48 +87,42 @@ export function UserNavProfile() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {/* <AvatarImage src={user?.avatar} alt={user?.name} /> */}
                   <AvatarFallback className="rounded-lg">
-                  <IconUserFilled size={25}/>
+                    <IconUserFilled size={25} />
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  {/* <span className="truncate font-medium">{user?.name}</span> */}
-                  <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
+                  <span className="text-black truncate text-xs">{user?.displayName}</span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    ID: {getUsername(user?.email)}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem disabled>
-                <IconUserCircle />
+                <IconUserCircle className="mr-2" />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem disabled>
-                <IconMail />
-                Mails
+                <IconMail className="mr-2" />
+                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                // logout.mutate();
-              }}
-              // disabled={logout.isPending}
-            >
-              {/* {logout.isPending ? (
+            <DropdownMenuItem variant="destructive" onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? (
                 <>
-                  <IconLoader className="animate-spin" />
+                  <IconLoader className="animate-spin mr-2" />
                   Logging out...
                 </>
               ) : (
                 <>
-                  <IconLogout />
+                  <IconLogout className="mr-2" />
                   Log out
                 </>
-              )} */}
+              )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

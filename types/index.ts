@@ -7,7 +7,16 @@ export type FirebaseConfig = {
   appId: string;
   measurementId: string;
   databaseURL: string;
-}
+};
+
+export type User = {
+  userId: string;
+  email: string;
+  password: string;
+  displayName: string;
+  role: 'admin' | 'manager' | 'driver';
+  createdAt: Date;
+};
 
 export type Order = {
   order_id: string;
@@ -17,10 +26,8 @@ export type Order = {
   created_at: Date;
   current_location: string;
   dimensions: string;
-  eway_bill_no: string;
   invoice: string;
   lr_no: string;
-  packing_type: string;
   price: number;
   receiver_details: string;
   shipper_details: string;
@@ -29,10 +36,10 @@ export type Order = {
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
-}
+};
 
 export type Trip = {
-  id: string; 
+  id: string;
   tripId: string;
   startingPoint: string;
   destination: string;
@@ -40,16 +47,51 @@ export type Trip = {
   numberOfStops: number;
   startDate: Date;
   truck: string;
-  status: string;
+  type: 'unassigned' | 'active' | 'past';
+  currentStatus?: 'Delivering' | 'Returning' | 'NA';
 };
 
+export type TripOrders = {
+  tripId: string;
+  orderIds: string[];
+  updatedAt: Date;
+};
 
 export type Driver = {
   id: string;
   driverId: string;
   driverName: string;
-  driverTruckNo: string;
+  status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber?: string;
-  licenseNumber?: string;
-  status?: string;
+  languages: string[];
+  driverTruckId?: string;
+  driverDocuments?: DriverDocuments;
+};
+
+export type DriverDocuments = {
+  aadhar_front: string;
+  aadhar_back: string;
+  aadhar_number: string;
+  dob: Date;
+  dob_certificate: string;
+  license: string;
+  license_number: string;
+  license_expiry: Date;
+  medicalCertificate: string;
+  status: 'Verified' | 'Pending';
+};
+
+export type Client = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientDetails: string;
+  current_tat: Date;
+  rateCard: ClientRateCard;
+};
+
+export type ClientRateCard = {
+  preferance: 'By Weight' | 'Per Boxes';
+  pricePerPref: number;
+  minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };

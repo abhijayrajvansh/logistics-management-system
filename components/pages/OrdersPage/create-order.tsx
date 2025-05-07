@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
-import { shippers, ShipperData } from '@/lib/mock-data';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
+import useClients from '@/hooks/useClients';
 import {
   Select,
   SelectContent,
@@ -22,15 +22,14 @@ interface CreateOrderFormProps {
 }
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
+  const { clients, isLoading } = useClients();
   const [formData, setFormData] = useState({
     shipper_details: '',
     receiver_details: '',
     total_boxes_count: '',
-    packing_type: '',
     dimensions: '',
     total_order_weight: '',
     lr_no: '',
-    eway_bill_no: '',
     tat: '',
     charge_basis: '',
     docket_id: '',
@@ -43,7 +42,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingId, setIsGeneratingId] = useState(true);
-  const [selectedShipper, setSelectedShipper] = useState<ShipperData | null>(null);
 
   // Generate a unique docket ID when the component mounts
   useEffect(() => {
@@ -62,24 +60,35 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     generateUniqueId();
   }, []);
 
-  // Effect to populate form fields when shipper is selected
-  useEffect(() => {
-    if (selectedShipper) {
-      setFormData((prevData) => ({
-        ...prevData,
-        shipper_details: selectedShipper.name,
-        receiver_details: selectedShipper.defaultReceiverDetails,
-        tat: selectedShipper.defaultTAT,
-        charge_basis: selectedShipper.defaultChargeBasis,
-        client_details: selectedShipper.clientDetails,
+  const handleClientChange = (clientId: string) => {
+    const selectedClient = clients.find((client) => client.id === clientId);
+    if (selectedClient) {
+      // Handle Firestore timestamp format
+      const tatValue = selectedClient.current_tat;
+      let tatDate = '';
+      
+      try {
+        if (tatValue) {
+          // Handle Firestore Timestamp
+          if (typeof tatValue === 'object' && tatValue !== null && 'seconds' in tatValue) {
+            const timestamp = tatValue as { seconds: number };
+            tatDate = new Date(timestamp.seconds * 1000).toISOString().split('T')[0];
+          }
+          // Handle regular Date object
+          else if (tatValue instanceof Date) {
+            tatDate = tatValue.toISOString().split('T')[0];
+          }
+        }
+      } catch (error) {
+        console.error('Error formatting TAT date:', error);
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        client_details: selectedClient.clientName,
+        shipper_details: `${selectedClient.clientName}\n${selectedClient.clientDetails}`,
+        tat: tatDate,
       }));
-    }
-  }, [selectedShipper]);
-
-  const handleShipperChange = (shipperId: string) => {
-    const shipper = shippers.find((s) => s.id === shipperId);
-    if (shipper) {
-      setSelectedShipper(shipper);
     }
   };
 
@@ -111,7 +120,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       });
 
       toast.success('Order created successfully!', {
-        description: `Order ID: ${orderRef.id}`,
+        description: `Docket ID: ${formData.docket_id}`,
       });
 
       // Reset form after successful submission
@@ -119,11 +128,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         shipper_details: '',
         receiver_details: '',
         total_boxes_count: '',
-        packing_type: '',
+
         dimensions: '',
         total_order_weight: '',
         lr_no: '',
-        eway_bill_no: '',
+
         tat: '',
         charge_basis: '',
         docket_id: '',
@@ -133,22 +142,19 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         invoice: '', // Default value for the invoice enum
         status: '',
       });
-      setSelectedShipper(null);
 
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
 
-
       // Add small delay before refreshing to allow toast to be visible
-    
+
       // setTimeout(() => {
       //   window.location.reload();
       // }, 1000);
 
       // ps: just add toast, no need to refresh - using real time api
-    
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to create order', {
@@ -175,19 +181,30 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="shipper_details">Shipper Details</Label>
-            <Select value={selectedShipper?.id || ''} onValueChange={handleShipperChange}>
+            <Label htmlFor="client">Client</Label>
+            <Select disabled={isLoading} onValueChange={handleClientChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a shipper" />
+                <SelectValue placeholder={isLoading ? 'Loading clients...' : 'Select a client'} />
               </SelectTrigger>
               <SelectContent>
-                {shippers.map((shipper) => (
-                  <SelectItem key={shipper.id} value={shipper.id}>
-                    {shipper.name}
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.clientName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="shipper_details">Shipper Details</Label>
+            <Input
+              id="shipper_details"
+              placeholder="Shipper details will auto-populate from client selection"
+              value={formData.shipper_details}
+              onChange={(e) => handleInputChange('shipper_details', e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
@@ -196,16 +213,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               placeholder="Enter receiver details"
               value={formData.receiver_details}
               onChange={(e) => handleInputChange('receiver_details', e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="client_details">Client Details</Label>
-            <Input
-              id="client_details"
-              placeholder="Enter client details"
-              value={formData.client_details}
-              onChange={(e) => handleInputChange('client_details', e.target.value)}
               required
             />
           </div>
@@ -223,16 +230,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="packing_type">Packing Type</Label>
-            <Input
-              id="packing_type"
-              placeholder="Enter packing type"
-              value={formData.packing_type}
-              onChange={(e) => handleInputChange('packing_type', e.target.value)}
-              required
-            />
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="dimensions">Dimensions</Label>
             <Input
@@ -243,9 +241,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="total_order_weight">Total Weight (kg)</Label>
             <Input
@@ -257,6 +252,25 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="charge_basis">Charge Basis</Label>
+            <Select
+              value={formData.charge_basis}
+              onValueChange={(value) => handleInputChange('charge_basis', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select charge basis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="By Weight">By Weight</SelectItem>
+                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="lr_no">LR Number</Label>
             <Input
@@ -268,19 +282,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="eway_bill_no">E-way Bill Number</Label>
-            <Input
-              id="eway_bill_no"
-              placeholder="Enter e-way bill number"
-              value={formData.eway_bill_no}
-              onChange={(e) => handleInputChange('eway_bill_no', e.target.value)}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
             <Label htmlFor="tat">TAT (Turn Around Time)</Label>
             <Input
               id="tat"
@@ -290,39 +291,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="charge_basis">Charge Basis</Label>
-            <Select
-              value={formData.charge_basis}
-              onValueChange={(value) => handleInputChange('charge_basis', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select charge basis" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Order Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleInputChange('status', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select order status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-                <SelectItem value="Assigned">Assigned</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="price">Price</Label>
             <Input
@@ -340,12 +311,27 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               value={formData.invoice}
               onValueChange={(value) => handleInputChange('invoice', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select invoice type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="paid">paid</SelectItem>
                 <SelectItem value="to pay">to pay</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Order Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleInputChange('status', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select order status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
+                <SelectItem value="Assigned">Assigned</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -360,11 +346,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 shipper_details: '',
                 receiver_details: '',
                 total_boxes_count: '',
-                packing_type: '',
+
                 dimensions: '',
                 total_order_weight: '',
                 lr_no: '',
-                eway_bill_no: '',
+
                 tat: '',
                 charge_basis: '',
                 docket_id: '',
@@ -374,7 +360,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 invoice: '',
                 status: '',
               });
-              setSelectedShipper(null);
 
               // Generate a new unique docket ID after reset
               const generateNewId = async () => {

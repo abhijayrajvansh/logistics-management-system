@@ -1,45 +1,72 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Driver } from '@/types';
 
 export function useDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchDrivers = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+    setIsLoading(true);
 
-        const driversCollection = collection(db, 'drivers');
-        const snapshot = await getDocs(driversCollection);
+    try {
+      // Set up real-time listener for drivers collection
+      const driversRef = collection(db, 'drivers');
+      const unsubscribe = onSnapshot(
+        driversRef,
+        (snapshot) => {
+          const fetchedDrivers = snapshot.docs.map((doc) => {
+            const data = doc.data();
 
-        const fetchedDrivers = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          driverId: doc.data().driverId || '',
-          driverName: doc.data().driverName || '',
-          driverTruckNo: doc.data().driverTruckNo || '',
-          phoneNumber: doc.data().phoneNumber || '',
-          licenseNumber: doc.data().licenseNumber || '',
-          status: doc.data().status || 'active',
-        }));
+            const driverResponse = {
+              id: doc.id,
+              driverId: data.driverId || '',
+              driverName: data.driverName || '',
+              status: data.status || 'Inactive',
+              phoneNumber: data.phoneNumber || '',
+              languages: Array.isArray(data.languages) ? data.languages : [],
+              driverTruckId: data.driverTruckId || '',
+              driverDocuments: data.driverDocuments || {
+                aadhar: '',
+                dob: new Date(),
+                license: '',
+                insurance: '',
+                medicalCertificate: '',
+                panCard: '',
+              },
+            } as Driver;
 
-        setDrivers(fetchedDrivers);
-      } catch (err) {
-        console.error('Error fetching drivers:', err);
-        setError('Failed to load drivers');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+            return driverResponse;
+          });
 
-    fetchDrivers();
+          setDrivers(fetchedDrivers);
+          setIsLoading(false);
+        },
+        (err) => {
+          console.error('Error fetching drivers:', err);
+          setError(err as Error);
+          setIsLoading(false);
+        },
+      );
+
+      // Clean up listener on unmount
+      return () => {
+        unsubscribe();
+      };
+    } catch (err) {
+      console.error('Error setting up drivers listener:', err);
+      setError(err as Error);
+      setIsLoading(false);
+    }
   }, []);
 
-  return { drivers, isLoading, error };
+  return {
+    drivers,
+    isLoading,
+    error,
+  };
 }
 
 export default useDrivers;

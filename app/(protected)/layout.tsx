@@ -1,24 +1,36 @@
+'use client';
+
 import React from 'react';
-import { redirect } from 'next/navigation';
-import { AuthProvider } from '@/app/context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-// import { getCurrentUser } from '@/firebase/firebase.auth';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  // const user = await getCurrentUser();
-  // if (!user) redirect('/login');
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    // <AuthProvider user={user}>
-      <SidebarProvider>
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          {children}
-        </SidebarInset>
-      </SidebarProvider>
-    // </AuthProvider>
+    <SidebarProvider>
+      <AppSidebar variant="inset" />
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { FormEvent, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { IoIosWarning } from 'react-icons/io';
-import env from '@/constants';
 import { IconLoader } from '@tabler/icons-react';
-// import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import env from '@/constants';
 
 interface FormData {
   email: string;
@@ -22,31 +23,31 @@ export function LoginForm({
   urlError,
   ...props
 }: React.ComponentProps<'div'> & { urlError?: string | null }) {
+  const router = useRouter();
+  const { login, googleAuth } = useAuth();
 
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
   });
 
-  // const { login, googleAuth } = useAuth();
-  const login = {
-    isPending: false,
-  };
-  
-
-  const convertUserIDtoEmail = (userID: string) => {
-    const convertedEmail = userID + env.USERID_EMAIL;
-    return convertedEmail;
-  };
-
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const emailAddress = convertUserIDtoEmail(formData.email);
-    console.log({ ...formData, email: emailAddress });
+    try {
+      await login.mutate({ email: formData.email + env.USERID_EMAIL, password: formData.password });
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    // googleAuth.mutate();
+  const handleGoogleAuth = async () => {
+    try {
+      await googleAuth.mutate();
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Google login failed:', error);
+    }
   };
 
   return (
@@ -54,7 +55,6 @@ export function LoginForm({
       <Card className="border-none shadow-none">
         <CardHeader>
           <CardTitle className="text-3xl mb-3">Login</CardTitle>
-
           <CardDescription className="text-black text-base font-medium">
             Enter your credentials
           </CardDescription>
@@ -67,11 +67,10 @@ export function LoginForm({
                   User ID
                 </Label>
                 <Input
-                  className="py-5 hover:border-black transition-all ease-in-out "
+                  className="py-5 hover:border-black transition-all ease-in-out"
                   id="email"
                   name="email"
-                  type="string"
-                  placeholder="123456789"
+                  placeholder="123456"
                   required
                   disabled={login.isPending}
                   value={formData.email}
@@ -97,18 +96,14 @@ export function LoginForm({
                 />
               </div>
 
-              {/* {(login.error || urlError) && (
+              {(login.error || urlError) && (
                 <div className="text-red-600 bg-red-100 px-2 py-1 rounded text-sm border border-red-300">
-                  {env.NODE_ENV === 'dev' ? (
-                    (login.error as Error)?.message || urlError
-                  ) : (
-                    <p className="flex items-center gap-2">
-                      <IoIosWarning size={21} />
-                      {urlError || 'Invalid login credentials. Try again!'}
-                    </p>
-                  )}
+                  <p className="flex items-center gap-2">
+                    <IoIosWarning size={21} />
+                    {urlError || 'Invalid login credentials. Try again!'}
+                  </p>
                 </div>
-              )} */}
+              )}
 
               <div className="flex flex-col gap-2">
                 <Button
@@ -116,7 +111,7 @@ export function LoginForm({
                   className="w-full text-base py-5 mb-1 bg-blue-600 hover:border-black cursor-pointer"
                   disabled={login.isPending}
                 >
-                  {login.isPending && <IconLoader className="animate-spin"/>}
+                  {login.isPending && <IconLoader className="animate-spin" />}
                   {login.isPending ? 'Logging in...' : 'Login'}
                 </Button>
 
@@ -129,14 +124,15 @@ export function LoginForm({
             </div>
           </form>
           <Button
-            disabled={login.isPending}
+            disabled={googleAuth.isPending}
             onClick={handleGoogleAuth}
             variant="outline"
             size={'default'}
             className="w-full py-5 hover:border-black/40 transition-all mt-3 ease-in-out text-[15px] cursor-pointer"
           >
-            <FcGoogle size={18} />
-            Log in with Google
+            {googleAuth.isPending && <IconLoader className="animate-spin mr-2" />}
+            <FcGoogle size={18} className="mr-2" />
+            {googleAuth.isPending ? 'Signing in...' : 'Sign in with Google'}
           </Button>
         </CardContent>
       </Card>

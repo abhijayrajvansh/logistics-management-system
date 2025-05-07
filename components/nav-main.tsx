@@ -11,7 +11,8 @@ import {
 
 import { usePathname, useRouter } from 'next/navigation';
 import { AiFillDashboard } from "react-icons/ai";
-import { FaBoxesStacked, FaTruck } from "react-icons/fa6";
+import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
+import { FaHandshake } from "react-icons/fa6";
 
 const navMain = [
   {
@@ -27,36 +28,26 @@ const navMain = [
   {
     title: 'Trips',
     url: '/dashboard/trips',
-    icon: FaTruck,
-  }
-  // {
-  //   title: 'Team',
-  //   url: '/teams',
-  //   icon: IconUsers,
-  // },
-  // {
-  //   title: 'Lifecycle',
-  //   url: '#',
-  //   icon: IconListDetails,
-  // },
-  // {
-  //   title: 'Analytics',
-  //   url: '#',
-  //   icon: IconChartBar,
-  // },
-  // {
-  //   title: 'Projects',
-  //   url: '#',
-  //   icon: IconFolder,
-  // },
+    icon: FaLocationDot,
+  },
+  {
+    title: 'Drivers',
+    url: '/dashboard/drivers',
+    icon: FaUsersGear,
+  },
+  {
+    title: 'Clients',
+    url: '/dashboard/clients',
+    icon: FaHandshake,
+  },
 ];
 
-export function AdminNavPanel() {
+export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const router = useRouter();
   const pathname = usePathname();
 
   return (
-    <SidebarGroup>
+    <SidebarGroup {...props}>
       {/* admin panel */}
       <SidebarGroupLabel>Navigation Panel</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
