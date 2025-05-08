@@ -21,7 +21,7 @@ interface UseAuthReturn {
   logout: () => Promise<void>;
 }
 
-export function useAuth(): UseAuthReturn {
+export function useHandleAuthentication(): UseAuthReturn {
   const [isLoginPending, setIsLoginPending] = useState(false);
   const [loginError, setLoginError] = useState<Error | null>(null);
 
