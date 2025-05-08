@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/select';
 import { Driver, DriverDocuments } from '@/types';
 import { db } from '@/firebase/database';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
-import { createUserWebhook } from '@/firebase/auth/createUserWebhook';
+import { createNewUser, createUserWebhook } from '@/firebase/auth/createUserWebhook';
 import env from '@/constants';
 import { IconLoader } from '@tabler/icons-react';
 
@@ -182,24 +182,25 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         },
       };
 
-      // Add the driver to Firestore
-      const driversRef = collection(db, 'drivers');
-      const driverDocRef = await addDoc(driversRef, {
-        ...driverData,
-        created_at: new Date(),
-      });
-
       // Generate random 6-digit password
       const randomPassword = Math.floor(100000 + Math.random() * 900000).toString();
 
       // Create user credentials
-      await createUserWebhook({
-        userId: driverDocRef.id, // Using Firestore generated ID
+      const newUser = await createNewUser({
         email: `${driverId}${env.USERID_EMAIL}`,
         password: randomPassword,
         displayName: formData.driverName,
         role: 'driver',
-        createdAt: new Date(),
+      });
+
+      await createUserWebhook(newUser);
+
+      // Add the driver to Firestore
+      const driverDocRef = doc(db, 'drivers', newUser.uid);
+
+      await setDoc(driverDocRef, {
+        ...driverData,
+        created_at: new Date(),
       });
 
       toast.success('Driver Onboarded successfully');
