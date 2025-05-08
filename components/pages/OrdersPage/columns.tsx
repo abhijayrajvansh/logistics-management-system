@@ -13,8 +13,48 @@ import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import { FaRegEye } from "react-icons/fa";
 
 // This type is used to define the shape of our data based on the image schema
+
+// Create a component for the proof cell to manage dialog state
+const ProofCell = ({ row }: { row: any }) => {
+  const order = row.original;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  return (
+    <div className='text-center'>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setIsDialogOpen(true)}
+        disabled={order.proof_of_delivery === 'NA'}
+      >
+        <FaRegEye />
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
+          </DialogHeader>
+          {order.proof_of_delivery !== 'NA' && (
+            <div className="relative aspect-square w-full">
+              <Image
+                src={order.proof_of_delivery.photo}
+                alt="Proof of Delivery"
+                className="object-contain"
+                fill
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -24,13 +64,6 @@ const ActionCell = ({ row }: { row: any }) => {
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
-    // to add toast success message for update
-  };
-
-  const handleDeleteSuccess = () => {
-    // Refresh the page to show updated data
-
-    // to add toast success message for delete
   };
 
   return (
@@ -70,7 +103,6 @@ const ActionCell = ({ row }: { row: any }) => {
         orderId={order.order_id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onSuccess={handleDeleteSuccess}
       />
     </div>
   );
@@ -86,8 +118,24 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Client',
   },
   {
+    accessorKey: 'receiver_name',
+    header: 'Receiver Name',
+  },
+  {
     accessorKey: 'receiver_details',
     header: 'Receiver Details',
+    cell: ({ row }) => {
+      const details: string = row.getValue('receiver_details');
+      return (
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">
+          {details}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'receiver_contact',
+    header: 'Receiver Contact',
   },
   {
     accessorKey: 'total_boxes_count',
@@ -176,6 +224,12 @@ export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
+  },
+
+  {
+    accessorKey: 'proof_of_delivery',
+    header: 'Delivery Proof',
+    cell: ProofCell,
   },
 
   {

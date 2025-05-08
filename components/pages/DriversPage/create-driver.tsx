@@ -20,6 +20,7 @@ import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
 import { createUserWebhook } from '@/firebase/auth/createUserWebhook';
 import env from '@/constants';
+import { IconLoader } from '@tabler/icons-react';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -514,7 +515,14 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting || !areAllDocumentsValid()}>
-            {isSubmitting ? 'Creating...' : 'Create Driver'}
+            {isSubmitting ? (
+              <>
+                <IconLoader className="animate-spin mr-2" />
+                Creating...{' '}
+              </>
+            ) : (
+              'Create Driver'
+            )}
           </Button>
         </div>
       </div>
