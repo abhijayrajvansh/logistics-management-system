@@ -20,7 +20,7 @@ import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
-import { fetchAvailableOrders } from '@/lib/utils';
+import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
