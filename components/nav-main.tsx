@@ -15,6 +15,7 @@ import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
 import { FaHandshake } from "react-icons/fa6";
 import { RiUserReceived2Fill } from "react-icons/ri";
 import { PiUserSquareFill } from "react-icons/pi";
+import { FaTruck } from "react-icons/fa";
 
 const navMain = [
   {
@@ -31,6 +32,11 @@ const navMain = [
     title: 'Trips',
     url: '/dashboard/trips',
     icon: FaLocationDot,
+  },
+  {
+    title: 'Trucks',
+    url: '/dashboard/trucks',
+    icon: FaTruck,
   },
   {
     title: 'Drivers',

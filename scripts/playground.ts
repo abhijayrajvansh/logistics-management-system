@@ -13,9 +13,11 @@ async function seedTrucks() {
     // First check if we already have trucks in the collection
     const trucksCollection = collection(db, 'trucks');
     const existingTrucks = await getDocs(trucksCollection);
-    
+
     if (!existingTrucks.empty) {
-      console.log(`Found ${existingTrucks.size} existing trucks. Skipping seeding to avoid duplicates.`);
+      console.log(
+        `Found ${existingTrucks.size} existing trucks. Skipping seeding to avoid duplicates.`,
+      );
       return;
     }
 
@@ -70,7 +72,7 @@ async function seedTrucks() {
         permitExpiry: new Date('2026-04-23'),
         odoCurrent: 36000,
         odoAtLastService: 32000,
-      }
+      },
     ];
 
     // Add each truck to Firestore

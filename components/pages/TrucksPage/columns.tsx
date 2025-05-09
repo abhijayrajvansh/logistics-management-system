@@ -82,14 +82,16 @@ export const columns: ColumnDef<Truck>[] = [
     cell: ({ row }) => {
       const ownership: string = row.getValue('ownership');
       return (
-        <div
-          className={`font-medium ${
+        <div className='flex justify-start items-center w-full'>
+          <div
+          className={`font-medium px-3 ${
             ownership === 'Owned'
               ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1'
               : 'text-blue-700 bg-blue-200 border text-center rounded-lg border-blue-500 px-1 text-xs'
           }`}
         >
           {ownership}
+        </div>
         </div>
       );
     },
@@ -224,40 +226,42 @@ export const columns: ColumnDef<Truck>[] = [
       return <div className="text-left font-medium">{odoAtLastService.toLocaleString()}</div>;
     },
   },
-  {
-    accessorKey: 'serviceStatus',
-    header: 'Service Due',
-    cell: ({ row }) => {
-      const odoCurrent: number = row.getValue('odoCurrent');
-      const odoAtLastService: number = row.getValue('odoAtLastService');
+  // Uncomment this section if you want to display service status
+  // Note: This requires the service status logic to be implemented
+  // {
+  //   accessorKey: 'serviceStatus',
+  //   header: 'Service Due',
+  //   cell: ({ row }) => {
+  //     const odoCurrent: number = row.getValue('odoCurrent');
+  //     const odoAtLastService: number = row.getValue('odoAtLastService');
 
-      // Calculate kilometers since last service
-      const kmSinceService = odoCurrent - odoAtLastService;
+  //     // Calculate kilometers since last service
+  //     const kmSinceService = odoCurrent - odoAtLastService;
 
-      // Determine if service is due (assuming service is required every 10,000 km)
-      const serviceThreshold = 10000;
-      const isServiceDue = kmSinceService >= serviceThreshold;
-      const isServiceSoonDue = kmSinceService >= serviceThreshold * 0.8 && !isServiceDue;
+  //     // Determine if service is due (assuming service is required every 10,000 km)
+  //     const serviceThreshold = 10000;
+  //     const isServiceDue = kmSinceService >= serviceThreshold;
+  //     const isServiceSoonDue = kmSinceService >= serviceThreshold * 0.8 && !isServiceDue;
 
-      return (
-        <div
-          className={`text-center font-medium rounded-lg text-xs px-2 py-1 ${
-            isServiceDue
-              ? 'bg-red-200 text-red-800 border border-red-500'
-              : isServiceSoonDue
-                ? 'bg-orange-200 text-orange-800 border border-orange-500'
-                : 'bg-green-200 text-green-800 border border-green-500'
-          }`}
-        >
-          {isServiceDue
-            ? `Due (${kmSinceService.toLocaleString()} km)`
-            : isServiceSoonDue
-              ? `Soon (${kmSinceService.toLocaleString()} km)`
-              : `OK (${kmSinceService.toLocaleString()} km)`}
-        </div>
-      );
-    },
-  },
+  //     return (
+  //       <div
+  //         className={`text-center font-medium rounded-lg text-xs px-2 py-1 ${
+  //           isServiceDue
+  //             ? 'bg-red-200 text-red-800 border border-red-500'
+  //             : isServiceSoonDue
+  //               ? 'bg-orange-200 text-orange-800 border border-orange-500'
+  //               : 'bg-green-200 text-green-800 border border-green-500'
+  //         }`}
+  //       >
+  //         {isServiceDue
+  //           ? `Due (${kmSinceService.toLocaleString()} km)`
+  //           : isServiceSoonDue
+  //             ? `Soon (${kmSinceService.toLocaleString()} km)`
+  //             : `OK (${kmSinceService.toLocaleString()} km)`}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: 'actions',
     header: () => <div className="text-center">Actions</div>,

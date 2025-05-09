@@ -1,7 +1,7 @@
 'use client';
 
 import { columns } from './columns';
-import { DataTable } from '../OrdersPage/data-table';
+import { DataTable } from '../TrucksPage/data-table';
 import { SiteHeader } from '@/components/site-header';
 import useTrucks from '@/hooks/useTrucks';
 
