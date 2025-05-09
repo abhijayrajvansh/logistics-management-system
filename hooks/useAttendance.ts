@@ -17,7 +17,8 @@ export function useAttendance() {
         // Fetch drivers directly from Firestore
         const driversRef = collection(db, 'drivers');
         const driversSnapshot = await getDocs(driversRef);
-        const driversData = driversSnapshot.docs.map((doc) =>
+        const driversData = driversSnapshot.docs.map(
+          (doc) =>
             ({
               id: doc.id,
               ...doc.data(),
@@ -51,40 +52,55 @@ export function useAttendance() {
   // Process attendance data to include more details
   const processedAttendance = attendance.map((record) => {
     // Find the corresponding driver
-    const driver = drivers.find((d) => d.driverId === record.driverId);
-    console.log(driver);
+    // Create a lookup map for drivers by id and driverId
+    const driverMap = new Map();
+    drivers.forEach((driver) => {
+      if (driver.id) driverMap.set(driver.id, driver);
+      if (driver.driverId) driverMap.set(driver.driverId, driver);
+    });
+
+    // Try to find driver by driverId from the record
+    let driver = record.driverId ? driverMap.get(record.driverId) : null;
+
+    // If not found, try to find by id as a fallback
+    if (!driver && record.id) {
+      driver = driverMap.get(record.id);
+    }
 
     // Calculate attendance stats
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    const currentMonthAttendance = record.attendance.filter((day) => {
-      // Fix the Timestamp conversion using proper type handling
-      let jsDate: Date;
+    const currentMonthAttendance = record.attendance
+      ? record.attendance.filter((day) => {
+          // Fix the Timestamp conversion using proper type handling
+          let jsDate: Date;
 
-      if (day.date instanceof Timestamp) {
-        // Use Timestamp's toDate() method if available
-        jsDate = day.date.toDate();
-      } else if (typeof day.date === 'object' && day.date !== null && 'seconds' in day.date) {
-        // Handle plain timestamp object with seconds property
-        const timestamp = day.date as { seconds: number };
-        jsDate = new Date(timestamp.seconds * 1000);
-      } else {
-        // Fallback for string or other formats
-        jsDate = new Date(day.date as any);
-      }
+          if (day.date instanceof Timestamp) {
+            // Use Timestamp's toDate() method if available
+            jsDate = day.date.toDate();
+          } else if (typeof day.date === 'object' && day.date !== null && 'seconds' in day.date) {
+            // Handle plain timestamp object with seconds property
+            const timestamp = day.date as { seconds: number };
+            jsDate = new Date(timestamp.seconds * 1000);
+          } else {
+            // Fallback for string or other formats
+            jsDate = new Date(day.date as any);
+          }
 
-      return jsDate.getMonth() === currentMonth && jsDate.getFullYear() === currentYear;
-    });
+          return jsDate.getMonth() === currentMonth && jsDate.getFullYear() === currentYear;
+        })
+      : [];
 
     const totalPresent = currentMonthAttendance.filter((day) => day.status === 'Present').length;
     const totalAbsent = currentMonthAttendance.filter((day) => day.status === 'Absent').length;
     const totalDays = currentMonthAttendance.length;
     const attendancePercentage = totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0;
+    const driverName = driver.driverName;
 
     return {
       ...record,
-      driverName: driver?.driverName || 'Unknown Driver',
+      driverName,
       currentMonthAttendance,
       totalPresent,
       totalAbsent,
