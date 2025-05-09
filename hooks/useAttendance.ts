@@ -1,48 +1,58 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { DriversAttendance, DailyAttendacne } from '@/types';
-import useDrivers from './useDrivers';
+import { DriversAttendance, DailyAttendacne, Driver } from '@/types';
 
 export function useAttendance() {
   const [attendance, setAttendance] = useState<DriversAttendance[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const { drivers } = useDrivers();
-
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
 
       try {
+        // Fetch drivers directly from Firestore
+        const driversRef = collection(db, 'drivers');
+        const driversSnapshot = await getDocs(driversRef);
+        const driversData = driversSnapshot.docs.map((doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            }) as Driver,
+        );
+        setDrivers(driversData);
+
         // Fetch attendance data from Firestore
         const attendanceRef = collection(db, 'attendance');
-        const snapshot = await getDocs(attendanceRef);
-
-        const attendanceData: DriversAttendance[] = snapshot.docs.map((doc) => {
-          return {
-            id: doc.id,
-            ...doc.data(),
-          } as DriversAttendance;
-        });
-
+        const attendanceSnapshot = await getDocs(attendanceRef);
+        const attendanceData = attendanceSnapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            }) as DriversAttendance,
+        );
         setAttendance(attendanceData);
+
         setIsLoading(false);
       } catch (err) {
-        console.error('Error fetching attendance:', err);
+        console.error('Error fetching data:', err);
         setError(err as Error);
         setIsLoading(false);
       }
     };
 
-    fetchAttendance();
+    fetchData();
   }, []);
 
   // Process attendance data to include more details
   const processedAttendance = attendance.map((record) => {
     // Find the corresponding driver
     const driver = drivers.find((d) => d.driverId === record.driverId);
+    console.log(driver);
 
     // Calculate attendance stats
     const currentMonth = new Date().getMonth();

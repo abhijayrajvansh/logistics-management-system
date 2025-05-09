@@ -14,6 +14,7 @@ import { AiFillDashboard } from "react-icons/ai";
 import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
 import { FaHandshake } from "react-icons/fa6";
 import { RiUserReceived2Fill } from "react-icons/ri";
+import { PiUserSquareFill } from "react-icons/pi";
 
 const navMain = [
   {
@@ -35,6 +36,11 @@ const navMain = [
     title: 'Drivers',
     url: '/dashboard/drivers',
     icon: FaUsersGear,
+  },
+  {
+    title: 'Drivers Attendance',
+    url: '/dashboard/attendance',
+    icon: PiUserSquareFill,
   },
   {
     title: 'Clients',
