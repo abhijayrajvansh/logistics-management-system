@@ -125,7 +125,7 @@ export const columns: ColumnDef<ExtendedAttendanceRecord>[] = [
     header: 'Present Days',
     cell: ({ row }) => {
       const count: number = row.getValue('totalPresent');
-      return <div className="text-center font-medium">{count}</div>;
+      return <div className="text-left font-medium">{count}</div>;
     },
   },
   {
@@ -133,7 +133,7 @@ export const columns: ColumnDef<ExtendedAttendanceRecord>[] = [
     header: 'Absent Days',
     cell: ({ row }) => {
       const count: number = row.getValue('totalAbsent');
-      return <div className="text-center font-medium">{count}</div>;
+      return <div className="text-left font-medium">{count}</div>;
     },
   },
   {
@@ -141,7 +141,7 @@ export const columns: ColumnDef<ExtendedAttendanceRecord>[] = [
     header: 'Total Days',
     cell: ({ row }) => {
       const count: number = row.getValue('totalDays');
-      return <div className="text-center font-medium">{count}</div>;
+      return <div className="text-left font-medium">{count}</div>;
     },
   },
   {
@@ -158,7 +158,7 @@ export const columns: ColumnDef<ExtendedAttendanceRecord>[] = [
         colorClass = 'text-red-600';
       }
 
-      return <div className={`text-center font-medium ${colorClass}`}>{percentage}%</div>;
+      return <div className={`text-left font-medium ${colorClass}`}>{percentage}%</div>;
     },
   },
   {

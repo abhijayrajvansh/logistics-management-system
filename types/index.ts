@@ -124,3 +124,15 @@ export type DailyAttendacne = {
   truckPhoto: string | 'NA';
   status: 'Present' | 'Absent';
 }
+
+export type Truck = {
+  id: string;
+  regNumber: string;
+  axleConfig: string;
+  ownership: "Owned" | "OnLoan";
+  emiAmount: number;
+  insuranceExpiry: Date;
+  permitExpiry: Date;
+  odoCurrent: number;
+  odoAtLastService: number;
+};
