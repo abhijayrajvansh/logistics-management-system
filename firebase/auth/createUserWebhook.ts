@@ -1,32 +1,46 @@
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, updateProfile, UserInfo } from 'firebase/auth';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth } from '@/firebase/auth';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
 
-export async function createUserWebhook(newUser: User) {
-  const { email, password, displayName, role, userId } = newUser;
+export interface NewUserPayload {
+  email: string,
+  password: string,
+  displayName: string,
+  role: string,
+}
 
-  // Check if the user already exists
-  const userDocRef = doc(db, 'users', userId);
-  const userDocSnap = await getDoc(userDocRef);
-  if (userDocSnap.exists()) {
-    throw new Error('User already exists');
-  }
-
+export async function createNewUser(newUser: NewUserPayload) {
+  const { email, password, displayName, role } = newUser;
+  
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
   await updateProfile(user, { displayName });
 
+  const userDocRef = doc(db, 'users', user.uid);
   await setDoc(userDocRef, {
-    userId,
     email,
     password,
     displayName,
     role,
     createdAt: new Date(),
   });
+
+  return user;
+}
+
+export async function createUserWebhook(user: UserInfo) {
+  const { email, displayName, uid } = user;
+
+  const userDocRef = doc(db, 'users', uid);
+  await updateDoc(userDocRef, {
+    email,
+    displayName,
+    userId: uid,
+    createdAt: new Date(),
+  } as User);
 
   return user;
 }
