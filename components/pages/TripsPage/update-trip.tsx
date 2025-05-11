@@ -14,7 +14,7 @@ import {
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
 import { Driver, Order } from '@/types';
-import { fetchAvailableOrders } from '@/lib/utils';
+import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
 import { FaArrowRightLong } from 'react-icons/fa6';
 
 import { Button } from '@/components/ui/button';

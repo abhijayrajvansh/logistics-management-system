@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type FirebaseConfig = {
   apiKey: string;
   authDomain: string;
@@ -108,4 +110,17 @@ export type ReceiverDetails = {
   receiverName: string;
   receiverDetails: string;
   receiverContact: string;
+}
+
+export type DriversAttendance = {
+  id: string;
+  attendance: DailyAttendacne[];
+  driverId: string;
+}
+
+export type DailyAttendacne = {
+  date: Timestamp;
+  driverPhoto: string | 'NA';
+  truckPhoto: string | 'NA';
+  status: 'Present' | 'Absent';
 }
