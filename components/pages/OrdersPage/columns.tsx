@@ -15,7 +15,7 @@ import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { FaRegEye } from "react-icons/fa";
+import { FaRegEye } from 'react-icons/fa';
 
 // This type is used to define the shape of our data based on the image schema
 
@@ -25,7 +25,7 @@ const ProofCell = ({ row }: { row: any }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <div className='text-center'>
+    <div className="text-center">
       <Button
         variant="outline"
         size="icon"
@@ -211,12 +211,19 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Invoice',
     cell: ({ row }) => {
       const invoice: string = row.getValue('invoice');
+
+      // Define styles based on invoice status
+      let styles = '';
+      if (invoice === 'paid') {
+        styles = 'text-green-700 bg-green-200 border border-green-500';
+      } else if (invoice === 'to pay') {
+        styles = 'text-red-700 bg-red-200 border border-red-500';
+      } else if (invoice === 'received') {
+        styles = 'text-yellow-700 bg-yellow-200 border border-yellow-500';
+      }
+
       return (
-        <div
-          className={`font-medium ${invoice === 'paid' ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1' : 'text-red-700 bg-red-200 border text-center rounded-lg border-red-500 px-1 text-xs'}`}
-        >
-          {invoice}
-        </div>
+        <div className={`font-medium ${styles} text-center rounded-lg text-xs px-1`}>{invoice}</div>
       );
     },
   },

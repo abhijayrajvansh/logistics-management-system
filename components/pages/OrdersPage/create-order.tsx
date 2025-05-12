@@ -484,6 +484,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               <SelectContent>
                 <SelectItem value="paid">paid</SelectItem>
                 <SelectItem value="to pay">to pay</SelectItem>
+                <SelectItem value="received">received</SelectItem>
               </SelectContent>
             </Select>
           </div>
