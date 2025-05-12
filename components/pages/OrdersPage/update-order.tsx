@@ -197,6 +197,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     dimensions: string = formData.dimensions,
   ) => {
     let calculatedPrice = 0;
+    // Always use the latest docket price
     const docketPrice = parseFloat(formData.docket_price || '0');
 
     // Client preference pricing
@@ -258,6 +259,10 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
     // Calculate total price as sum of docket price and calculated price
     const totalPrice = docketPrice + calculatedPrice;
+    // console.log('Update order - Updated calculations:');
+    // console.log('- Calculated price:', calculatedPrice);
+    // console.log('- Docket price:', docketPrice);
+    // console.log('- Total price:', totalPrice);
 
     setFormData((prev) => ({
       ...prev,
@@ -273,7 +278,12 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     }));
 
     // Recalculate price when boxes count, weight, or dimensions change
-    if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
+    if (
+      field === 'total_boxes_count' ||
+      field === 'total_order_weight' ||
+      field === 'dimensions' ||
+      field === 'docket_price'
+    ) {
       // For client preference pricing
       if (pricingMethod === 'clientPreference' && selectedClient) {
         const client = clients.find((c: Client) => c.id === selectedClient);
@@ -576,14 +586,102 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             <RadioGroup
               value={pricingMethod}
               onValueChange={(value: 'clientPreference' | 'volumetric') => {
+                // Set the new pricing method
                 setPricingMethod(value);
 
-                // Recalculate price when pricing method changes
+                // Calculate prices using the new pricing method directly (not relying on state update)
                 if (value === 'clientPreference' && selectedClient) {
                   const client = clients.find((c: Client) => c.id === selectedClient);
-                  calculatePrice(client, formData.total_boxes_count, formData.total_order_weight);
+
+                  let calculatedPrice = 0;
+                  const docketPrice = parseFloat(formData.docket_price || '0');
+                  const boxesCount = formData.total_boxes_count;
+                  const weight = formData.total_order_weight;
+
+                  // Client preference pricing calculation logic
+                  if (client?.rateCard) {
+                    const chargeBasis = client.rateCard.preferance;
+
+                    if (chargeBasis === 'Per Boxes' && boxesCount) {
+                      const pricePerBox = parseFloat(
+                        client.rateCard.pricePerPref?.toString() || '0',
+                      );
+                      calculatedPrice = parseInt(boxesCount) * pricePerBox;
+                    } else if (chargeBasis === 'By Weight' && weight) {
+                      const pricePerKg = parseFloat(
+                        client.rateCard.pricePerPref?.toString() || '0',
+                      );
+                      const minPriceWeight =
+                        client.rateCard.minPriceWeight !== 'NA'
+                          ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+                          : 0;
+
+                      calculatedPrice = parseInt(weight) * pricePerKg;
+
+                      if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+                        calculatedPrice = minPriceWeight;
+                      }
+                    }
+                  }
+
+                  // Update form data with the new calculated price
+                  const totalPrice = docketPrice + calculatedPrice;
+                  console.log('Client preference calculation with new pricing method:');
+                  console.log('- Docket price:', docketPrice);
+                  console.log('- Calculated price:', calculatedPrice);
+                  console.log('- Total price:', totalPrice);
+
+                  setFormData((prev) => ({
+                    ...prev,
+                    calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+                    total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
+                  }));
                 } else if (value === 'volumetric') {
-                  calculatePrice(null, formData.total_boxes_count, formData.total_order_weight);
+                  // Volumetric pricing calculation
+                  let calculatedPrice = 0;
+                  const docketPrice = parseFloat(formData.docket_price || '0');
+                  const dimensions = formData.dimensions;
+                  const boxesCount = formData.total_boxes_count;
+
+                  if (dimensions && boxesCount) {
+                    try {
+                      // Parse dimensions (format: LxWxH in cm)
+                      const dimensionValues = dimensions
+                        .split(/[xX×\s]+/)
+                        .filter(Boolean)
+                        .map((dim) => parseFloat(dim));
+
+                      // Make sure we got 3 dimensions
+                      if (dimensionValues.length >= 3) {
+                        const [length, width, height] = dimensionValues;
+
+                        if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+                          // Calculate volume in cubic cm
+                          const volumePerBox = length * width * height;
+                          const totalVolume = volumePerBox * parseInt(boxesCount || '0');
+
+                          // Calculate price based on volume
+                          calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+                          calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error calculating volumetric price:', error);
+                    }
+                  }
+
+                  // Update form data with the new calculated price
+                  const totalPrice = docketPrice + calculatedPrice;
+                  console.log('Volumetric calculation with new pricing method:');
+                  console.log('- Docket price:', docketPrice);
+                  console.log('- Calculated price:', calculatedPrice);
+                  console.log('- Total price:', totalPrice);
+
+                  setFormData((prev) => ({
+                    ...prev,
+                    calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+                    total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
+                  }));
                 }
               }}
               className="flex flex-row items-center space-x-6"
@@ -612,7 +710,32 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               type="number"
               placeholder="Enter docket price"
               value={formData.docket_price}
-              onChange={(e) => handleInputChange('docket_price', e.target.value)}
+              onChange={(e) => {
+                const newDocketPrice = e.target.value;
+
+                // Update form data state with the new docket price
+                setFormData((prev) => ({
+                  ...prev,
+                  docket_price: newDocketPrice,
+                }));
+
+                // Calculate total price using the new docket price directly
+                const docketPrice = parseFloat(newDocketPrice || '0');
+                const calculatedPrice = parseFloat(formData.calculated_price || '0');
+                const totalPrice = docketPrice + calculatedPrice;
+
+                // Update total price immediately with the new values
+                setFormData((prev) => ({
+                  ...prev,
+                  docket_price: newDocketPrice,
+                  total_price: totalPrice.toFixed(2),
+                }));
+
+                // console.log('Direct calculation with new docket price:');
+                // console.log('- New docket price:', docketPrice);
+                // console.log('- Calculated price:', calculatedPrice);
+                // console.log('- Total price:', totalPrice);
+              }}
               required
             />
           </div>
@@ -621,10 +744,10 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             <Input
               id="calculated_price"
               type="number"
-              placeholder="Enter calculated price"
+              placeholder="Auto-calculated"
               value={formData.calculated_price}
               onChange={(e) => handleInputChange('calculated_price', e.target.value)}
-              required
+              disabled
             />
           </div>
           <div className="space-y-2">
@@ -632,10 +755,10 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             <Input
               id="total_price"
               type="number"
-              placeholder="Enter total price"
+              placeholder="Docket + Calculated Price"
               value={formData.total_price}
               onChange={(e) => handleInputChange('total_price', e.target.value)}
-              required
+              disabled
             />
           </div>
         </div>
