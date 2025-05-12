@@ -435,7 +435,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="charge_basis">Charge Basis</Label>
-            <Select
+            <Select disabled={true}
               value={formData.charge_basis}
               onValueChange={(value) => handleInputChange('charge_basis', value)}
             >

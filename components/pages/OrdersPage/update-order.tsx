@@ -150,6 +150,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
+          charge_basis: client.rateCard.preferance,
         }));
       }
     }
@@ -420,7 +421,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="charge_basis">Charge Basis</Label>
-            <Select
+            <Select disabled={true}
               value={formData.charge_basis}
               onValueChange={(value) => handleInputChange('charge_basis', value)}
             >
