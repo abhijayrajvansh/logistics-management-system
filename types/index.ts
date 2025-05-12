@@ -30,8 +30,10 @@ export type Order = {
   dimensions: string;
   invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
+  payment_mode: "cash" | "online" | '-';
   price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
+  proof_of_payment: ProofOfPayment | 'NA';
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
@@ -43,6 +45,10 @@ export type Order = {
 };
 
 export type ProofOfDelivery = {
+  photo: string;
+};
+
+export type ProofOfPayment = {
   photo: string;
 };
 

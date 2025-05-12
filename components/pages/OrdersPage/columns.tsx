@@ -56,6 +56,50 @@ const ProofCell = ({ row }: { row: any }) => {
   );
 };
 
+// Create a component for payment proof cell to manage dialog state
+const PaymentProofCell = ({ row }: { row: any }) => {
+  const order = row.original;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Check if payment proof is available
+  const isPaymentProofAvailable =
+    order.proof_of_payment &&
+    order.proof_of_payment !== 'NA' &&
+    typeof order.proof_of_payment === 'object' &&
+    order.proof_of_payment.photo;
+
+  return (
+    <div className="text-center">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setIsDialogOpen(true)}
+        disabled={!isPaymentProofAvailable}
+      >
+        <FaRegEye />
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Proof of Payment - {order.docket_id}</DialogTitle>
+          </DialogHeader>
+          {isPaymentProofAvailable && (
+            <div className="relative aspect-square w-full">
+              <Image
+                src={order.proof_of_payment.photo}
+                alt="Proof of Payment"
+                className="object-contain"
+                fill
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
   const order = row.original;
@@ -229,6 +273,28 @@ export const columns: ColumnDef<Order>[] = [
   },
 
   {
+    accessorKey: 'payment_mode',
+    header: 'Payment Mode',
+    cell: ({ row }) => {
+      const paymentMode: string = row.getValue('payment_mode');
+
+      // Define styles based on payment mode
+      let styles = '';
+      if (paymentMode === 'cash') {
+        styles = 'text-blue-700 bg-blue-100 border border-blue-500';
+      } else if (paymentMode === 'online') {
+        styles = 'text-purple-700 bg-purple-100 border border-purple-500';
+      } else {
+        styles = 'text-gray-700 bg-gray-100 border';
+      }
+
+      return (
+        <div className={`font-medium ${styles} text-center rounded-lg text-xs`}>{paymentMode}</div>
+      );
+    },
+  },
+
+  {
     accessorKey: 'status',
     header: 'Status',
   },
@@ -237,6 +303,12 @@ export const columns: ColumnDef<Order>[] = [
     accessorKey: 'proof_of_delivery',
     header: 'Delivery Proof',
     cell: ProofCell,
+  },
+
+  {
+    accessorKey: 'proof_of_payment',
+    header: 'Payment Proof',
+    cell: PaymentProofCell,
   },
 
   {
