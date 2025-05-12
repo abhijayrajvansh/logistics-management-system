@@ -23,6 +23,7 @@ export type User = {
 export type Order = {
   order_id: string;
   docket_id: string;
+  docket_price: number;
   charge_basis: string;
   client_details: string;
   created_at: Date;
@@ -31,7 +32,8 @@ export type Order = {
   invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
   payment_mode: "cash" | "online" | '-';
-  price: number;
+  calculated_price: number;
+  total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';
   receiver_name: string;

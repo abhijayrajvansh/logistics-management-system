@@ -242,10 +242,28 @@ export const columns: ColumnDef<Order>[] = [
   },
 
   {
-    accessorKey: 'price',
-    header: 'Price',
+    accessorKey: 'docket_price',
+    header: 'Docket Price',
     cell: ({ row }) => {
-      const price: string = row.getValue('price');
+      const price: number = row.getValue('docket_price');
+      return <div className="text-left font-medium">₹ {price}</div>;
+    },
+  },
+
+  {
+    accessorKey: 'calculated_price',
+    header: 'Calculated Price',
+    cell: ({ row }) => {
+      const price: number = row.getValue('calculated_price');
+      return <div className="text-left font-medium">₹ {price}</div>;
+    },
+  },
+
+  {
+    accessorKey: 'total_price',
+    header: 'Total Price',
+    cell: ({ row }) => {
+      const price: number = row.getValue('total_price');
       return <div className="text-left font-medium">₹ {price}</div>;
     },
   },

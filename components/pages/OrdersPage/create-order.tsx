@@ -44,7 +44,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     docket_id: '',
     current_location: '<manager-current-location>',
     client_details: '',
-    price: '',
+    docket_price: '',
+    calculated_price: '',
+    total_price: '',
     invoice: '',
     status: '',
   });
@@ -120,6 +122,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
     const chargeBasis = client.rateCard.preferance;
     let calculatedPrice = 0;
+    const docketPrice = parseFloat(formData.docket_price || '0');
 
     if (chargeBasis === 'Per Boxes' && boxesCount) {
       // Calculate price based on boxes
@@ -138,9 +141,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       }
     }
 
+    // Calculate total price as sum of docket price and calculated price
+    const totalPrice = docketPrice + calculatedPrice;
+
     setFormData((prev) => ({
       ...prev,
-      price: calculatedPrice > 0 ? calculatedPrice.toString() : '',
+      calculated_price: calculatedPrice > 0 ? calculatedPrice.toString() : '0',
+      total_price: totalPrice > 0 ? totalPrice.toString() : '0',
     }));
   };
 
@@ -196,7 +203,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         ...formData,
         total_boxes_count: parseInt(formData.total_boxes_count),
         total_order_weight: parseInt(formData.total_order_weight),
-        price: formData.price ? parseFloat(formData.price) : 0,
+        docket_price: parseFloat(formData.docket_price || '0'),
+        calculated_price: parseFloat(formData.calculated_price || '0'),
+        total_price: parseFloat(formData.total_price || '0'),
         tat: new Date(formData.tat),
         proof_of_delivery: 'NA',
         created_at: new Date(),
@@ -223,7 +232,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         docket_id: '',
         current_location: '',
         client_details: '',
-        price: '',
+        docket_price: '',
+        calculated_price: '',
+        total_price: '',
         invoice: '', // Default value for the invoice enum
         status: '',
       });
@@ -462,16 +473,48 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
+            <Label htmlFor="docket_price">Docket Price</Label>
             <Input
-              id="price"
+              id="docket_price"
               type="number"
-              placeholder="Enter price"
-              value={formData.price}
-              onChange={(e) => handleInputChange('price', e.target.value)}
+              placeholder="Enter docket price"
+              value={formData.docket_price}
+              onChange={(e) => {
+                handleInputChange('docket_price', e.target.value);
+                // Recalculate total price when docket price changes
+                if (selectedClient) {
+                  const client = clients.find((c) => c.id === selectedClient);
+                  calculatePrice(client, formData.total_boxes_count, formData.total_order_weight);
+                }
+              }}
               required
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="calculated_price">Calculated Price</Label>
+            <Input
+              id="calculated_price"
+              type="number"
+              placeholder="Auto-calculated"
+              value={formData.calculated_price}
+              onChange={(e) => handleInputChange('calculated_price', e.target.value)}
+              disabled
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="total_price">Total Price</Label>
+            <Input
+              id="total_price"
+              type="number"
+              placeholder="Docket + Calculated Price"
+              value={formData.total_price}
+              onChange={(e) => handleInputChange('total_price', e.target.value)}
+              disabled
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="invoice">Invoice</Label>
             <Select
@@ -528,7 +571,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 docket_id: '',
                 current_location: '',
                 client_details: '',
-                price: '',
+                docket_price: '',
+                calculated_price: '',
+                total_price: '',
                 invoice: '',
                 status: '',
               });

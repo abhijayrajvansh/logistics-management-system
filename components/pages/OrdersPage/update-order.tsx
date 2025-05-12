@@ -40,7 +40,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     docket_id: '',
     current_location: '',
     client_details: '',
-    price: '',
+    docket_price: '',
+    calculated_price: '',
+    total_price: '',
     invoice: '',
     status: '',
   });
@@ -94,7 +96,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             docket_id: data.docket_id || '',
             current_location: data.current_location || '',
             client_details: data.client_details || '',
-            price: data.price?.toString() || '',
+            docket_price: data.docket_price?.toString() || '',
+            calculated_price: data.calculated_price?.toString() || '',
+            total_price: data.total_price?.toString() || '',
             invoice: data.invoice || '',
             status: data.status || '',
           });
@@ -181,6 +185,25 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
       ...prev,
       [field]: value,
     }));
+
+    // If docket_price or calculated_price changes, update total_price
+    if (field === 'docket_price' || field === 'calculated_price') {
+      calculateTotalPrice(
+        field === 'docket_price' ? value : formData.docket_price,
+        field === 'calculated_price' ? value : formData.calculated_price,
+      );
+    }
+  };
+
+  const calculateTotalPrice = (docketPrice: string, calculatedPrice: string) => {
+    const docketPriceValue = parseFloat(docketPrice || '0');
+    const calculatedPriceValue = parseFloat(calculatedPrice || '0');
+    const totalPrice = docketPriceValue + calculatedPriceValue;
+
+    setFormData((prev) => ({
+      ...prev,
+      total_price: totalPrice.toString(),
+    }));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -193,7 +216,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         ...formData,
         total_boxes_count: parseInt(formData.total_boxes_count),
         total_order_weight: parseInt(formData.total_order_weight),
-        price: formData.price ? parseFloat(formData.price) : 0,
+        docket_price: formData.docket_price ? parseFloat(formData.docket_price) : 0,
+        calculated_price: formData.calculated_price ? parseFloat(formData.calculated_price) : 0,
+        total_price: formData.total_price ? parseFloat(formData.total_price) : 0,
         tat: new Date(formData.tat),
         updated_at: new Date(),
         proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
@@ -432,16 +457,41 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
+            <Label htmlFor="docket_price">Docket Price</Label>
             <Input
-              id="price"
+              id="docket_price"
               type="number"
-              placeholder="Enter price"
-              value={formData.price}
-              onChange={(e) => handleInputChange('price', e.target.value)}
+              placeholder="Enter docket price"
+              value={formData.docket_price}
+              onChange={(e) => handleInputChange('docket_price', e.target.value)}
               required
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="calculated_price">Calculated Price</Label>
+            <Input
+              id="calculated_price"
+              type="number"
+              placeholder="Enter calculated price"
+              value={formData.calculated_price}
+              onChange={(e) => handleInputChange('calculated_price', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="total_price">Total Price</Label>
+            <Input
+              id="total_price"
+              type="number"
+              placeholder="Enter total price"
+              value={formData.total_price}
+              onChange={(e) => handleInputChange('total_price', e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="invoice">Invoice</Label>
             <Select
