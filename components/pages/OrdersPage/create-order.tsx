@@ -17,10 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
 }
+
+// Hardcoded price per volume (price per cubic cm)
+const PRICE_PER_VOLUME = 0.01;
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
@@ -30,6 +34,10 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+  // Add state for pricing method selection
+  const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
+    'clientPreference',
+  );
 
   const [formData, setFormData] = useState({
     receiver_name: '',
@@ -115,39 +123,121 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     }
   };
 
-  const calculatePrice = (client: any, boxesCount: string, weight: string) => {
-    if (!client?.rateCard) {
-      return;
-    }
+  const calculatePrice = (
+    client: any,
+    boxesCount: string,
+    weight: string,
+    dimensions: string = formData.dimensions,
+  ) => {
+    console.log('---- Debugging Price Calculation ----');
+    console.log('Pricing Method:', pricingMethod);
+    console.log('Dimensions:', dimensions);
+    console.log('Box Count:', boxesCount);
+    console.log('Weight:', weight);
+    console.log('Docket Price:', formData.docket_price);
 
-    const chargeBasis = client.rateCard.preferance;
     let calculatedPrice = 0;
     const docketPrice = parseFloat(formData.docket_price || '0');
 
-    if (chargeBasis === 'Per Boxes' && boxesCount) {
-      // Calculate price based on boxes
-      const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-      calculatedPrice = parseInt(boxesCount) * pricePerBox;
-    } else if (chargeBasis === 'By Weight' && weight) {
-      // Calculate price based on weight
-      const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-      const minPriceWeight = parseFloat(client.rateCard.minPriceWeight?.toString() || '0');
+    // Client preference pricing
+    if (pricingMethod === 'clientPreference' && client?.rateCard) {
+      const chargeBasis = client.rateCard.preferance;
+      console.log('Client Rate Card Preference:', chargeBasis);
 
-      calculatedPrice = parseInt(weight) * pricePerKg;
+      if (chargeBasis === 'Per Boxes' && boxesCount) {
+        // Calculate price based on boxes
+        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        calculatedPrice = parseInt(boxesCount) * pricePerBox;
+        console.log(
+          'Per Box Calculation:',
+          `${boxesCount} boxes × ₹${pricePerBox} = ₹${calculatedPrice}`,
+        );
+      } else if (chargeBasis === 'By Weight' && weight) {
+        // Calculate price based on weight
+        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        const minPriceWeight =
+          client.rateCard.minPriceWeight !== 'NA'
+            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+            : 0;
 
-      // If calculated price is less than minimum price weight, use minimum price weight
-      if (calculatedPrice < minPriceWeight) {
-        calculatedPrice = minPriceWeight;
+        calculatedPrice = parseInt(weight) * pricePerKg;
+        console.log(
+          'By Weight Calculation:',
+          `${weight} kg × ₹${pricePerKg} = ₹${calculatedPrice}`,
+        );
+
+        // If calculated price is less than minimum price weight, use minimum price weight
+        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+          console.log(
+            'Using minimum price:',
+            `₹${minPriceWeight} (min) instead of ₹${calculatedPrice}`,
+          );
+          calculatedPrice = minPriceWeight;
+        }
+      }
+    }
+    // Volumetric pricing - fix the implementation
+    else if (pricingMethod === 'volumetric') {
+      console.log('Using volumetric pricing');
+      if (dimensions && boxesCount) {
+        try {
+          // Parse dimensions (format: LxWxH in cm)
+          // Handle different possible formats (L x W x H or LxWxH)
+          const dimensionValues = dimensions
+            .split(/[xX×\s]+/)
+            .filter(Boolean)
+            .map((dim) => parseFloat(dim));
+          console.log('Parsed dimensions:', dimensionValues);
+
+          // Make sure we got 3 dimensions
+          if (dimensionValues.length >= 3) {
+            const [length, width, height] = dimensionValues;
+
+            if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+              // Calculate volume in cubic cm
+              const volumePerBox = length * width * height;
+              const totalVolume = volumePerBox * parseInt(boxesCount || '0');
+
+              // Calculate price based on volume
+              calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+              console.log('Volumetric Calculation:');
+              console.log(
+                `- Box dimensions: ${length}cm × ${width}cm × ${height}cm = ${volumePerBox}cm³`,
+              );
+              console.log(
+                `- Total volume: ${volumePerBox}cm³ × ${boxesCount} boxes = ${totalVolume}cm³`,
+              );
+              console.log(
+                `- Price: ${totalVolume}cm³ × ₹${PRICE_PER_VOLUME}/cm³ = ₹${calculatedPrice}`,
+              );
+
+              // Round to 2 decimal places for better display
+              calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+            } else {
+              console.error('Found NaN in dimensions:', length, width, height);
+            }
+          } else {
+            console.error('Invalid dimensions format. Expected LxWxH. Got:', dimensionValues);
+          }
+        } catch (error) {
+          console.error('Error calculating volumetric price:', error);
+        }
+      } else {
+        console.error('Missing required data for volumetric pricing:');
+        console.error('- Dimensions:', dimensions);
+        console.error('- Box count:', boxesCount);
       }
     }
 
     // Calculate total price as sum of docket price and calculated price
     const totalPrice = docketPrice + calculatedPrice;
+    console.log('Final calculated price:', calculatedPrice);
+    console.log('Total price (docket + calculated):', totalPrice);
 
     setFormData((prev) => ({
       ...prev,
-      calculated_price: calculatedPrice > 0 ? calculatedPrice.toString() : '0',
-      total_price: totalPrice > 0 ? totalPrice.toString() : '0',
+      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
     }));
   };
 
@@ -182,14 +272,27 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       [field]: value,
     }));
 
-    // Recalculate price when boxes count or weight changes
-    if ((field === 'total_boxes_count' || field === 'total_order_weight') && selectedClient) {
-      const client = clients.find((c) => c.id === selectedClient);
-      calculatePrice(
-        client,
-        field === 'total_boxes_count' ? value : formData.total_boxes_count,
-        field === 'total_order_weight' ? value : formData.total_order_weight,
-      );
+    // Recalculate price when boxes count, weight, or dimensions change
+    if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
+      // For client preference pricing
+      if (pricingMethod === 'clientPreference' && selectedClient) {
+        const client = clients.find((c) => c.id === selectedClient);
+        calculatePrice(
+          client,
+          field === 'total_boxes_count' ? value : formData.total_boxes_count,
+          field === 'total_order_weight' ? value : formData.total_order_weight,
+          field === 'dimensions' ? value : formData.dimensions,
+        );
+      }
+      // For volumetric pricing - don't need a client
+      else if (pricingMethod === 'volumetric') {
+        calculatePrice(
+          null,
+          field === 'total_boxes_count' ? value : formData.total_boxes_count,
+          field === 'total_order_weight' ? value : formData.total_order_weight,
+          field === 'dimensions' ? value : formData.dimensions,
+        );
+      }
     }
   };
 
@@ -435,7 +538,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="charge_basis">Charge Basis</Label>
-            <Select disabled={true}
+            <Select
+              disabled={true}
               value={formData.charge_basis}
               onValueChange={(value) => handleInputChange('charge_basis', value)}
             >
@@ -471,6 +575,39 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           </div>
         </div>
 
+        {/* Pricing Method Selection */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-4">
+            <Label className='font-semibold'>Pricing Method</Label>
+            <RadioGroup
+              value={pricingMethod}
+              onValueChange={(value: 'clientPreference' | 'volumetric') => {
+                setPricingMethod(value);
+
+                // Recalculate price when pricing method changes
+                if (selectedClient) {
+                  const client = clients.find((c) => c.id === selectedClient);
+                  calculatePrice(client, formData.total_boxes_count, formData.total_order_weight);
+                }
+              }}
+              className="flex flex-row items-center space-x-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="clientPreference" id="clientPreference" />
+                <Label htmlFor="clientPreference" className="cursor-pointer">
+                  Use Client Rate Card ({formData.charge_basis})
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="volumetric" id="volumetric" />
+                <Label htmlFor="volumetric" className="cursor-pointer">
+                  Use Volumetric Price (₹{PRICE_PER_VOLUME}/cm³)
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="docket_price">Docket Price</Label>
@@ -482,9 +619,12 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               onChange={(e) => {
                 handleInputChange('docket_price', e.target.value);
                 // Recalculate total price when docket price changes
-                if (selectedClient) {
+                if (pricingMethod === 'clientPreference' && selectedClient) {
                   const client = clients.find((c) => c.id === selectedClient);
                   calculatePrice(client, formData.total_boxes_count, formData.total_order_weight);
+                } else if (pricingMethod === 'volumetric') {
+                  // For volumetric pricing, we don't need a client
+                  calculatePrice(null, formData.total_boxes_count, formData.total_order_weight);
                 }
               }}
               required
