@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Center } from '@/types';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { UpdateCenterForm } from './update-center';
 import { DeleteCenterDialog } from './delete-center';

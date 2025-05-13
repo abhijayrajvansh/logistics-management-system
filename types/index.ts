@@ -31,7 +31,7 @@ export type Order = {
   dimensions: string;
   invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
-  payment_mode: "cash" | "online" | '-';
+  payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
