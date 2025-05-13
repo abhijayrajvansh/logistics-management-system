@@ -49,7 +49,6 @@ export function DataTable<TData, TValue>({
 }) {
   const [data, setData] = React.useState(() => initialData);
 
-  // Update data when initialData changes
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);

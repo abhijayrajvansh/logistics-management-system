@@ -9,7 +9,7 @@ import { FormEvent, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { IoIosWarning } from 'react-icons/io';
 import { IconLoader } from '@tabler/icons-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useHandleAuthentication } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import env from '@/constants';
 
@@ -24,7 +24,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'div'> & { urlError?: string | null }) {
   const router = useRouter();
-  const { login, googleAuth } = useAuth();
+  const { login, googleAuth } = useHandleAuthentication();
 
   const [formData, setFormData] = useState<FormData>({
     email: '',

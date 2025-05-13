@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type FirebaseConfig = {
   apiKey: string;
   authDomain: string;
@@ -29,14 +31,20 @@ export type Order = {
   invoice: string;
   lr_no: string;
   price: number;
+  proof_of_delivery: ProofOfDelivery | 'NA';
+  receiver_name: string;
   receiver_details: string;
-  shipper_details: string;
+  receiver_contact: string;
   status: string;
   tat: Date;
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
 };
+
+export type ProofOfDelivery = {
+  photo: string;
+}
 
 export type Trip = {
   id: string;
@@ -94,4 +102,37 @@ export type ClientRateCard = {
   preferance: 'By Weight' | 'Per Boxes';
   pricePerPref: number;
   minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
+};
+
+export type ReceiverDetails = {
+  id: string;
+  receiverId: string;
+  receiverName: string;
+  receiverDetails: string;
+  receiverContact: string;
+}
+
+export type DriversAttendance = {
+  id: string;
+  attendance: DailyAttendacne[];
+  driverId: string;
+}
+
+export type DailyAttendacne = {
+  date: Timestamp;
+  driverPhoto: string | 'NA';
+  truckPhoto: string | 'NA';
+  status: 'Present' | 'Absent';
+}
+
+export type Truck = {
+  id: string;
+  regNumber: string;
+  axleConfig: string;
+  ownership: "Owned" | "OnLoan";
+  emiAmount: number;
+  insuranceExpiry: Date;
+  permitExpiry: Date;
+  odoCurrent: number;
+  odoAtLastService: number;
 };

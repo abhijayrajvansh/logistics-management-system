@@ -1,5 +1,6 @@
 'use client';
 
+import { SiteHeader } from '@/components/site-header';
 import { columns } from './columns';
 import { DataTable } from './data-tabel';
 import { useTrips } from '@/hooks/useTrips';
@@ -20,14 +21,21 @@ export function TripsPage() {
   }
 
   return (
-    <div className="h-full flex-1 flex-col space-y-8 py-8">
-      <DataTable
-        columns={columns}
-        data={unassignedTrips}
-        activeTripData={activeTrips}
-        pastTripData={pastTrips}
-      />
-    </div>
+    <>
+      <SiteHeader title="Trips" />
+      <div className="flex flex-1 flex-col">
+        <div className="@container/main flex flex-1 flex-col gap-2">
+          <div className="h-full flex-1 flex-col space-y-8 py-8">
+            <DataTable
+              columns={columns}
+              data={unassignedTrips}
+              activeTripData={activeTrips}
+              pastTripData={pastTrips}
+            />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -13,8 +13,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
-import { useOrders } from '@/hooks/useOrders';
-import { Driver } from '@/types';
+import { Driver, Order } from '@/types';
+import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
+import { FaArrowRightLong } from 'react-icons/fa6';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,9 @@ interface UpdateTripFormProps {
 
 export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormProps) {
   const { drivers, isLoading: isLoadingDrivers } = useDrivers();
-  const { orders, isLoading: isLoadingOrders } = useOrders();
+  const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
+  const [associatedOrders, setAssociatedOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     startingPoint: '',
@@ -56,10 +59,42 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  // Filter orders that are ready to transport
-  const availableOrders = orders.filter(
-    (order) => order.status === 'Ready To Transport' || selectedOrderIds.includes(order.order_id),
-  );
+  const fetchAssociatedOrders = async (orderIds: string[]) => {
+    try {
+      const ordersPromises = orderIds.map((id) => getDoc(doc(db, 'orders', id)));
+      const orderDocs = await Promise.all(ordersPromises);
+      return orderDocs
+        .filter((doc) => doc.exists())
+        .map(
+          (doc) =>
+            ({
+              order_id: doc.id,
+              ...doc.data(),
+            }) as Order,
+        );
+    } catch (error) {
+      console.error('Error fetching associated orders:', error);
+      return [];
+    }
+  };
+
+  const loadOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const orders = await fetchAvailableOrders();
+      setAvailableOrders(orders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Failed to load available orders');
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  // Load orders when component mounts
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   const fetchTripData = useCallback(async () => {
     try {
@@ -113,8 +148,12 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
       if (!tripOrdersSnapshot.empty) {
         const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        const tripOrdersData = tripOrdersDoc.data();
-        setSelectedOrderIds(tripOrdersData.orderIds || []);
+        const orderIds = tripOrdersDoc.data().orderIds || [];
+        setSelectedOrderIds(orderIds);
+
+        // Fetch the actual order documents
+        const associatedOrders = await fetchAssociatedOrders(orderIds);
+        setAssociatedOrders(associatedOrders);
       }
 
       // Find and set the selected driver
@@ -415,33 +454,119 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           )}
         </div>
 
-        {/* Add this section before the buttons */}
+        {/* Orders section */}
         <div className="space-y-4">
           <Label>Select Orders for this Trip</Label>
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {isLoadingOrders ? (
               <div className="text-center py-4">Loading orders...</div>
-            ) : availableOrders.length === 0 ? (
+            ) : availableOrders.length === 0 && associatedOrders.length === 0 ? (
               <div className="text-center py-4">No orders available</div>
             ) : (
-              <div className="space-y-2">
-                {availableOrders.map((order) => (
-                  <div key={order.order_id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={order.order_id}
-                      checked={selectedOrderIds.includes(order.order_id)}
-                      onCheckedChange={(checked) =>
-                        handleOrderSelection(order.order_id, checked as boolean)
-                      }
-                    />
-                    <label
-                      htmlFor={order.order_id}
-                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {order.docket_id} - {order.shipper_details} to {order.receiver_details}
-                    </label>
+              <div className="space-y-4">
+                {/* Associated Orders Section */}
+                {associatedOrders.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      Currently Assigned Orders:
+                    </div>
+                    {associatedOrders.map((order) => (
+                      <div key={order.order_id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`assigned-${order.order_id}`}
+                          checked={selectedOrderIds.includes(order.order_id)}
+                          onCheckedChange={(checked) =>
+                            handleOrderSelection(order.order_id, checked as boolean)
+                          }
+                        />
+                        <label
+                          htmlFor={`assigned-${order.order_id}`}
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          <span className="flex items-center gap-1">
+                            <span className="flex gap-2 items-center">
+                              <span className="font-medium">{order.docket_id}:</span>
+                              {order.client_details} <FaArrowRightLong /> {order.receiver_name},
+                            </span>
+                            <span className="font-medium">TAT:</span>
+                            {(() => {
+                              try {
+                                if (order.tat instanceof Date) {
+                                  return order.tat.toLocaleDateString();
+                                }
+                                if (
+                                  typeof order.tat === 'object' &&
+                                  order.tat &&
+                                  'seconds' in order.tat
+                                ) {
+                                  return new Date(
+                                    (order.tat as any).seconds * 1000,
+                                  ).toLocaleDateString();
+                                }
+                                return new Date(order.tat as string).toLocaleDateString();
+                              } catch (error) {
+                                return 'Invalid Date';
+                              }
+                            })()}
+                            , Boxes: {order.total_boxes_count}
+                          </span>
+                        </label>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Available Orders Section */}
+                {availableOrders.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      Available Orders:
+                    </div>
+                    {availableOrders.map((order) => (
+                      <div key={order.order_id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`available-${order.order_id}`}
+                          checked={selectedOrderIds.includes(order.order_id)}
+                          onCheckedChange={(checked) =>
+                            handleOrderSelection(order.order_id, checked as boolean)
+                          }
+                        />
+                        <label
+                          htmlFor={`available-${order.order_id}`}
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          <span className="flex items-center gap-1">
+                            <span className="flex gap-2 items-center">
+                              <span className="font-medium">{order.docket_id}:</span>
+                              {order.client_details} <FaArrowRightLong /> {order.receiver_name},
+                            </span>
+                            <span className="font-medium">TAT:</span>
+                            {(() => {
+                              try {
+                                if (order.tat instanceof Date) {
+                                  return order.tat.toLocaleDateString();
+                                }
+                                if (
+                                  typeof order.tat === 'object' &&
+                                  order.tat &&
+                                  'seconds' in order.tat
+                                ) {
+                                  return new Date(
+                                    (order.tat as any).seconds * 1000,
+                                  ).toLocaleDateString();
+                                }
+                                return new Date(order.tat as string).toLocaleDateString();
+                              } catch (error) {
+                                return 'Invalid Date';
+                              }
+                            })()}
+                            , Boxes: {order.total_boxes_count}
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </ScrollArea>

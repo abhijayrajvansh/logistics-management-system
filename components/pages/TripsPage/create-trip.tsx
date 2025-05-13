@@ -1,15 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
-import { useDrivers } from '@/hooks/useDrivers';
-import { Driver, Trip } from '@/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -17,9 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useOrders } from '@/hooks/useOrders';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
+import { db } from '@/firebase/database';
+import { useDrivers } from '@/hooks/useDrivers';
+import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
+import { Driver, Trip, Order } from '@/types';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { FaArrowRightLong } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -27,7 +28,8 @@ interface CreateTripFormProps {
 
 export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const { drivers, isLoading: isLoadingDrivers, error: driverError } = useDrivers();
-  const { orders, isLoading: isLoadingOrders } = useOrders();
+  const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   // Define form data with proper types matching the Trip interface
@@ -76,8 +78,23 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     }
   }, [selectedDriver]);
 
-  // Filter orders that are ready to transport
-  const availableOrders = orders.filter((order) => order.status === 'Ready To Transport');
+  const loadOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const orders = await fetchAvailableOrders();
+      setAvailableOrders(orders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Failed to load available orders');
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  // Load orders when dialog opens
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
@@ -130,6 +147,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     });
     setSelectedDriver(null);
     setSelectedOrderIds([]);
+
+    // Refresh available orders
+    loadOrders();
 
     // Generate a new unique trip ID
     const generateNewId = async () => {
@@ -378,9 +398,34 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                       htmlFor={order.order_id}
                       className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {order.docket_id} - {order.shipper_details} to {order.receiver_details}
+                      <span className="flex items-center gap-1">
+                        <span className="flex gap-2 item-center">
+                          <span className="font-medium">{order.docket_id}:</span>
+                          {order.client_details} <FaArrowRightLong /> {order.receiver_name},{' '}
+                        </span>
+                        <span className="font-medium">TAT</span>:
+                        {(() => {
+                          try {
+                            if (order.tat instanceof Date) {
+                              return order.tat.toLocaleDateString();
+                            }
+                            if (
+                              typeof order.tat === 'object' &&
+                              order.tat &&
+                              'seconds' in order.tat
+                            ) {
+                              return new Date(
+                                (order.tat as any).seconds * 1000,
+                              ).toLocaleDateString();
+                            }
+                            return new Date(order.tat as string).toLocaleDateString();
+                          } catch (error) {
+                            return 'Invalid Date';
+                          }
+                        })()}
+                        , Boxes: {order.total_boxes_count}
+                      </span>
                     </label>
-                    {/* add more feilds here... like tat, number of boxes and weight */}
                   </div>
                 ))}
               </div>
