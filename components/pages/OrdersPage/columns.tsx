@@ -23,6 +23,26 @@ import { FaRegEye } from 'react-icons/fa';
 const ProofCell = ({ row }: { row: any }) => {
   const order = row.original;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Check if proof of delivery is available and has photos
+  const hasProofImages =
+    order.proof_of_delivery !== 'NA' &&
+    typeof order.proof_of_delivery === 'object' &&
+    Array.isArray(order.proof_of_delivery.photo) &&
+    order.proof_of_delivery.photo.length > 0;
+
+  const handlePrevious = () => {
+    setCurrentImageIndex((prev) =>
+      prev > 0 ? prev - 1 : hasProofImages ? order.proof_of_delivery.photo.length - 1 : 0,
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentImageIndex((prev) =>
+      hasProofImages && prev < order.proof_of_delivery.photo.length - 1 ? prev + 1 : 0,
+    );
+  };
 
   return (
     <div className="text-center">
@@ -30,25 +50,65 @@ const ProofCell = ({ row }: { row: any }) => {
         variant="outline"
         size="icon"
         onClick={() => setIsDialogOpen(true)}
-        disabled={order.proof_of_delivery === 'NA'}
+        disabled={!hasProofImages}
       >
         <FaRegEye />
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
           </DialogHeader>
-          {order.proof_of_delivery !== 'NA' && (
-            <div className="relative aspect-square w-full">
-              <Image
-                src={order.proof_of_delivery.photo}
-                alt="Proof of Delivery"
-                className="object-contain"
-                fill
-              />
+          {hasProofImages ? (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative aspect-square w-full ">
+                <Image
+                  src={order.proof_of_delivery.photo[currentImageIndex]}
+                  alt={`Proof of Delivery ${currentImageIndex + 1}`}
+                  className="object-contain"
+                  fill
+                />
+              </div>
+
+              {order.proof_of_delivery.photo.length > 1 && (
+                <div className="flex items-center justify-between w-full">
+                  <Button variant="outline" onClick={handlePrevious}>
+                    Previous
+                  </Button>
+                  <span>
+                    {currentImageIndex + 1} of {order.proof_of_delivery.photo.length}
+                  </span>
+                  <Button variant="outline" onClick={handleNext}>
+                    Next
+                  </Button>
+                </div>
+              )}
+
+              {/* Image thumbnails for quick navigation */}
+              {order.proof_of_delivery.photo.length > 1 && (
+                <div className="flex overflow-x-auto space-x-2 w-full py-2">
+                  {order.proof_of_delivery.photo.map((photo: string, index: number) => (
+                    <div
+                      key={index}
+                      className={`relative h-16 w-16 flex-shrink-0 cursor-pointer border-2 ${
+                        currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    >
+                      <Image
+                        src={photo}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          ) : (
+            <div className="text-center py-8">No proof of delivery images available</div>
           )}
         </DialogContent>
       </Dialog>

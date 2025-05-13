@@ -47,7 +47,7 @@ export type Order = {
 };
 
 export type ProofOfDelivery = {
-  photo: string;
+  photo: string[];
 };
 
 export type ProofOfPayment = {
