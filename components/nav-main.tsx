@@ -16,6 +16,7 @@ import { FaHandshake } from "react-icons/fa6";
 import { RiUserReceived2Fill } from "react-icons/ri";
 import { PiUserSquareFill } from "react-icons/pi";
 import { FaTruck } from "react-icons/fa";
+import { MdHub } from "react-icons/md";
 
 const navMain = [
   {
@@ -57,6 +58,11 @@ const navMain = [
     title: 'Receivers',
     url: '/dashboard/receivers',
     icon: RiUserReceived2Fill,
+  },
+  {
+    title: 'Centers',
+    url: '/dashboard/centers',
+    icon: MdHub,
   },
 ];
 

@@ -144,3 +144,10 @@ export type Truck = {
   odoCurrent: number;
   odoAtLastService: number;
 };
+
+export type Center = {
+  id: string;
+  name: string;
+  location: string;
+  pincode: string;
+};
