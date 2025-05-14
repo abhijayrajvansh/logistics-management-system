@@ -7,17 +7,6 @@ async function seedUsers() {
   console.log('Starting to seed user data...');
 
   try {
-    // First check if we already have users in the collection
-    const usersCollection = collection(db, 'users');
-    const existingUsers = await getDocs(usersCollection);
-
-    if (!existingUsers.empty) {
-      console.log(
-        `Found ${existingUsers.size} existing users. Skipping seeding to avoid duplicates.`,
-      );
-      return;
-    }
-
     // Sample user data
     const users: User[] = [
       {
@@ -47,7 +36,8 @@ async function seedUsers() {
 // Run the seed functions
 async function runSeedFunctions() {
   await seedUsers();
-  console.log('All seeding completed!');
 }
 
-runSeedFunctions();
+runSeedFunctions().finally(() => {
+  process.exit(0)
+})

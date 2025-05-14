@@ -1,12 +1,20 @@
 'use client';
 
+import { useAuth } from '@/app/context/AuthContext';
 import { columns } from './columns';
 import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
 import useOrders from '@/hooks/useOrders';
+import useUsers from '@/hooks/useUsers';
 
 export default function OrdersPage() {
-  const { orders, isLoading, error } = useOrders('<manager-current-location>');
+  const { user, loading } = useAuth();
+  
+  const {users: currentUser, isLoading: isLoadingUsers, error: errorUsers} = useUsers(user?.uid);
+
+  console.log({currentUser})
+  
+  const { orders, isLoading, error } = useOrders(currentUser[0]?.location);
 
   const formattedOrders = orders.map((order) => ({
     id: order.order_id,
