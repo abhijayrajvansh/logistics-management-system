@@ -154,3 +154,14 @@ export type Center = {
   location: string;
   pincode: string;
 };
+
+
+export type tat_mappings = {
+  id: string;
+  center_id: string;
+  client_id: string;
+  receiver_id: string;
+  tat_value: number; // in hours
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
