@@ -102,7 +102,7 @@ const EntityCell = ({
 
   return (
     <div className="flex flex-col">
-      <span>{name}</span>
+      <span className=''>{name}</span>
       <span className="text-xs text-gray-500 hidden">{pincode}</span>
     </div>
   );

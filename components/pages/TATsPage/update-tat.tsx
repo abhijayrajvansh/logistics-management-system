@@ -110,13 +110,15 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
         tatsRef,
         where('center_pincode', '==', selectedCenter.pincode),
         where('client_pincode', '==', selectedClient.pincode),
-        where('receiver_pincode', '==', selectedReceiver.pincode)
+        where('receiver_pincode', '==', selectedReceiver.pincode),
       );
 
       const duplicateSnapshot = await getDocs(duplicateQuery);
       const hasDuplicate = duplicateSnapshot.docs.some((doc) => doc.id !== tatId);
       if (hasDuplicate) {
-        throw new Error('A TAT mapping already exists for this combination of center, client, and receiver');
+        throw new Error(
+          'A TAT mapping already exists for this combination of center, client, and receiver',
+        );
       }
 
       // Validate and parse form data with pincodes
@@ -169,7 +171,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {centers.map((center) => (
                   <SelectItem key={center.id} value={center.id}>
-                    {center.name} 
+                    {center.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -213,7 +215,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {receivers.map((receiver) => (
                   <SelectItem key={receiver.id} value={receiver.id}>
-                    {receiver.receiverName} 
+                    {receiver.receiverName}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -63,12 +63,14 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
         tatsRef,
         where('center_pincode', '==', selectedCenter.pincode),
         where('client_pincode', '==', selectedClient.pincode),
-        where('receiver_pincode', '==', selectedReceiver.pincode)
+        where('receiver_pincode', '==', selectedReceiver.pincode),
       );
 
       const duplicateSnapshot = await getDocs(duplicateQuery);
       if (!duplicateSnapshot.empty) {
-        throw new Error('A TAT mapping already exists for this combination of center, client, and receiver');
+        throw new Error(
+          'A TAT mapping already exists for this combination of center, client, and receiver',
+        );
       }
 
       // Validate and parse form data with pincodes
