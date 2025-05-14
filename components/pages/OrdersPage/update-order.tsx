@@ -610,9 +610,13 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               type="datetime-local"
               value={
                 formData.tat
-                  ? new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000)
-                      .toISOString()
-                      .slice(0, 16)
+                  ? (() => {
+                      const offsetInMilliseconds = 5.5 * 60 * 60 * 1000; // indian time offset (UTC+5:30)
+                      const now = Date.now() + offsetInMilliseconds;
+                      const tatHours = parseInt(formData.tat) * 60 * 60 * 1000;
+                      const deadlineDate = new Date(now + tatHours);
+                      return deadlineDate.toISOString().slice(0, 16);
+                    })()
                   : ''
               }
               disabled
