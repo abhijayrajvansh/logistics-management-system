@@ -49,6 +49,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     total_price: '',
     invoice: '',
     status: '',
+    payment_mode: '-',
   });
 
   // Add state to store the existing proof_of_delivery value
@@ -80,18 +81,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           // Store existing proof_of_delivery separately
           setExistingProofOfDelivery(data.proof_of_delivery || 'NA');
 
-          // Format date for input field if it exists
-          let formattedTat = '';
-          if (data.tat) {
-            if (data.tat.toDate) {
-              formattedTat = data.tat.toDate().toISOString().split('T')[0];
-            } else if (data.tat instanceof Date) {
-              formattedTat = data.tat.toISOString().split('T')[0];
-            } else if (typeof data.tat === 'string') {
-              formattedTat = data.tat;
-            }
-          }
-
           setFormData({
             receiver_name: data.receiver_name || '',
             receiver_details: data.receiver_details || '',
@@ -100,7 +89,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             dimensions: data.dimensions || '',
             total_order_weight: data.total_order_weight?.toString() || '',
             lr_no: data.lr_no || '',
-            tat: formattedTat,
+            tat: data.tat?.toString() || '', // TAT is now a number (hours)
             charge_basis: data.charge_basis || '',
             docket_id: data.docket_id || '',
             current_location: data.current_location || '',
@@ -110,6 +99,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             total_price: data.total_price?.toString() || '',
             invoice: data.invoice || '',
             status: data.status || '',
+            payment_mode: data.payment_mode || '-',
           });
 
           // Set selected client and receiver based on existing data
@@ -342,7 +332,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         docket_price: formData.docket_price ? parseFloat(formData.docket_price) : 0,
         calculated_price: formData.calculated_price ? parseFloat(formData.calculated_price) : 0,
         total_price: formData.total_price ? parseFloat(formData.total_price) : 0,
-        tat: new Date(formData.tat),
+        tat: parseInt(formData.tat), // Parse TAT as integer (hours)
+        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from TAT hours
         updated_at: new Date(),
         proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
       };
@@ -568,10 +559,12 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tat">TAT (Turn Around Time)</Label>
+            <Label htmlFor="tat">TAT (Hours)</Label>
             <Input
               id="tat"
-              type="date"
+              type="number"
+              placeholder="Enter TAT in hours"
+              min="1"
               value={formData.tat}
               onChange={(e) => handleInputChange('tat', e.target.value)}
               required
@@ -764,6 +757,22 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="payment_mode">Payment Mode</Label>
+            <Select
+              value={formData.payment_mode}
+              onValueChange={(value) => handleInputChange('payment_mode', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select payment mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="-">-</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="invoice">Invoice</Label>
             <Select

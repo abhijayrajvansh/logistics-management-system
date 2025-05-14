@@ -34,6 +34,8 @@ export function useOrders(locationFilter?: string) {
               order_id: doc.id,
               ...data,  
             } as Order;
+
+            console.log({orderResponse})
             
             return orderResponse;
           });

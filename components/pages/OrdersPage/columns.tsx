@@ -269,24 +269,32 @@ export const columns: ColumnDef<Order>[] = [
     accessorKey: 'tat',
     header: 'TAT',
     cell: ({ row }) => {
-      const tatValue = row.getValue('tat');
+      const tat: number = row.getValue('tat');
+      return <div className="text-left font-medium">{tat} H</div>;
+    }
+  },
+  {
+    accessorKey: 'deadline',
+    header: 'Deadline',
+    cell: ({ row }) => {
+      const deadlineValue = row.getValue('deadline');
 
       // Handle different date formats that might come from Firestore
       let formattedDate = '';
 
-      if (tatValue) {
+      if (deadlineValue) {
         try {
           // Handle if it's a Date object
-          if (tatValue instanceof Date) {
-            formattedDate = tatValue.toLocaleDateString();
+          if (deadlineValue instanceof Date) {
+            formattedDate = deadlineValue.toLocaleDateString();
           }
           // Handle string date format
-          else if (typeof tatValue === 'string') {
-            formattedDate = new Date(tatValue).toLocaleDateString();
+          else if (typeof deadlineValue === 'string') {
+            formattedDate = new Date(deadlineValue).toLocaleDateString();
           }
           // Handle timestamp object
-          else if (tatValue && typeof tatValue === 'object' && 'seconds' in tatValue) {
-            formattedDate = new Date((tatValue.seconds as number) * 1000).toLocaleDateString();
+          else if (deadlineValue && typeof deadlineValue === 'object' && 'seconds' in deadlineValue) {
+            formattedDate = new Date((deadlineValue.seconds as number) * 1000).toLocaleDateString();
           }
         } catch (error) {
           console.error('Error formatting TAT date:', error);

@@ -98,31 +98,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setSelectedClient(value);
       const client = clients.find((c) => c.id === value);
       if (client) {
-        let tatDate = '';
-        try {
-          if (client.current_tat) {
-            // Handle Firestore Timestamp
-            if (
-              typeof client.current_tat === 'object' &&
-              client.current_tat !== null &&
-              'seconds' in client.current_tat
-            ) {
-              const timestamp = client.current_tat as { seconds: number };
-              tatDate = new Date(timestamp.seconds * 1000).toISOString().split('T')[0];
-            }
-            // Handle regular Date object
-            else if (client.current_tat instanceof Date) {
-              tatDate = client.current_tat.toISOString().split('T')[0];
-            }
-          }
-        } catch (error) {
-          console.error('Error formatting TAT date:', error);
-        }
-
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
-          tat: tatDate,
           charge_basis: client.rateCard.preferance,
         }));
       }
@@ -317,9 +295,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         docket_price: parseFloat(formData.docket_price || '0'),
         calculated_price: parseFloat(formData.calculated_price || '0'),
         total_price: parseFloat(formData.total_price || '0'),
-        tat: new Date(formData.tat),
+        tat: parseInt(formData.tat), // Now parsing as integer instead of Date
+        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from tat hours
         proof_of_delivery: 'NA',
+        proof_of_payment: 'NA',
+        payment_mode: '-', // Set default payment mode
         created_at: new Date(),
+        updated_at: new Date(),
       };
 
       // Add the order to Firestore
@@ -572,13 +554,36 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tat">TAT (Turn Around Time)</Label>
+            <Label htmlFor="tat">TAT (Hours)</Label>
             <Input
               id="tat"
-              type="date"
+              type="number"
+              placeholder="Enter TAT in hours"
+              min="1"
               value={formData.tat}
-              onChange={(e) => handleInputChange('tat', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('tat', e.target.value);
+              }}
               required
+            />
+          </div>
+        </div>
+
+        {/* Show calculated deadline based on TAT */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline</Label>
+            <Input
+              id="deadline"
+              type="datetime-local"
+              value={
+                formData.tat
+                  ? new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000)
+                      .toISOString()
+                      .slice(0, 16)
+                  : ''
+              }
+              disabled
             />
           </div>
         </div>

@@ -29,6 +29,7 @@ export type Order = {
   client_details: string;
   created_at: Date;
   current_location: string;
+  deadline: Date; // deadline for delivery, calculated from order creation date + tat
   dimensions: string;
   invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
@@ -41,7 +42,7 @@ export type Order = {
   receiver_details: string;
   receiver_contact: string;
   status: string;
-  tat: Date;
+  tat: number; // whole numbers, format: hours
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
