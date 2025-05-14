@@ -1,15 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/firebase/database';
+import { useAuth } from '@/app/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
-import useClients from '@/hooks/useClients';
-import useReceivers from '@/hooks/useReceivers';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -17,10 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useAuth } from '@/app/context/AuthContext';
-import useUsers from '@/hooks/useUsers';
-import { User } from '@/types';
+import { db } from '@/firebase/database';
+import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
+import useTATs from '@/hooks/useTATs';
+import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
+import { addDoc, collection } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
@@ -32,6 +31,7 @@ const PRICE_PER_VOLUME = 0.01;
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { tats } = useTATs();
 
   const { userData } = useAuth();
 
@@ -39,6 +39,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+  const [selectedClientPincode, setSelectedClientPincode] = useState<string>('');
+  const [selectedReceiverPincode, setSelectedReceiverPincode] = useState<string>('');
 
   // Add state for pricing method selection
   const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
@@ -85,10 +87,31 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     generateUniqueId();
   }, []);
 
+  // Add effect to auto-populate TAT when all pincodes are available
+  useEffect(() => {
+    if (userData?.location && selectedClientPincode && selectedReceiverPincode) {
+      // Find matching TAT record
+      const matchingTat = tats.find(
+        (tat) =>
+          tat.center_pincode === userData.location &&
+          tat.client_pincode === selectedClientPincode &&
+          tat.receiver_pincode === selectedReceiverPincode,
+      );
+
+      if (matchingTat) {
+        setFormData((prev) => ({
+          ...prev,
+          tat: matchingTat.tat_value.toString(),
+        }));
+      }
+    }
+  }, [userData?.location, selectedClientPincode, selectedReceiverPincode, tats]);
+
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualClientEntry(true);
       setSelectedClient('');
+      setSelectedClientPincode('');
       setFormData((prev) => ({
         ...prev,
         client_details: '',
@@ -98,6 +121,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setSelectedClient(value);
       const client = clients.find((c) => c.id === value);
       if (client) {
+        setSelectedClientPincode(client.pincode || '');
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
@@ -231,6 +255,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
       setSelectedReceiver('');
+      setSelectedReceiverPincode('');
       setFormData((prev) => ({
         ...prev,
         receiver_name: '',
@@ -242,6 +267,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setSelectedReceiver(value);
       const receiver = receivers.find((r) => r.id === value);
       if (receiver) {
+        setSelectedReceiverPincode(receiver.pincode || '');
         setFormData((prev) => ({
           ...prev,
           receiver_name: receiver.receiverName,

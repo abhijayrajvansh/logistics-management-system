@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { shippers, ShipperData } from '@/lib/mock-data';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
+import useTATs from '@/hooks/useTATs';
 import { Client, ReceiverDetails } from '@/types';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -18,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 
 interface UpdateOrderFormProps {
@@ -57,6 +57,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { tats } = useTATs();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +65,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+  const [selectedClientPincode, setSelectedClientPincode] = useState<string>('');
+  const [selectedReceiverPincode, setSelectedReceiverPincode] = useState<string>('');
 
   // Add state for pricing method selection
   const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
@@ -106,6 +109,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           const client = clients.find((c: Client) => c.clientName === data.client_details);
           if (client) {
             setSelectedClient(client.id);
+            setSelectedClientPincode(client.pincode || '');
           } else {
             setIsManualClientEntry(true);
           }
@@ -115,6 +119,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           );
           if (receiver) {
             setSelectedReceiver(receiver.id);
+            setSelectedReceiverPincode(receiver.pincode || '');
           } else {
             setIsManualReceiverEntry(true);
           }
@@ -133,10 +138,31 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     fetchOrderData();
   }, [orderId, onCancel, clients, receivers]);
 
+  // Add effect to auto-populate TAT when all pincodes are available
+  useEffect(() => {
+    if (formData.current_location && selectedClientPincode && selectedReceiverPincode) {
+      // Find matching TAT record
+      const matchingTat = tats.find(
+        (tat) =>
+          tat.center_pincode === formData.current_location &&
+          tat.client_pincode === selectedClientPincode &&
+          tat.receiver_pincode === selectedReceiverPincode,
+      );
+
+      if (matchingTat) {
+        setFormData((prev) => ({
+          ...prev,
+          tat: matchingTat.tat_value.toString(),
+        }));
+      }
+    }
+  }, [formData.current_location, selectedClientPincode, selectedReceiverPincode, tats]);
+
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualClientEntry(true);
       setSelectedClient('');
+      setSelectedClientPincode('');
       setFormData((prev) => ({
         ...prev,
         client_details: '',
@@ -146,6 +172,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
       setSelectedClient(value);
       const client = clients.find((c: Client) => c.id === value);
       if (client) {
+        setSelectedClientPincode(client.pincode || '');
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
@@ -159,6 +186,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
       setSelectedReceiver('');
+      setSelectedReceiverPincode('');
       setFormData((prev) => ({
         ...prev,
         receiver_name: '',
@@ -170,6 +198,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
       setSelectedReceiver(value);
       const receiver = receivers.find((r: ReceiverDetails) => r.id === value);
       if (receiver) {
+        setSelectedReceiverPincode(receiver.pincode || '');
         setFormData((prev) => ({
           ...prev,
           receiver_name: receiver.receiverName,
