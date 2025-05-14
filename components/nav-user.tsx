@@ -36,9 +36,7 @@ export function UserNavProfile() {
   const { isMobile } = useSidebar();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user } = useAuth();
-  const { users: currentUser } = useUsers(user?.uid);
-  const currentUserData = currentUser[0] as User;
+  const { userData } = useAuth();
 
   const getUsername = (email: string | null | undefined) => {
     if (!email) return '';
@@ -74,9 +72,9 @@ export function UserNavProfile() {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="text-black truncate text-xs">{currentUserData?.displayName}</span>
+                <span className="text-black truncate text-xs">{userData?.displayName}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  ID: {getUsername(currentUserData?.email)}
+                  ID: {getUsername(userData?.email)}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -96,9 +94,9 @@ export function UserNavProfile() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="text-black truncate text-xs">{currentUserData?.displayName}</span>
+                  <span className="text-black truncate text-xs">{userData?.displayName}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    ID: {getUsername(currentUserData?.email)}
+                    ID: {getUsername(userData?.email)}
                   </span>
                 </div>
               </div>
