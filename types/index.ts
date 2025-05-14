@@ -16,6 +16,7 @@ export type User = {
   email: string;
   password: string;
   displayName: string;
+  location: string;
   role: 'admin' | 'manager' | 'driver';
   createdAt: Date;
 };
@@ -102,7 +103,7 @@ export type Client = {
   clientId: string;
   clientName: string;
   clientDetails: string;
-  current_tat: Date;
+  // current_tat: Date;
   rateCard: ClientRateCard;
 };
 

@@ -29,7 +29,6 @@ tat_mappings {
     client_id: foreign key
     receiver_id: foreign key
     tat_value: integer (in days)
-    is_active: boolean
     created_at: timestamp
     updated_at: timestamp
 }

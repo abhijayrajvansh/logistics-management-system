@@ -3,7 +3,7 @@ import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestor
 import { db } from '@/firebase/database';
 import { Order } from '@/types';
 
-export function useOrders() {
+export function useOrders(locationFilter?: string) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -14,8 +14,13 @@ export function useOrders() {
     try {
       // Set up real-time listener for orders collection
       const ordersRef = collection(db, 'orders');
+
+      const ordersQuery = locationFilter 
+        ? query(ordersRef, where('current_location', '==', locationFilter))
+        : ordersRef;
+
       const unsubscribe = onSnapshot(
-        ordersRef,
+        ordersQuery,
         (snapshot) => {
           const fetchedOrders = snapshot.docs.map((doc) => {
             const data = doc.data();

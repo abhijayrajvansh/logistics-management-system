@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/site-header';
 import useOrders from '@/hooks/useOrders';
 
 export default function OrdersPage() {
-  const { orders, isLoading, error } = useOrders();
+  const { orders, isLoading, error } = useOrders('<manager-current-location>');
 
   const formattedOrders = orders.map((order) => ({
     id: order.order_id,
