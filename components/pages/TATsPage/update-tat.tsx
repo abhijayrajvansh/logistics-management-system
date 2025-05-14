@@ -154,7 +154,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {centers.map((center) => (
                   <SelectItem key={center.id} value={center.id}>
-                    {center.name} ({center.pincode})
+                    {center.name} 
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -175,7 +175,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.clientName} ({client.pincode})
+                    {client.clientName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -198,7 +198,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {receivers.map((receiver) => (
                   <SelectItem key={receiver.id} value={receiver.id}>
-                    {receiver.receiverName} ({receiver.pincode})
+                    {receiver.receiverName} 
                   </SelectItem>
                 ))}
               </SelectContent>

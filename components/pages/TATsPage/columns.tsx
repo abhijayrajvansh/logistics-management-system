@@ -1,10 +1,5 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
-import { TAT_Mapping } from '@/hooks/useTATs';
-import { useState } from 'react';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,12 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Timestamp } from 'firebase/firestore';
-import UpdateTATForm from './update-tat';
-import DeleteTATDialog from './delete-tat';
+import useCenters from '@/hooks/useCenters';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
-import useCenters from '@/hooks/useCenters';
+import { TAT_Mapping } from '@/hooks/useTATs';
+import { ColumnDef } from '@tanstack/react-table';
+import { Timestamp } from 'firebase/firestore';
+import { useState } from 'react';
+import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import DeleteTATDialog from './delete-tat';
+import UpdateTATForm from './update-tat';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -104,7 +103,7 @@ const EntityCell = ({
   return (
     <div className="flex flex-col">
       <span>{name}</span>
-      <span className="text-xs text-gray-500">{pincode}</span>
+      <span className="text-xs text-gray-500 hidden">{pincode}</span>
     </div>
   );
 };

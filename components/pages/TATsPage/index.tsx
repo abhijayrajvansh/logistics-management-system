@@ -1,28 +1,16 @@
 'use client';
 
-import React from 'react';
-import { useAuth } from '@/app/context/AuthContext';
-import { columns } from './columns';
-import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
 import useTATs from '@/hooks/useTATs';
-import useUsers from '@/hooks/useUsers';
-import useCenters from '@/hooks/useCenters';
+import { columns } from './columns';
+import { DataTable } from './data-table';
 
 export default function TATsPage() {
-  const { userData, loading: authLoading } = useAuth();
-  const { centers } = useCenters();
+  const { tats, isLoading: isLoadingTATs, error: errorTATs } = useTATs();
 
-  // Get the user's center pincode if they are a manager
-  const userCenterPincode = userData?.location;
+  console.log({ tats });
 
-  const { tats, isLoading: isLoadingTATs, error: errorTATs } = useTATs(userCenterPincode);
-
-  console.log({tats})
-
-  const isLoading = authLoading || (userCenterPincode && isLoadingTATs);
-
-  if (isLoading) {
+  if (isLoadingTATs) {
     return <div>Loading...</div>;
   }
 

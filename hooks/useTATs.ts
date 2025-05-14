@@ -12,14 +12,13 @@ export type TAT_Mapping = {
   updated_at: Timestamp;
 };
 
-const useTATs = (centerPincode?: string) => {
+const useTATs = () => {
   const [tats, setTATs] = useState<TAT_Mapping[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
 
-    if (!centerPincode) return; 
 
     let unsubscribe: () => void;
 
@@ -29,13 +28,13 @@ const useTATs = (centerPincode?: string) => {
         const tatsRef = collection(db, 'tats');
 
         // Create query based on center pincode if provided
-        const tatsQuery = centerPincode
-          ? query(tatsRef, where('center_pincode', '==', centerPincode))
-          : query(tatsRef);
+        // const tatsQuery = centerPincode
+        //   ? query(tatsRef, where('center_pincode', '==', centerPincode))
+        //   : query(tatsRef);
 
         // Set up real-time listener
         unsubscribe = onSnapshot(
-          tatsQuery,
+          tatsRef,
           (snapshot) => {
             const tatsData: TAT_Mapping[] = snapshot.docs.map((doc) => ({
               id: doc.id,
@@ -68,7 +67,7 @@ const useTATs = (centerPincode?: string) => {
         unsubscribe();
       }
     };
-  }, [centerPincode]);
+  }, []);
 
   return { tats, isLoading, error };
 };
