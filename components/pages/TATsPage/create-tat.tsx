@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,20 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
         throw new Error('Please select all required fields');
       }
 
+      // Check for existing mapping
+      const tatsRef = collection(db, 'tats');
+      const duplicateQuery = query(
+        tatsRef,
+        where('center_pincode', '==', selectedCenter.pincode),
+        where('client_pincode', '==', selectedClient.pincode),
+        where('receiver_pincode', '==', selectedReceiver.pincode)
+      );
+
+      const duplicateSnapshot = await getDocs(duplicateQuery);
+      if (!duplicateSnapshot.empty) {
+        throw new Error('A TAT mapping already exists for this combination of center, client, and receiver');
+      }
+
       // Validate and parse form data with pincodes
       const validatedData = {
         center_pincode: selectedCenter.pincode,
@@ -87,7 +101,7 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
     } catch (error) {
       console.error('Error creating TAT mapping:', error);
       toast.error('Failed to create TAT mapping', {
-        description: 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     } finally {
       setIsSubmitting(false);
