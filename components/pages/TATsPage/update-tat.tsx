@@ -45,10 +45,16 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
         const tatDoc = await getDoc(doc(db, 'tats', tatId));
         if (tatDoc.exists()) {
           const data = tatDoc.data();
+
+          // Find the entities by pincode
+          const matchedCenter = centers.find((c) => c.pincode === data.center_pincode);
+          const matchedClient = clients.find((c) => c.pincode === data.client_pincode);
+          const matchedReceiver = receivers.find((r) => r.pincode === data.receiver_pincode);
+
           setFormData({
-            center_id: data.center_id || '',
-            client_id: data.client_id || '',
-            receiver_id: data.receiver_id || '',
+            center_id: matchedCenter?.id || '',
+            client_id: matchedClient?.id || '',
+            receiver_id: matchedReceiver?.id || '',
             tat_value: data.tat_value?.toString() || '',
           });
         } else {
@@ -63,8 +69,19 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
       }
     };
 
-    fetchTATData();
-  }, [tatId, onCancel]);
+    if (!isLoadingCenters && !isLoadingClients && !isLoadingReceivers) {
+      fetchTATData();
+    }
+  }, [
+    tatId,
+    onCancel,
+    centers,
+    clients,
+    receivers,
+    isLoadingCenters,
+    isLoadingClients,
+    isLoadingReceivers,
+  ]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -78,9 +95,20 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
     setIsSubmitting(true);
 
     try {
-      // Validate and parse form data
+      // Find the selected entities to get their pincodes
+      const selectedCenter = centers.find((c) => c.id === formData.center_id);
+      const selectedClient = clients.find((c) => c.id === formData.client_id);
+      const selectedReceiver = receivers.find((r) => r.id === formData.receiver_id);
+
+      if (!selectedCenter || !selectedClient || !selectedReceiver) {
+        throw new Error('Please select all required fields');
+      }
+
+      // Validate and parse form data with pincodes
       const validatedData = {
-        ...formData,
+        center_pincode: selectedCenter.pincode,
+        client_pincode: selectedClient.pincode,
+        receiver_pincode: selectedReceiver.pincode,
         tat_value: parseInt(formData.tat_value),
         updated_at: new Date(),
       };
@@ -104,7 +132,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingCenters || isLoadingClients || isLoadingReceivers) {
     return <div className="py-8 text-center">Loading TAT data...</div>;
   }
 
@@ -126,7 +154,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {centers.map((center) => (
                   <SelectItem key={center.id} value={center.id}>
-                    {center.name}
+                    {center.name} ({center.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -147,7 +175,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.clientName}
+                    {client.clientName} ({client.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -170,7 +198,7 @@ export function UpdateTATForm({ tatId, onSuccess, onCancel }: UpdateTATFormProps
               <SelectContent>
                 {receivers.map((receiver) => (
                   <SelectItem key={receiver.id} value={receiver.id}>
-                    {receiver.receiverName}
+                    {receiver.receiverName} ({receiver.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>

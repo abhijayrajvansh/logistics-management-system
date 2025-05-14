@@ -15,6 +15,9 @@ import {
 import { Timestamp } from 'firebase/firestore';
 import UpdateTATForm from './update-tat';
 import DeleteTATDialog from './delete-tat';
+import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
+import useCenters from '@/hooks/useCenters';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -74,18 +77,55 @@ const formatDate = (timestamp: Timestamp) => {
   return date.toLocaleDateString();
 };
 
+// Component to display entity name with pincode
+const EntityCell = ({
+  entityType,
+  pincode,
+}: {
+  entityType: 'center' | 'client' | 'receiver';
+  pincode: string;
+}) => {
+  const { centers } = useCenters();
+  const { clients } = useClients();
+  const { receivers } = useReceivers();
+
+  let name = '';
+  if (entityType === 'center') {
+    const center = centers.find((c) => c.pincode === pincode);
+    name = center?.name || '';
+  } else if (entityType === 'client') {
+    const client = clients.find((c) => c.pincode === pincode);
+    name = client?.clientName || '';
+  } else if (entityType === 'receiver') {
+    const receiver = receivers.find((r) => r.pincode === pincode);
+    name = receiver?.receiverName || '';
+  }
+
+  return (
+    <div className="flex flex-col">
+      <span>{name}</span>
+      <span className="text-xs text-gray-500">{pincode}</span>
+    </div>
+  );
+};
+
 export const columns: ColumnDef<TAT_Mapping>[] = [
   {
-    accessorKey: 'center_id',
+    accessorKey: 'center_pincode',
     header: 'Center',
+    cell: ({ row }) => <EntityCell entityType="center" pincode={row.getValue('center_pincode')} />,
   },
   {
-    accessorKey: 'client_id',
+    accessorKey: 'client_pincode',
     header: 'Client',
+    cell: ({ row }) => <EntityCell entityType="client" pincode={row.getValue('client_pincode')} />,
   },
   {
-    accessorKey: 'receiver_id',
+    accessorKey: 'receiver_pincode',
     header: 'Receiver',
+    cell: ({ row }) => (
+      <EntityCell entityType="receiver" pincode={row.getValue('receiver_pincode')} />
+    ),
   },
   {
     accessorKey: 'tat_value',

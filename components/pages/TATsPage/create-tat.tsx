@@ -48,9 +48,20 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Validate and parse form data
+      // Find the selected entities to get their pincodes
+      const selectedCenter = centers.find((c) => c.id === formData.center_id);
+      const selectedClient = clients.find((c) => c.id === formData.client_id);
+      const selectedReceiver = receivers.find((r) => r.id === formData.receiver_id);
+
+      if (!selectedCenter || !selectedClient || !selectedReceiver) {
+        throw new Error('Please select all required fields');
+      }
+
+      // Validate and parse form data with pincodes
       const validatedData = {
-        ...formData,
+        center_pincode: selectedCenter.pincode,
+        client_pincode: selectedClient.pincode,
+        receiver_pincode: selectedReceiver.pincode,
         tat_value: parseInt(formData.tat_value),
         created_at: new Date(),
         updated_at: new Date(),
@@ -101,7 +112,7 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
               <SelectContent>
                 {centers.map((center) => (
                   <SelectItem key={center.id} value={center.id}>
-                    {center.name}
+                    {center.name} ({center.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -122,7 +133,7 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
               <SelectContent>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.clientName}
+                    {client.clientName} ({client.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -145,7 +156,7 @@ export function CreateTATForm({ onSuccess }: CreateTATFormProps) {
               <SelectContent>
                 {receivers.map((receiver) => (
                   <SelectItem key={receiver.id} value={receiver.id}>
-                    {receiver.receiverName}
+                    {receiver.receiverName} ({receiver.pincode})
                   </SelectItem>
                 ))}
               </SelectContent>

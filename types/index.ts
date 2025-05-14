@@ -156,11 +156,11 @@ export type Center = {
 };
 
 
-export type tat_mappings = {
+export type TAT_Mapping = {
   id: string;
-  center_id: string;
-  client_id: string;
-  receiver_id: string;
+  center_pincode: string;
+  client_pincode: string;
+  receiver_pincode: string;
   tat_value: number; // in hours
   created_at: Timestamp;
   updated_at: Timestamp;
