@@ -9,6 +9,11 @@ export function useOrders(locationFilter?: string) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+
+    // not running if location is not available
+    // todo: add a check for locationFilter if its equal to "all", i.e. admin wants to see all pincode orders
+    if (!locationFilter) return; 
+
     setIsLoading(true);
 
     try {
@@ -53,7 +58,7 @@ export function useOrders(locationFilter?: string) {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, []);
+  }, [locationFilter]);
 
   return {
     orders,
