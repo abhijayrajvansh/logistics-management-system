@@ -85,33 +85,8 @@ export const columns: ColumnDef<Client>[] = [
     header: 'Client Details',
   },
   {
-    accessorKey: 'current_tat',
-    header: 'Current TAT',
-    cell: ({ row }) => {
-      const tatValue = row.original.current_tat;
-      let formattedDate = '';
-
-      try {
-        // Handle Date object
-        if (tatValue instanceof Date) {
-          formattedDate = tatValue.toLocaleDateString();
-        }
-        // Handle Firestore Timestamp
-        else if (tatValue && typeof tatValue === 'object' && 'seconds' in tatValue) {
-          const timestamp = tatValue as { seconds: number; nanoseconds: number };
-          formattedDate = new Date(timestamp.seconds * 1000).toLocaleDateString();
-        }
-        // Handle string date format
-        else if (typeof tatValue === 'string') {
-          formattedDate = new Date(tatValue).toLocaleDateString();
-        }
-      } catch (error) {
-        console.error('Error formatting TAT date:', error);
-        formattedDate = 'Invalid Date';
-      }
-
-      return <div className="text-left">{formattedDate}</div>;
-    },
+    accessorKey: 'pincode',
+    header: 'Pincode',
   },
   {
     accessorKey: 'rateCard.preferance',

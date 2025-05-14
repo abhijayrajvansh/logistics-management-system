@@ -19,6 +19,7 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
     receiverName: '',
     receiverDetails: '',
     receiverContact: '',
+    pincode: '',
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +36,7 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
             receiverName: data.receiverName || '',
             receiverDetails: data.receiverDetails || '',
             receiverContact: data.receiverContact || '',
+            pincode: data.pincode || '',
           });
         } else {
           toast.error('Receiver not found');
@@ -69,6 +71,7 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
         receiverName: formData.receiverName,
         receiverDetails: formData.receiverDetails,
         receiverContact: formData.receiverContact,
+        pincode: formData.pincode,
         updated_at: new Date(),
       });
 
@@ -125,6 +128,17 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
             placeholder="Enter receiver details"
             value={formData.receiverDetails}
             onChange={(e) => handleInputChange('receiverDetails', e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pincode">Pincode</Label>
+          <Input
+            id="pincode"
+            placeholder="Enter pincode"
+            value={formData.pincode}
+            onChange={(e) => handleInputChange('pincode', e.target.value)}
             required
           />
         </div>

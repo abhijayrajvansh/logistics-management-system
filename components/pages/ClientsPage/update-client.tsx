@@ -26,7 +26,7 @@ export function UpdateClientForm({ clientId, onSuccess, onCancel }: UpdateClient
   const [formData, setFormData] = useState({
     clientName: '',
     clientDetails: '',
-    current_tat: '',
+    pincode: '',
     rateCard: {
       preferance: '',
       pricePerPref: '',
@@ -44,16 +44,10 @@ export function UpdateClientForm({ clientId, onSuccess, onCancel }: UpdateClient
         const clientDoc = await getDoc(doc(db, 'clients', clientId));
         if (clientDoc.exists()) {
           const data = clientDoc.data();
-          // Convert Firestore Timestamp to Date string in YYYY-MM-DD format
-          const tatDate =
-            data.current_tat instanceof Date
-              ? data.current_tat.toISOString().split('T')[0]
-              : new Date(data.current_tat.seconds * 1000).toISOString().split('T')[0];
-
           setFormData({
             clientName: data.clientName || '',
             clientDetails: data.clientDetails || '',
-            current_tat: tatDate,
+            pincode: data.pincode || '',
             rateCard: {
               preferance: data.rateCard.preferance || '',
               pricePerPref: data.rateCard.pricePerPref?.toString() || '',
@@ -102,9 +96,10 @@ export function UpdateClientForm({ clientId, onSuccess, onCancel }: UpdateClient
       const rateCard: ClientRateCard = {
         preferance: formData.rateCard.preferance as 'By Weight' | 'Per Boxes',
         pricePerPref: parseFloat(formData.rateCard.pricePerPref),
-        minPriceWeight: formData.rateCard.preferance === 'By Weight'
-          ? parseFloat(formData.rateCard.minPriceWeight) || 0 // Convert to number or use 0 if empty
-          : 'NA'
+        minPriceWeight:
+          formData.rateCard.preferance === 'By Weight'
+            ? parseFloat(formData.rateCard.minPriceWeight) || 0
+            : 'NA',
       };
 
       // Validate required fields for By Weight option
@@ -119,7 +114,7 @@ export function UpdateClientForm({ clientId, onSuccess, onCancel }: UpdateClient
       await updateDoc(clientRef, {
         clientName: formData.clientName,
         clientDetails: formData.clientDetails,
-        current_tat: new Date(formData.current_tat),
+        pincode: formData.pincode,
         rateCard,
         updated_at: new Date(),
       });
@@ -172,13 +167,12 @@ export function UpdateClientForm({ clientId, onSuccess, onCancel }: UpdateClient
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="current_tat">Current TAT</Label>
+            <Label htmlFor="pincode">Pincode</Label>
             <Input
-              id="current_tat"
-              type="date"
-              placeholder="Select TAT date"
-              value={formData.current_tat}
-              onChange={(e) => handleInputChange('current_tat', e.target.value)}
+              id="pincode"
+              placeholder="Enter pincode"
+              value={formData.pincode}
+              onChange={(e) => handleInputChange('pincode', e.target.value)}
               required
             />
           </div>

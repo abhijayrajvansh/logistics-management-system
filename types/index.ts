@@ -104,7 +104,7 @@ export type Client = {
   clientId: string;
   clientName: string;
   clientDetails: string;
-  // current_tat: Date;
+  pincode: string;
   rateCard: ClientRateCard;
 };
 
@@ -120,6 +120,7 @@ export type ReceiverDetails = {
   receiverName: string;
   receiverDetails: string;
   receiverContact: string;
+  pincode: string;
 };
 
 export type DriversAttendance = {

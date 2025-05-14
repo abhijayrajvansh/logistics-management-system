@@ -86,15 +86,19 @@ export const columns: ColumnDef<ReceiverDetails>[] = [
     cell: ({ row }) => {
       const details: string = row.getValue('receiverDetails');
       return (
-        <div className='overflow-hidden text-ellipsis whitespace-nowrap max-w-[300px]'>
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[300px]">
           {details}
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: 'receiverContact',
     header: 'Contact',
+  },
+  {
+    accessorKey: 'pincode',
+    header: 'Pincode',
   },
   {
     accessorKey: 'actions',
