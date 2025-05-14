@@ -33,18 +33,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
 
-  const { user } = useAuth();
-  const { users: currentUser } = useUsers(user?.uid);
-  const currentUserData = currentUser[0] as User;
-
-  useEffect(() => {
-    if (currentUserData?.location) {
-      setFormData((prev) => ({
-        ...prev,
-        current_location: currentUserData.location,
-      }));
-    }
-  }, [currentUserData]);
+  const { userData } = useAuth();
 
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
@@ -67,7 +56,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     tat: '',
     charge_basis: '',
     docket_id: '',
-    current_location: '',
+    current_location: userData?.location,
     client_details: '',
     docket_price: '',
     calculated_price: '',
