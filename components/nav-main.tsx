@@ -50,6 +50,11 @@ const navMain = [
     icon: PiUserSquareFill,
   },
   {
+    title: 'Centers',
+    url: '/dashboard/centers',
+    icon: MdHub,
+  },
+  {
     title: 'Clients',
     url: '/dashboard/clients',
     icon: FaHandshake,
@@ -58,11 +63,6 @@ const navMain = [
     title: 'Receivers',
     url: '/dashboard/receivers',
     icon: RiUserReceived2Fill,
-  },
-  {
-    title: 'Centers',
-    url: '/dashboard/centers',
-    icon: MdHub,
   },
 ];
 
