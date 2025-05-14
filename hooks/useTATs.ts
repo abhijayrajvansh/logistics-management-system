@@ -41,8 +41,6 @@ const useTATs = () => {
               ...(doc.data() as Omit<TAT_Mapping, 'id'>),
             }));
 
-            console.log({tatsData})
-
             setTATs(tatsData);
             setIsLoading(false);
           },

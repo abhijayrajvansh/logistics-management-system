@@ -8,8 +8,6 @@ import { DataTable } from './data-table';
 export default function TATsPage() {
   const { tats, isLoading: isLoadingTATs, error: errorTATs } = useTATs();
 
-  console.log({ tats });
-
   if (isLoadingTATs) {
     return <div>Loading...</div>;
   }
