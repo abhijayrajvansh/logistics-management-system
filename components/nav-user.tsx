@@ -34,10 +34,9 @@ import { User } from '@/types';
 
 export function UserNavProfile() {
   const { isMobile } = useSidebar();
-  const { user } = useAuth();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
+  const { user } = useAuth();
   const { users: currentUser } = useUsers(user?.uid);
   const currentUserData = currentUser[0] as User;
 

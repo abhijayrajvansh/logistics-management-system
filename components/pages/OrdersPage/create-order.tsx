@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useAuth } from '@/app/context/AuthContext';
+import useUsers from '@/hooks/useUsers';
+import { User } from '@/types';
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
@@ -30,10 +33,24 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
 
+  const { user } = useAuth();
+  const { users: currentUser } = useUsers(user?.uid);
+  const currentUserData = currentUser[0] as User;
+
+  useEffect(() => {
+    if (currentUserData?.location) {
+      setFormData((prev) => ({
+        ...prev,
+        current_location: currentUserData.location,
+      }));
+    }
+  }, [currentUserData]);
+
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+
   // Add state for pricing method selection
   const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
     'clientPreference',
@@ -50,7 +67,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     tat: '',
     charge_basis: '',
     docket_id: '',
-    current_location: '<manager-current-location>',
+    current_location: '',
     client_details: '',
     docket_price: '',
     calculated_price: '',
