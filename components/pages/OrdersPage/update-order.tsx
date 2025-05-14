@@ -572,6 +572,25 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           </div>
         </div>
 
+        {/* Show calculated deadline based on TAT */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline</Label>
+            <Input
+              id="deadline"
+              type="datetime-local"
+              value={
+                formData.tat
+                  ? new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000)
+                      .toISOString()
+                      .slice(0, 16)
+                  : ''
+              }
+              disabled
+            />
+          </div>
+        </div>
+
         {/* Pricing Method Selection */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
@@ -756,23 +775,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="payment_mode">Payment Mode</Label>
-            <Select
-              value={formData.payment_mode}
-              onValueChange={(value) => handleInputChange('payment_mode', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select payment mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="-">-</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="invoice">Invoice</Label>
             <Select
@@ -804,6 +807,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </SelectContent>
             </Select>
           </div>
+          <div></div>
         </div>
 
         {/* handling location on backend for specific order update wrt to managers */}
