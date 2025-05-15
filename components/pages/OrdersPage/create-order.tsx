@@ -64,7 +64,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
-    status: '',
+    status: 'Ready To Transport',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
