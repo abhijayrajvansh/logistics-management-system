@@ -128,6 +128,7 @@ const TypeCell = ({ row }: { row: any }) => {
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
   const trip = row.original;
+  // console.log({trip})
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -163,7 +164,7 @@ const ActionCell = ({ row }: { row: any }) => {
             </DialogDescription>
           </DialogHeader>
           <UpdateTripForm
-            tripId={trip.tripId}
+            tripId={trip.id}
             onSuccess={handleUpdateSuccess}
             onCancel={() => setIsEditDialogOpen(false)}
           />

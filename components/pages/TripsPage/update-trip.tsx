@@ -59,11 +59,34 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  const fetchAssociatedOrders = async (orderIds: string[]) => {
+  const fetchAssociatedOrders = async (tripDocId: string) => {
+    
     try {
-      const ordersPromises = orderIds.map((id) => getDoc(doc(db, 'orders', id)));
+      // Use the same document ID tripDocId to fetch from trip_orders collection
+      const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', tripDocId));
+      console.log('Trip orders doc exists?', tripOrdersDoc.exists());
+      console.log('Trip orders data:', tripOrdersDoc.data());
+
+      if (!tripOrdersDoc.exists()) {
+        console.log('No trip_orders document found for tripDocId:', tripDocId);
+        return [];
+      }
+
+      // Get the orderIds array
+      const orderIds = tripOrdersDoc.data().orderIds || [];
+      console.log('Found orderIds:', orderIds);
+
+      if (orderIds.length === 0) {
+        console.log('No orderIds found in trip_orders document');
+        return [];
+      }
+
+      // Now fetch all the orders in parallel
+      console.log('Fetching orders for IDs:', orderIds);
+      const ordersPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
       const orderDocs = await Promise.all(ordersPromises);
-      return orderDocs
+
+      const orders = orderDocs
         .filter((doc) => doc.exists())
         .map(
           (doc) =>
@@ -72,8 +95,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               ...doc.data(),
             }) as Order,
         );
+
+      console.log('Successfully fetched orders:', orders);
+      return orders;
     } catch (error) {
-      console.error('Error fetching associated orders:', error);
+      console.error('Error in fetchAssociatedOrders:', error);
       return [];
     }
   };
@@ -98,15 +124,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   const fetchTripData = useCallback(async () => {
     try {
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         onCancel?.();
         return;
       }
+
+      // Create a structure similar to querySnapshot to maintain compatibility with the rest of the code
+      const querySnapshot = {
+        docs: [
+          {
+        data: () => tripDocSnap.data(),
+        id: tripDocSnap.id
+          }
+        ],
+        empty: false
+      };
 
       const tripDoc = querySnapshot.docs[0];
       const data = tripDoc.data();
@@ -152,7 +188,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         setSelectedOrderIds(orderIds);
 
         // Fetch the actual order documents
-        const associatedOrders = await fetchAssociatedOrders(orderIds);
+        const associatedOrders = await fetchAssociatedOrders(tripId);
         setAssociatedOrders(associatedOrders);
       }
 
