@@ -41,7 +41,7 @@ export type Order = {
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
-  status: "Ready To Transport" | "Assigned" | "In Transit" | "Delivered";
+  status: "Ready To Transport" | "Assigned" | "In Transit" | "Transferred" | "Delivered";
   tat: number; // whole numbers, format: hours
   total_boxes_count: number;
   total_order_weight: number;

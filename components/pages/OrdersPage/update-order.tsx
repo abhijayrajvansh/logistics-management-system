@@ -838,6 +838,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
                 <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
                 <SelectItem value="Assigned">Assigned</SelectItem>
                 <SelectItem value="In Transit">In Transit</SelectItem>
+                <SelectItem value="Transferred">Transferred</SelectItem>
                 <SelectItem value="Delivered">Delivered</SelectItem>
               </SelectContent>
             </Select>
