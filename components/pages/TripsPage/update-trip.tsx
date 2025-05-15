@@ -10,6 +10,8 @@ import {
   where,
   getDocs,
   addDoc,
+  setDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
@@ -279,30 +281,26 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         updated_at: new Date(),
       };
 
-      // Find the document with the given tripId
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
+      // Get the trip document reference directly using the tripId
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         return;
       }
 
       // Update the trip in Firestore
-      const tripDoc = querySnapshot.docs[0];
-      await updateDoc(doc(db, 'trips', tripDoc.id), validatedData);
+      await updateDoc(tripDocRef, validatedData);
 
-      // Update trip_orders
-      const tripOrdersRef = collection(db, 'trip_orders');
-      const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
-      const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+      // Get current trip_orders document using the same ID as the trip document
+      const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
+      const tripOrdersSnap = await getDoc(tripOrdersDocRef);
 
       let previousOrderIds: string[] = [];
 
-      if (!tripOrdersSnapshot.empty) {
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        previousOrderIds = tripOrdersDoc.data().orderIds || [];
+      if (tripOrdersSnap.exists()) {
+        previousOrderIds = tripOrdersSnap.data().orderIds || [];
       }
 
       // Find orders to add and remove
@@ -328,23 +326,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       // Wait for all order status updates to complete
       await Promise.all([...addPromises, ...removePromises]);
 
-      // Update or create trip_orders document
-      if (tripOrdersSnapshot.empty) {
-        // Create new trip_orders document if there are selected orders
-        if (selectedOrderIds.length > 0) {
-          await addDoc(collection(db, 'trip_orders'), {
+      // Update or create trip_orders document using the same ID as the trip
+      if (selectedOrderIds.length > 0) {
+        if (tripOrdersSnap.exists()) {
+          // Update existing trip_orders document
+          await updateDoc(tripOrdersDocRef, {
+            orderIds: selectedOrderIds,
+            updatedAt: new Date(),
+          });
+        } else {
+          // Create new trip_orders document with same ID as trip
+          await setDoc(tripOrdersDocRef, {
             tripId,
             orderIds: selectedOrderIds,
             updatedAt: new Date(),
           });
         }
-      } else {
-        // Update existing trip_orders document
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        await updateDoc(doc(db, 'trip_orders', tripOrdersDoc.id), {
-          orderIds: selectedOrderIds,
-          updatedAt: new Date(),
-        });
+      } else if (tripOrdersSnap.exists()) {
+        // If no orders selected and document exists, delete it
+        await deleteDoc(tripOrdersDocRef);
       }
 
       toast.success('Trip updated successfully!');
