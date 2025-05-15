@@ -272,10 +272,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     setIsSubmitting(true);
 
     try {
-      // Parse and validate form data
+      // Parse and validate form data, setting numberOfStops to selectedOrderIds length
       const validatedData = {
         ...formData,
-        numberOfStops: parseInt(formData.numberOfStops),
+        numberOfStops: selectedOrderIds.length,
         startDate: new Date(formData.startDate),
         updated_at: new Date(),
       };
@@ -393,10 +393,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
             <Input
+              disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
-              value={formData.numberOfStops}
+              value={selectedOrderIds.length}
               onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
               required
               min="0"
