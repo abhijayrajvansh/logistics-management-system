@@ -16,7 +16,7 @@ import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import { Driver, Trip, Order } from '@/types';
-import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
@@ -196,9 +196,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
-        // Add trip_orders document
-        await addDoc(collection(db, 'trip_orders'), {
-          tripId: formData.tripId,
+        
+        // Use setDoc with trip ID as document ID
+        await setDoc(doc(db, 'trip_orders', tripRef.id), {
+          tripId: tripRef.id,
           orderIds: selectedOrderIds,
           updatedAt: new Date(),
         });

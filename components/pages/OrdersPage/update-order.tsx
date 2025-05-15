@@ -837,7 +837,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               <SelectContent>
                 <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
                 {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
-                {/* <SelectItem value="Assigned">Assigned</SelectItem> */}
+                <SelectItem value="Assigned">Assigned</SelectItem>
                 <SelectItem value="In Transit">In Transit</SelectItem>
                 <SelectItem value="Transferred">Transferred</SelectItem>
                 <SelectItem value="Delivered">Delivered</SelectItem>
