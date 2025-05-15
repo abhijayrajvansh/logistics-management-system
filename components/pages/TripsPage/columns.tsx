@@ -33,8 +33,8 @@ const TypeCell = ({ row }: { row: any }) => {
   const trip = row.original;
   const [isUpdating, setIsUpdating] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<'Delivering' | 'Returning' | null>(
-    trip.currentStatus || null,
+  const [selectedStatus, setSelectedStatus] = useState<'Delivering' | 'Returning'>(
+    'Delivering',
   );
 
   const updateTripType = async (
