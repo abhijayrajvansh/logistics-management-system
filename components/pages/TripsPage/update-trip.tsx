@@ -62,29 +62,28 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   const fetchAssociatedOrders = async (tripDocId: string) => {
-    
     try {
       // Use the same document ID tripDocId to fetch from trip_orders collection
       const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', tripDocId));
-      console.log('Trip orders doc exists?', tripOrdersDoc.exists());
-      console.log('Trip orders data:', tripOrdersDoc.data());
+      // console.log('Trip orders doc exists?', tripOrdersDoc.exists());
+      // console.log('Trip orders data:', tripOrdersDoc.data());
 
       if (!tripOrdersDoc.exists()) {
-        console.log('No trip_orders document found for tripDocId:', tripDocId);
+        // console.log('No trip_orders document found for tripDocId:', tripDocId);
         return [];
       }
 
       // Get the orderIds array
       const orderIds = tripOrdersDoc.data().orderIds || [];
-      console.log('Found orderIds:', orderIds);
+      // console.log('Found orderIds:', orderIds);
 
       if (orderIds.length === 0) {
-        console.log('No orderIds found in trip_orders document');
+        // console.log('No orderIds found in trip_orders document');
         return [];
       }
 
       // Now fetch all the orders in parallel
-      console.log('Fetching orders for IDs:', orderIds);
+      // console.log('Fetching orders for IDs:', orderIds);
       const ordersPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
       const orderDocs = await Promise.all(ordersPromises);
 
@@ -98,7 +97,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             }) as Order,
         );
 
-      console.log('Successfully fetched orders:', orders);
+      // console.log('Successfully fetched orders:', orders);
       return orders;
     } catch (error) {
       console.error('Error in fetchAssociatedOrders:', error);
@@ -139,11 +138,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       const querySnapshot = {
         docs: [
           {
-        data: () => tripDocSnap.data(),
-        id: tripDocSnap.id
-          }
+            data: () => tripDocSnap.data(),
+            id: tripDocSnap.id,
+          },
         ],
-        empty: false
+        empty: false,
       };
 
       const tripDoc = querySnapshot.docs[0];
