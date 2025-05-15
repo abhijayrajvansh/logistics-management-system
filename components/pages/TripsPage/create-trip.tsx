@@ -182,7 +182,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       const validatedData: Omit<Trip, 'id'> = {
         ...formData,
         startDate: new Date(formData.startDate),
-        numberOfStops: Number(formData.numberOfStops),
+        numberOfStops: selectedOrderIds.length,
         currentStatus: formData.currentStatus,
         driver: selectedDriver?.id || 'Not Assigned',
         truck: selectedDriver?.driverTruckId || 'Not Assigned',
@@ -303,21 +303,21 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="truck">Truck Number</Label>
+            <Label htmlFor="truck">Vehicle Number</Label>
             <Input
               id="truck"
-              placeholder="Enter truck number (or select driver)"
+              placeholder="Enter vehicle number (or select driver)"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input
+            <Input disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
-              value={formData.numberOfStops}
+              value={selectedOrderIds.length}
               onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
               required
               min="0"

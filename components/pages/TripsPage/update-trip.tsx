@@ -432,10 +432,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="truck">Truck Number</Label>
+            <Label htmlFor="truck">Vehicle Number</Label>
             <Input
               id="truck"
-              placeholder="Enter truck number"
+              placeholder="Enter Vehicle number"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
