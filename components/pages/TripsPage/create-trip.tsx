@@ -403,22 +403,23 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                           <span className="font-medium">{order.docket_id}:</span>
                           {order.client_details} <FaArrowRightLong /> {order.receiver_name},{' '}
                         </span>
-                        <span className="font-medium">TAT</span>:
+                        <span className="font-medium">Deadline</span>:
                         {(() => {
+
                           try {
-                            if (order.tat instanceof Date) {
-                              return order.tat.toLocaleDateString();
+                            if (order.deadline instanceof Date) {
+                              return order.deadline.toLocaleDateString();
                             }
                             if (
-                              typeof order.tat === 'object' &&
-                              order.tat &&
-                              'seconds' in order.tat
+                              typeof order.deadline === 'object' &&
+                              order.deadline &&
+                              'seconds' in order.deadline
                             ) {
                               return new Date(
-                                (order.tat as any).seconds * 1000,
+                                (order.deadline as any).seconds * 1000,
                               ).toLocaleDateString();
                             }
-                            return new Date(order.tat as string).toLocaleDateString();
+                            return new Date(order.deadline as string).toLocaleDateString();
                           } catch (error) {
                             return 'Invalid Date';
                           }
