@@ -235,8 +235,17 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         created_at: new Date(),
       });
 
-      // If a driver was selected, update their status to "On Trip"
+      // If a driver was selected, create trip_driver mapping and update driver status
       if (selectedDriver) {
+        // Create trip_driver mapping
+        await setDoc(doc(db, 'trip_drivers', tripRef.id), {
+          tripId: tripRef.id,
+          driverId: selectedDriver.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Update driver status to "OnTrip"
         const driverRef = doc(db, 'drivers', selectedDriver.id);
         await updateDoc(driverRef, {
           status: 'On Trip',

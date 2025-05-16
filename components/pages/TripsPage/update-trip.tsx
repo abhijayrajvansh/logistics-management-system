@@ -319,17 +319,30 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
       // Handle driver status updates if driver assignment changed
       if (previousDriverId !== formData.driver) {
-        // Set previous driver's status back to Active if there was one
+        // Handle previous driver: Set status back to Active and remove from trip_drivers
         if (previousDriverId && previousDriverId !== 'Not Assigned') {
+          // Update previous driver's status
           const prevDriverRef = doc(db, 'drivers', previousDriverId);
           await updateDoc(prevDriverRef, {
             status: 'Active',
             updated_at: new Date(),
           });
+
+          // Remove previous trip-driver mapping
+          await deleteDoc(doc(db, 'trip_drivers', tripId));
         }
 
-        // Set new driver's status to On Trip if one is assigned
+        // Handle new driver: Set status to OnTrip and create trip_drivers mapping
         if (formData.driver && formData.driver !== 'Not Assigned') {
+          // Create new trip-driver mapping
+          await setDoc(doc(db, 'trip_drivers', tripId), {
+            tripId: tripId,
+            driverId: formData.driver,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          // Update new driver's status
           const newDriverRef = doc(db, 'drivers', formData.driver);
           await updateDoc(newDriverRef, {
             status: 'On Trip',
