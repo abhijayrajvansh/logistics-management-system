@@ -112,6 +112,15 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       if (field === 'type') {
         // Handle type change and set appropriate currentStatus
         const newType = value as 'unassigned' | 'active' | 'past';
+
+        // Validate driver and truck assignment when changing to active
+        if (newType === 'active') {
+          if (!selectedDriver || !formData.truck || formData.truck === 'Not Assigned') {
+            toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+            return prev; // Return previous state without changes
+          }
+        }
+
         return {
           ...prev,
           type: newType,
@@ -169,10 +178,16 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Only validate currentStatus for active trips
-    if (formData.type === 'active' && formData.currentStatus === 'NA') {
-      toast.error('Please select a valid status (Delivering or Returning) for active trip');
-      return;
+    // Only validate driver and truck assignment for active trips
+    if (formData.type === 'active') {
+      if (!selectedDriver || !formData.truck || formData.truck === 'Not Assigned') {
+        toast.error('Cannot create active trip: Driver and truck must be assigned first');
+        return;
+      }
+      if (formData.currentStatus === 'NA') {
+        toast.error('Please select a valid status (Delivering or Returning) for active trip');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -196,7 +211,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
-        
         // Use setDoc with trip ID as document ID
         await setDoc(doc(db, 'trip_orders', tripRef.id), {
           tripId: tripRef.id,
@@ -313,7 +327,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input disabled={true}
+            <Input
+              disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
@@ -406,7 +421,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                         </span>
                         <span className="font-medium">Deadline</span>:
                         {(() => {
-
                           try {
                             if (order.deadline instanceof Date) {
                               return order.deadline.toLocaleDateString();

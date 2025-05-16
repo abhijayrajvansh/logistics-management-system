@@ -236,6 +236,20 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       if (field === 'type') {
         // Handle type change and set appropriate currentStatus
         const newType = value as 'unassigned' | 'active' | 'past';
+
+        // Validate driver and truck assignment when changing to active
+        if (newType === 'active') {
+          if (
+            !prev.driver ||
+            prev.driver === 'Not Assigned' ||
+            !prev.truck ||
+            prev.truck === 'Not Assigned'
+          ) {
+            toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+            return prev; // Return previous state without changes
+          }
+        }
+
         return {
           ...prev,
           type: newType,
@@ -258,15 +272,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDriver) {
-      toast.error('Please select a driver');
-      return;
-    }
 
-    // Validate currentStatus for active trips
-    if (formData.type === 'active' && formData.currentStatus === 'NA') {
-      toast.error('Please select a valid status (Delivering or Returning) for active trip');
-      return;
+    // Only validate currentStatus for active trips
+    if (formData.type === 'active') {
+      if (
+        !formData.driver ||
+        formData.driver === 'Not Assigned' ||
+        !formData.truck ||
+        formData.truck === 'Not Assigned'
+      ) {
+        toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+        return;
+      }
+      if (formData.currentStatus === 'NA') {
+        toast.error('Please select a valid status (Delivering or Returning) for active trip');
+        return;
+      }
     }
 
     setIsSubmitting(true);

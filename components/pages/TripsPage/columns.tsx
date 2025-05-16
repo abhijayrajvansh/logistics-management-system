@@ -33,9 +33,7 @@ const TypeCell = ({ row }: { row: any }) => {
   const trip = row.original;
   const [isUpdating, setIsUpdating] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<'Delivering' | 'Returning'>(
-    'Delivering',
-  );
+  const [selectedStatus, setSelectedStatus] = useState<'Delivering' | 'Returning'>('Delivering');
 
   const updateTripType = async (
     newType: string,
@@ -65,7 +63,17 @@ const TypeCell = ({ row }: { row: any }) => {
   const handleTypeChange = async (newType: string) => {
     if (newType === trip.type) return;
 
+    // Validate driver and truck assignment when changing to active
     if (newType === 'active') {
+      if (
+        !trip.driver ||
+        trip.driver === 'Not Assigned' ||
+        !trip.truck ||
+        trip.truck === 'Not Assigned'
+      ) {
+        toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+        return;
+      }
       setShowStatusDialog(true);
     } else {
       await updateTripType(newType);
@@ -134,7 +142,6 @@ const ActionCell = ({ row }: { row: any }) => {
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
-
   };
 
   return (
