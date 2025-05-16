@@ -15,7 +15,7 @@ import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { FaRegEye } from "react-icons/fa";
+import { FaRegEye } from 'react-icons/fa';
 
 // This type is used to define the shape of our data based on the image schema
 
@@ -23,14 +23,118 @@ import { FaRegEye } from "react-icons/fa";
 const ProofCell = ({ row }: { row: any }) => {
   const order = row.original;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Check if proof of delivery is available and has photos
+  const hasProofImages =
+    order.proof_of_delivery !== 'NA' &&
+    typeof order.proof_of_delivery === 'object' &&
+    Array.isArray(order.proof_of_delivery.photo) &&
+    order.proof_of_delivery.photo.length > 0;
+
+  const handlePrevious = () => {
+    setCurrentImageIndex((prev) =>
+      prev > 0 ? prev - 1 : hasProofImages ? order.proof_of_delivery.photo.length - 1 : 0,
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentImageIndex((prev) =>
+      hasProofImages && prev < order.proof_of_delivery.photo.length - 1 ? prev + 1 : 0,
+    );
+  };
 
   return (
-    <div className='text-center'>
+    <div className="text-center">
       <Button
         variant="outline"
         size="icon"
         onClick={() => setIsDialogOpen(true)}
-        disabled={order.proof_of_delivery === 'NA'}
+        disabled={!hasProofImages}
+      >
+        <FaRegEye />
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
+          </DialogHeader>
+          {hasProofImages ? (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative aspect-square w-full ">
+                <Image
+                  src={order.proof_of_delivery.photo[currentImageIndex]}
+                  alt={`Proof of Delivery ${currentImageIndex + 1}`}
+                  className="object-contain"
+                  fill
+                />
+              </div>
+
+              {order.proof_of_delivery.photo.length > 1 && (
+                <div className="flex items-center justify-between w-full">
+                  <Button variant="outline" onClick={handlePrevious}>
+                    Previous
+                  </Button>
+                  <span>
+                    {currentImageIndex + 1} of {order.proof_of_delivery.photo.length}
+                  </span>
+                  <Button variant="outline" onClick={handleNext}>
+                    Next
+                  </Button>
+                </div>
+              )}
+
+              {/* Image thumbnails for quick navigation */}
+              {order.proof_of_delivery.photo.length > 1 && (
+                <div className="flex overflow-x-auto space-x-2 w-full py-2">
+                  {order.proof_of_delivery.photo.map((photo: string, index: number) => (
+                    <div
+                      key={index}
+                      className={`relative h-16 w-16 flex-shrink-0 cursor-pointer border-2 ${
+                        currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    >
+                      <Image
+                        src={photo}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="object-cover"
+                        fill
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">No proof of delivery images available</div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+// Create a component for payment proof cell to manage dialog state
+const PaymentProofCell = ({ row }: { row: any }) => {
+  const order = row.original;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Check if payment proof is available
+  const isPaymentProofAvailable =
+    order.proof_of_payment &&
+    order.proof_of_payment !== 'NA' &&
+    typeof order.proof_of_payment === 'object' &&
+    order.proof_of_payment.photo;
+
+  return (
+    <div className="text-center">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setIsDialogOpen(true)}
+        disabled={!isPaymentProofAvailable}
       >
         <FaRegEye />
       </Button>
@@ -38,13 +142,13 @@ const ProofCell = ({ row }: { row: any }) => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
+            <DialogTitle>Proof of Payment - {order.docket_id}</DialogTitle>
           </DialogHeader>
-          {order.proof_of_delivery !== 'NA' && (
+          {isPaymentProofAvailable && (
             <div className="relative aspect-square w-full">
               <Image
-                src={order.proof_of_delivery.photo}
-                alt="Proof of Delivery"
+                src={order.proof_of_payment.photo}
+                alt="Proof of Payment"
                 className="object-contain"
                 fill
               />
@@ -198,10 +302,28 @@ export const columns: ColumnDef<Order>[] = [
   },
 
   {
-    accessorKey: 'price',
-    header: 'Price',
+    accessorKey: 'docket_price',
+    header: 'Docket Price',
     cell: ({ row }) => {
-      const price: string = row.getValue('price');
+      const price: number = row.getValue('docket_price');
+      return <div className="text-left font-medium">₹ {price}</div>;
+    },
+  },
+
+  {
+    accessorKey: 'calculated_price',
+    header: 'Calculated Price',
+    cell: ({ row }) => {
+      const price: number = row.getValue('calculated_price');
+      return <div className="text-left font-medium">₹ {price}</div>;
+    },
+  },
+
+  {
+    accessorKey: 'total_price',
+    header: 'Total Price',
+    cell: ({ row }) => {
+      const price: number = row.getValue('total_price');
       return <div className="text-left font-medium">₹ {price}</div>;
     },
   },
@@ -211,12 +333,41 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Invoice',
     cell: ({ row }) => {
       const invoice: string = row.getValue('invoice');
+
+      // Define styles based on invoice status
+      let styles = '';
+      if (invoice === 'paid') {
+        styles = 'text-green-700 bg-green-200 border border-green-500';
+      } else if (invoice === 'to pay') {
+        styles = 'text-red-700 bg-red-200 border border-red-500';
+      } else if (invoice === 'received') {
+        styles = 'text-yellow-700 bg-yellow-200 border border-yellow-500';
+      }
+
       return (
-        <div
-          className={`font-medium ${invoice === 'paid' ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1' : 'text-red-700 bg-red-200 border text-center rounded-lg border-red-500 px-1 text-xs'}`}
-        >
-          {invoice}
-        </div>
+        <div className={`font-medium ${styles} text-center rounded-lg text-xs px-1`}>{invoice}</div>
+      );
+    },
+  },
+
+  {
+    accessorKey: 'payment_mode',
+    header: 'Payment Mode',
+    cell: ({ row }) => {
+      const paymentMode: string = row.getValue('payment_mode');
+
+      // Define styles based on payment mode
+      let styles = '';
+      if (paymentMode === 'cash') {
+        styles = 'text-blue-700 bg-blue-100 border border-blue-500';
+      } else if (paymentMode === 'online') {
+        styles = 'text-purple-700 bg-purple-100 border border-purple-500';
+      } else {
+        styles = 'text-gray-700 bg-gray-100 border';
+      }
+
+      return (
+        <div className={`font-medium ${styles} text-center rounded-lg text-xs`}>{paymentMode}</div>
       );
     },
   },
@@ -230,6 +381,12 @@ export const columns: ColumnDef<Order>[] = [
     accessorKey: 'proof_of_delivery',
     header: 'Delivery Proof',
     cell: ProofCell,
+  },
+
+  {
+    accessorKey: 'proof_of_payment',
+    header: 'Payment Proof',
+    cell: PaymentProofCell,
   },
 
   {

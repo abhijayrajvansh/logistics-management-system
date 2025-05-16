@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import { Timestamp } from 'firebase/firestore';
 
 export type FirebaseConfig = {
   apiKey: string;
@@ -23,15 +23,19 @@ export type User = {
 export type Order = {
   order_id: string;
   docket_id: string;
+  docket_price: number;
   charge_basis: string;
   client_details: string;
   created_at: Date;
   current_location: string;
   dimensions: string;
-  invoice: string;
+  invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
-  price: number;
+  payment_mode: "cash" | "online" | '-';
+  calculated_price: number;
+  total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
+  proof_of_payment: ProofOfPayment | 'NA';
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
@@ -43,8 +47,12 @@ export type Order = {
 };
 
 export type ProofOfDelivery = {
+  photo: string[];
+};
+
+export type ProofOfPayment = {
   photo: string;
-}
+};
 
 export type Trip = {
   id: string;
@@ -110,26 +118,26 @@ export type ReceiverDetails = {
   receiverName: string;
   receiverDetails: string;
   receiverContact: string;
-}
+};
 
 export type DriversAttendance = {
   id: string;
   attendance: DailyAttendacne[];
   driverId: string;
-}
+};
 
 export type DailyAttendacne = {
   date: Timestamp;
   driverPhoto: string | 'NA';
   truckPhoto: string | 'NA';
   status: 'Present' | 'Absent';
-}
+};
 
 export type Truck = {
   id: string;
   regNumber: string;
   axleConfig: string;
-  ownership: "Owned" | "OnLoan";
+  ownership: 'Owned' | 'OnLoan';
   emiAmount: number;
   insuranceExpiry: Date;
   permitExpiry: Date;
