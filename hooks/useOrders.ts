@@ -79,6 +79,14 @@ export function useOrders(locationFilter?: string) {
                   break;
               }
             }
+
+            // Add orders to upcoming transfers for the destination center
+            if (
+              order.transfer_center_location === locationFilter 
+              && (order.status === 'In Transit')
+            ) {
+              upcoming.push(order);
+            }
           });
 
           setReadyAndAssignedOrders(readyAndAssigned);
