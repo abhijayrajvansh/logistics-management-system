@@ -303,21 +303,20 @@ export function DataTable<TData, TValue>({
         </Dialog>
       </div>
 
-      {/* Upcoming Transfers Section - Show only if there are upcoming transfers */}
-      {upcomingTransfersData.length > 0 && (
-        <div className="flex flex-col gap-4 px-4 lg:px-6">
-          <h2 className="text-xl font-semibold text-yellow-600">Upcoming Transfers</h2>
-          <p className="text-sm text-gray-500 -mt-2">Orders being transferred to your center</p>
-          {renderTable(upcomingTransfersTable)}
-          {renderPagination(upcomingTransfersTable)}
-        </div>
-      )}
 
       {/* Ready to Transport & Assigned Orders Section */}
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <h2 className="text-xl font-semibold">Ready to Transport & Assigned Orders</h2>
         {renderTable(readyAndAssignedTable)}
         {renderPagination(readyAndAssignedTable)}
+      </div>
+
+      {/* Upcoming Transfers Section*/}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Upcoming Transfers</h2>
+        <p className="text-sm text-gray-500 -mt-2">Orders being transferred to your center</p>
+        {renderTable(upcomingTransfersTable)}
+        {renderPagination(upcomingTransfersTable)}
       </div>
 
       {/* In Transit Orders Section */}
