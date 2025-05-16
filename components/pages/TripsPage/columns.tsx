@@ -73,6 +73,48 @@ const TypeCell = ({ row }: { row: any }) => {
         }
       }
 
+      if (newType === 'ready to ship') {
+        // Get the trip_orders document
+        const tripOrdersRef = doc(db, 'trip_orders', trip.id);
+        const tripOrdersDoc = await getDoc(tripOrdersRef);
+
+        if (tripOrdersDoc.exists()) {
+          const orderIds = tripOrdersDoc.data().orderIds || [];
+
+          // Update all associated orders to "In Transit" status
+          const orderUpdatePromises = orderIds.map((orderId: string) =>
+            updateDoc(doc(db, 'orders', orderId), {
+              status: 'Assigned',
+              updated_at: new Date(),
+            }),
+          );
+
+          await Promise.all(orderUpdatePromises);
+          toast.success(`Updated ${orderIds.length} orders to Assigned', status`);
+        }
+      }
+
+      if (newType === 'past') {
+        // Get the trip_orders document
+        const tripOrdersRef = doc(db, 'trip_orders', trip.id);
+        const tripOrdersDoc = await getDoc(tripOrdersRef);
+
+        if (tripOrdersDoc.exists()) {
+          const orderIds = tripOrdersDoc.data().orderIds || [];
+
+          // Update all associated orders to "In Transit" status
+          const orderUpdatePromises = orderIds.map((orderId: string) =>
+            updateDoc(doc(db, 'orders', orderId), {
+              status: 'Delivered',
+              updated_at: new Date(),
+            }),
+          );
+
+          await Promise.all(orderUpdatePromises);
+          toast.success(`Updated ${orderIds.length} orders to Delivered', status`);
+        }
+      }
+
       toast.success('Trip type updated successfully');
       setShowStatusDialog(false);
     } catch (error) {
