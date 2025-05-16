@@ -602,7 +602,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         {/* Show calculated deadline based on TAT */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="deadline">Deadline</Label>
             <Input
@@ -622,12 +622,28 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               disabled
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="invoice">Invoice</Label>
+            <Select
+              value={formData.invoice}
+              onValueChange={(value) => handleInputChange('invoice', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select invoice type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paid">paid</SelectItem>
+                <SelectItem value="to pay">to pay</SelectItem>
+                <SelectItem value="received">received</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Pricing Method Selection */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
-            <Label>Pricing Method</Label>
+            <Label className='font-medium mb-4'>Pricing Method</Label>
             <RadioGroup
               value={pricingMethod}
               onValueChange={(value: 'clientPreference' | 'volumetric') => {
@@ -809,23 +825,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="invoice">Invoice</Label>
-            <Select
-              value={formData.invoice}
-              onValueChange={(value) => handleInputChange('invoice', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select invoice type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="paid">paid</SelectItem>
-                <SelectItem value="to pay">to pay</SelectItem>
-                <SelectItem value="received">received</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
+          
+          {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
+          {/* <div className="space-y-2">
             <Label htmlFor="status">Order Status</Label>
             <Select
               value={formData.status}
@@ -836,15 +838,13 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-                {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
                 <SelectItem value="Assigned">Assigned</SelectItem>
                 <SelectItem value="In Transit">In Transit</SelectItem>
                 <SelectItem value="Transferred">Transferred</SelectItem>
                 <SelectItem value="Delivered">Delivered</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div></div>
+          </div> */}
         </div>
 
         {/* handling location on backend for specific order update wrt to managers */}

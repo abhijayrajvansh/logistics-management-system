@@ -90,7 +90,7 @@ const TypeCell = ({ row }: { row: any }) => {
           );
 
           await Promise.all(orderUpdatePromises);
-          toast.success(`Updated ${orderIds.length} orders to Assigned', status`);
+          toast.success(`Updated ${orderIds.length} orders to Assigned status`);
         }
       }
 
@@ -111,7 +111,7 @@ const TypeCell = ({ row }: { row: any }) => {
           );
 
           await Promise.all(orderUpdatePromises);
-          toast.success(`Updated ${orderIds.length} orders to Delivered', status`);
+          toast.success(`Updated ${orderIds.length} orders to Delivered status`);
         }
       }
 
