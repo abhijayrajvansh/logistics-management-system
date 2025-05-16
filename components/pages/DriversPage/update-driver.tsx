@@ -316,8 +316,8 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
               <SelectContent>
                 <SelectItem value="Active">Active</SelectItem>
                 <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="OnLeave">On Leave</SelectItem>
-                <SelectItem value="OnTrip">On Trip</SelectItem>
+                <SelectItem value="On Leave">On Leave</SelectItem>
+                <SelectItem value="On Trip">On Trip</SelectItem>
                 <SelectItem value="Suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
