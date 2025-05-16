@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDrivers } from '@/hooks/useDrivers';
 import {
   Dialog,
@@ -27,6 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { FaArrowRightLong } from "react-icons/fa6";
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -198,16 +200,211 @@ const TypeCell = ({ row }: { row: any }) => {
   );
 };
 
-// Create a component for the actions cell to manage edit dialog state
+// Create ViewTripDialog component for past trips
+const ViewTripDialog = ({
+  trip,
+  isOpen,
+  onClose,
+}: {
+  trip: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  const [associatedOrders, setAssociatedOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAssociatedOrders = async () => {
+      try {
+        setIsLoading(true);
+        // Get the trip_orders document using the trip ID
+        const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', trip.id));
+
+        if (!tripOrdersDoc.exists()) {
+          setAssociatedOrders([]);
+          return;
+        }
+
+        const orderIds = tripOrdersDoc.data().orderIds || [];
+
+        // Fetch all order documents in parallel
+        const orderPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
+        const orderDocs = await Promise.all(orderPromises);
+
+        const orders = orderDocs
+          .filter((doc) => doc.exists())
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+        setAssociatedOrders(orders);
+      } catch (error) {
+        console.error('Error fetching associated orders:', error);
+        toast.error('Failed to load order details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen && trip.id) {
+      fetchAssociatedOrders();
+    }
+  }, [isOpen, trip.id]);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>View Trip Details</DialogTitle>
+          <DialogDescription>Details of the completed trip.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className='font-bold'>Trip ID</Label>
+              <div className="mt-1 text-sm">{trip.tripId}</div>
+            </div>
+            <div>
+              <Label className='font-bold'>Driver</Label>
+              <div className="mt-1 text-sm">
+                {
+                  (() => {
+                    const driverId = trip.driver;
+                    const { drivers } = useDrivers();
+                    const driver = drivers.find((d) => d.id === driverId);
+                    const showDriverName = driver ? driver.driverName : trip.driver;
+                    return showDriverName;
+                  }
+                  )()
+                }
+              </div>
+            </div>
+            <div>
+              <Label className='font-bold'>Starting Point</Label>
+              <div className="mt-1 text-sm">{trip.startingPoint}</div>
+            </div>
+            <div>
+              <Label className='font-bold'>Destination</Label>
+              <div className="mt-1 text-sm">{trip.destination}</div>
+            </div>
+            <div>
+              <Label className='font-bold'>Number of Stops</Label>
+              <div className="mt-1 text-sm">{trip.numberOfStops}</div>
+            </div>
+            <div>
+              <Label className='font-bold'>Vehicle Number</Label>
+              <div className="mt-1 text-sm">{trip.truck}</div>
+            </div>
+            <div>
+              <Label className='font-bold'>Start Date</Label>
+              <div className="mt-1 text-sm">
+                {(() => {
+                  try {
+                    if (trip.startDate instanceof Date) {
+                      return trip.startDate.toLocaleDateString();
+                    }
+                    if (
+                      typeof trip.startDate === 'object' &&
+                      trip.startDate &&
+                      'seconds' in trip.startDate
+                    ) {
+                      return new Date(trip.startDate.seconds * 1000).toLocaleDateString();
+                    }
+                    return new Date(trip.startDate).toLocaleDateString();
+                  } catch (error) {
+                    return 'Invalid Date';
+                  }
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Orders Section */}
+          <div className="space-y-4">
+            <Label className='font-bold'>Delivered Orders</Label>
+            <ScrollArea className="h-[200px] border rounded-md p-4">
+              {isLoading ? (
+                <div className="text-center py-4">Loading orders...</div>
+              ) : associatedOrders.length === 0 ? (
+                <div className="text-center py-4">No orders found for this trip</div>
+              ) : (
+                <div className="space-y-4">
+                  {associatedOrders.map((order) => (
+                    <div key={order.id} className="text-sm border-b pb-2 last:border-0">
+                      <div className="flex items-center gap-1">
+                        <span className="flex gap-2 items-center">
+                          <span className="font-medium">{order.docket_id}:</span>
+                          {order.client_details} <FaArrowRightLong /> {order.receiver_name}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-muted-foreground">
+                        <span className="font-medium">Boxes:</span> {order.total_boxes_count} |{' '}
+                        <span className="font-medium">Deadline:</span>{' '}
+                        {(() => {
+                          try {
+                            if (order.deadline instanceof Date) {
+                              return order.deadline.toLocaleDateString();
+                            }
+                            if (
+                              typeof order.deadline === 'object' &&
+                              order.deadline &&
+                              'seconds' in order.deadline
+                            ) {
+                              return new Date(order.deadline.seconds * 1000).toLocaleDateString();
+                            }
+                            return new Date(order.deadline).toLocaleDateString();
+                          } catch (error) {
+                            return 'Invalid Date';
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Update ActionCell component
 const ActionCell = ({ row }: { row: any }) => {
   const trip = row.original;
-  // console.log({trip})
+  console.log({trip})
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
   };
+
+  if (trip.type === 'past') {
+    return (
+      <div className="text-center">
+        <button
+          className="hover:bg-[#FB8E15] p-1 rounded-lg cursor-pointer border border-[#FB8E15] text-[#FB8E15] hover:text-white"
+          onClick={() => setIsViewDialogOpen(true)}
+        >
+          <span className="px-2">View</span>
+        </button>
+        <ViewTripDialog
+          trip={trip}
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="text-center space-x-2">
