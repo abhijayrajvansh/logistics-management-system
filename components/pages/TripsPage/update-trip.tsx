@@ -561,7 +561,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                 <SelectValue placeholder="Select trip type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="past">Past</SelectItem>
               </SelectContent>

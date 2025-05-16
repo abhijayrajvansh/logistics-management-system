@@ -83,11 +83,11 @@ const TypeCell = ({ row }: { row: any }) => {
   return (
     <>
       <Select value={trip.type} onValueChange={handleTypeChange} disabled={isUpdating}>
-        <SelectTrigger className="w-[130px]">
+        <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Select type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="unassigned">Unassigned</SelectItem>
+          <SelectItem value="ready to ship">Ready to Ship</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="past">Past</SelectItem>
         </SelectContent>

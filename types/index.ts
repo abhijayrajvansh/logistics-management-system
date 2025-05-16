@@ -65,7 +65,7 @@ export type Trip = {
   numberOfStops: number;
   startDate: Date;
   truck: string;
-  type: 'unassigned' | 'active' | 'past';
+  type: 'ready to ship' | 'active' | 'past';
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
 };
 

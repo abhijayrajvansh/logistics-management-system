@@ -42,7 +42,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     numberOfStops: 0,
     startDate: new Date().toISOString().split('T')[0], // Set default to current date
     truck: '',
-    type: 'unassigned',
+    type: 'ready to ship',
     currentStatus: 'NA', // Default to 'NA' for new trips
   });
 
@@ -137,7 +137,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setFormData((prev) => {
       if (field === 'type') {
         // Handle type change and set appropriate currentStatus
-        const newType = value as 'unassigned' | 'active' | 'past';
+        const newType = value as 'ready to ship' | 'active' | 'past';
 
         // Validate driver and truck assignment when changing to active
         if (newType === 'active') {
@@ -151,7 +151,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           ...prev,
           type: newType,
           currentStatus:
-            newType === 'unassigned'
+            newType === 'ready to ship'
               ? 'NA'
               : newType === 'active'
                 ? prev.currentStatus === 'NA'
@@ -177,7 +177,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       numberOfStops: 0,
       startDate: '',
       truck: '',
-      type: 'unassigned',
+      type: 'ready to ship',
       currentStatus: 'NA', // Reset to 'NA'
     });
     setSelectedDriver(null);
@@ -400,7 +400,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 <SelectValue placeholder="Select trip type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="past">Past</SelectItem>
               </SelectContent>
