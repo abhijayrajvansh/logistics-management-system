@@ -16,7 +16,7 @@ import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import { Driver, Trip, Order } from '@/types';
-import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
@@ -182,7 +182,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       const validatedData: Omit<Trip, 'id'> = {
         ...formData,
         startDate: new Date(formData.startDate),
-        numberOfStops: Number(formData.numberOfStops),
+        numberOfStops: selectedOrderIds.length,
         currentStatus: formData.currentStatus,
         driver: selectedDriver?.id || 'Not Assigned',
         truck: selectedDriver?.driverTruckId || 'Not Assigned',
@@ -196,9 +196,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
-        // Add trip_orders document
-        await addDoc(collection(db, 'trip_orders'), {
-          tripId: formData.tripId,
+        
+        // Use setDoc with trip ID as document ID
+        await setDoc(doc(db, 'trip_orders', tripRef.id), {
+          tripId: tripRef.id,
           orderIds: selectedOrderIds,
           updatedAt: new Date(),
         });
@@ -302,21 +303,21 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="truck">Truck Number</Label>
+            <Label htmlFor="truck">Vehicle Number</Label>
             <Input
               id="truck"
-              placeholder="Enter truck number (or select driver)"
+              placeholder="Enter vehicle number (or select driver)"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input
+            <Input disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
-              value={formData.numberOfStops}
+              value={selectedOrderIds.length}
               onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
               required
               min="0"
@@ -403,22 +404,23 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                           <span className="font-medium">{order.docket_id}:</span>
                           {order.client_details} <FaArrowRightLong /> {order.receiver_name},{' '}
                         </span>
-                        <span className="font-medium">TAT</span>:
+                        <span className="font-medium">Deadline</span>:
                         {(() => {
+
                           try {
-                            if (order.tat instanceof Date) {
-                              return order.tat.toLocaleDateString();
+                            if (order.deadline instanceof Date) {
+                              return order.deadline.toLocaleDateString();
                             }
                             if (
-                              typeof order.tat === 'object' &&
-                              order.tat &&
-                              'seconds' in order.tat
+                              typeof order.deadline === 'object' &&
+                              order.deadline &&
+                              'seconds' in order.deadline
                             ) {
                               return new Date(
-                                (order.tat as any).seconds * 1000,
+                                (order.deadline as any).seconds * 1000,
                               ).toLocaleDateString();
                             }
-                            return new Date(order.tat as string).toLocaleDateString();
+                            return new Date(order.deadline as string).toLocaleDateString();
                           } catch (error) {
                             return 'Invalid Date';
                           }

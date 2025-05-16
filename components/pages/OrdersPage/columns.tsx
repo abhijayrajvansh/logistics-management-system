@@ -345,11 +345,11 @@ export const columns: ColumnDef<Order>[] = [
       // Define styles based on invoice status
       let styles = '';
       if (invoice === 'paid') {
-        styles = 'text-green-700 bg-green-200 border border-green-500';
+        styles = 'text-green-700 bg-green-200 border border-green-500 px-3';
       } else if (invoice === 'to pay') {
-        styles = 'text-red-700 bg-red-200 border border-red-500';
+        styles = 'text-red-700 bg-red-200 border border-red-500 px-3';
       } else if (invoice === 'received') {
-        styles = 'text-yellow-700 bg-yellow-200 border border-yellow-500';
+        styles = 'text-yellow-700 bg-yellow-200 border border-yellow-500 px-3';
       }
 
       return (

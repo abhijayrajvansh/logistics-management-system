@@ -64,7 +64,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
-    status: '',
+    status: 'Ready To Transport',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -318,14 +318,15 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         ...formData,
         total_boxes_count: parseInt(formData.total_boxes_count),
         total_order_weight: parseInt(formData.total_order_weight),
-        docket_price: parseFloat(formData.docket_price || '0'),
-        calculated_price: parseFloat(formData.calculated_price || '0'),
-        total_price: parseFloat(formData.total_price || '0'),
-        tat: parseInt(formData.tat), // Now parsing as integer instead of Date
-        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from tat hours
+        docket_price: formData.docket_price ? parseFloat(formData.docket_price) : 0,
+        calculated_price: formData.calculated_price ? parseFloat(formData.calculated_price) : 0,
+        total_price: formData.total_price ? parseFloat(formData.total_price) : 0,
+        tat: parseInt(formData.tat), // Parse TAT as integer (hours)
+        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from TAT hours
         proof_of_delivery: 'NA',
         proof_of_payment: 'NA',
         payment_mode: '-', // Set default payment mode
+        status: formData.status || 'Ready To Transport', // Set default status if not provided
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -603,15 +604,15 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               id="deadline"
               type="datetime-local"
               value={
-          formData.tat
-            ? (() => {
-                const offsetInMilliseconds = 5.5 * 60 * 60 * 1000; // indian time offset (UTC+5:30)
-                const now = Date.now() + offsetInMilliseconds;
-                const tatHours = parseInt(formData.tat) * 60 * 60 * 1000;
-                const deadlineDate = new Date(now + tatHours);
-                return deadlineDate.toISOString().slice(0, 16);
-              })()
-            : ''
+                formData.tat
+                  ? (() => {
+                      const offsetInMilliseconds = 5.5 * 60 * 60 * 1000; // indian time offset (UTC+5:30)
+                      const now = Date.now() + offsetInMilliseconds;
+                      const tatHours = parseInt(formData.tat) * 60 * 60 * 1000;
+                      const deadlineDate = new Date(now + tatHours);
+                      return deadlineDate.toISOString().slice(0, 16);
+                    })()
+                  : ''
               }
               disabled
             />
@@ -815,7 +816,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-                <SelectItem value="Assigned">Assigned</SelectItem>
+                {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
+                {/* <SelectItem value="Assigned">Assigned</SelectItem> */}
+                <SelectItem value="In Transit">In Transit</SelectItem>
+                <SelectItem value="Transferred">Transferred</SelectItem>
+                <SelectItem value="Delivered">Delivered</SelectItem>
               </SelectContent>
             </Select>
           </div>

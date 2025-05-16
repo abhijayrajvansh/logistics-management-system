@@ -15,7 +15,14 @@ export default function OrdersPage() {
   // got the user location from the currentUser
   // this is the location of the user who is logged in, works only for manager. !admin !driver (no accounts yet)
   const userLocation = currentUser?.[0]?.location;
-  const { orders, isLoading: isLoadingOrders, error: errorOrders } = useOrders(userLocation);
+  const {
+    readyAndAssignedOrders,
+    inTransitOrders,
+    transferredOrders,
+    deliveredOrders,
+    isLoading: isLoadingOrders,
+    error: errorOrders,
+  } = useOrders(userLocation);
 
   const isLoading = authLoading || isLoadingUsers || (userLocation && isLoadingOrders);
 
@@ -31,7 +38,23 @@ export default function OrdersPage() {
     return <div>Error loading orders: {errorOrders.message}</div>;
   }
 
-  const formattedOrders = orders.map((order) => ({
+  // Add id field to each order category
+  const formattedReadyAndAssigned = readyAndAssignedOrders.map((order) => ({
+    id: order.order_id,
+    ...order,
+  }));
+
+  const formattedInTransit = inTransitOrders.map((order) => ({
+    id: order.order_id,
+    ...order,
+  }));
+
+  const formattedTransferred = transferredOrders.map((order) => ({
+    id: order.order_id,
+    ...order,
+  }));
+
+  const formattedDelivered = deliveredOrders.map((order) => ({
     id: order.order_id,
     ...order,
   }));
@@ -42,7 +65,13 @@ export default function OrdersPage() {
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4">
-            <DataTable columns={columns} data={formattedOrders} />
+            <DataTable
+              columns={columns}
+              data={formattedReadyAndAssigned}
+              inTransitData={formattedInTransit}
+              transferredData={formattedTransferred}
+              deliveredData={formattedDelivered}
+            />
           </div>
         </div>
       </div>

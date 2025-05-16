@@ -10,6 +10,8 @@ import {
   where,
   getDocs,
   addDoc,
+  setDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useDrivers } from '@/hooks/useDrivers';
@@ -59,11 +61,33 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  const fetchAssociatedOrders = async (orderIds: string[]) => {
+  const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
-      const ordersPromises = orderIds.map((id) => getDoc(doc(db, 'orders', id)));
+      // Use the same document ID tripDocId to fetch from trip_orders collection
+      const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', tripDocId));
+      // console.log('Trip orders doc exists?', tripOrdersDoc.exists());
+      // console.log('Trip orders data:', tripOrdersDoc.data());
+
+      if (!tripOrdersDoc.exists()) {
+        // console.log('No trip_orders document found for tripDocId:', tripDocId);
+        return [];
+      }
+
+      // Get the orderIds array
+      const orderIds = tripOrdersDoc.data().orderIds || [];
+      // console.log('Found orderIds:', orderIds);
+
+      if (orderIds.length === 0) {
+        // console.log('No orderIds found in trip_orders document');
+        return [];
+      }
+
+      // Now fetch all the orders in parallel
+      // console.log('Fetching orders for IDs:', orderIds);
+      const ordersPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
       const orderDocs = await Promise.all(ordersPromises);
-      return orderDocs
+
+      const orders = orderDocs
         .filter((doc) => doc.exists())
         .map(
           (doc) =>
@@ -72,8 +96,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               ...doc.data(),
             }) as Order,
         );
+
+      // console.log('Successfully fetched orders:', orders);
+      return orders;
     } catch (error) {
-      console.error('Error fetching associated orders:', error);
+      console.error('Error in fetchAssociatedOrders:', error);
       return [];
     }
   };
@@ -98,15 +125,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   const fetchTripData = useCallback(async () => {
     try {
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         onCancel?.();
         return;
       }
+
+      // Create a structure similar to querySnapshot to maintain compatibility with the rest of the code
+      const querySnapshot = {
+        docs: [
+          {
+            data: () => tripDocSnap.data(),
+            id: tripDocSnap.id,
+          },
+        ],
+        empty: false,
+      };
 
       const tripDoc = querySnapshot.docs[0];
       const data = tripDoc.data();
@@ -152,7 +189,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         setSelectedOrderIds(orderIds);
 
         // Fetch the actual order documents
-        const associatedOrders = await fetchAssociatedOrders(orderIds);
+        const associatedOrders = await fetchAssociatedOrders(tripId);
         setAssociatedOrders(associatedOrders);
       }
 
@@ -235,38 +272,34 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     setIsSubmitting(true);
 
     try {
-      // Parse and validate form data
+      // Parse and validate form data, setting numberOfStops to selectedOrderIds length
       const validatedData = {
         ...formData,
-        numberOfStops: parseInt(formData.numberOfStops),
+        numberOfStops: selectedOrderIds.length,
         startDate: new Date(formData.startDate),
         updated_at: new Date(),
       };
 
-      // Find the document with the given tripId
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
+      // Get the trip document reference directly using the tripId
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         return;
       }
 
       // Update the trip in Firestore
-      const tripDoc = querySnapshot.docs[0];
-      await updateDoc(doc(db, 'trips', tripDoc.id), validatedData);
+      await updateDoc(tripDocRef, validatedData);
 
-      // Update trip_orders
-      const tripOrdersRef = collection(db, 'trip_orders');
-      const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
-      const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+      // Get current trip_orders document using the same ID as the trip document
+      const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
+      const tripOrdersSnap = await getDoc(tripOrdersDocRef);
 
       let previousOrderIds: string[] = [];
 
-      if (!tripOrdersSnapshot.empty) {
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        previousOrderIds = tripOrdersDoc.data().orderIds || [];
+      if (tripOrdersSnap.exists()) {
+        previousOrderIds = tripOrdersSnap.data().orderIds || [];
       }
 
       // Find orders to add and remove
@@ -292,23 +325,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       // Wait for all order status updates to complete
       await Promise.all([...addPromises, ...removePromises]);
 
-      // Update or create trip_orders document
-      if (tripOrdersSnapshot.empty) {
-        // Create new trip_orders document if there are selected orders
-        if (selectedOrderIds.length > 0) {
-          await addDoc(collection(db, 'trip_orders'), {
+      // Update or create trip_orders document using the same ID as the trip
+      if (selectedOrderIds.length > 0) {
+        if (tripOrdersSnap.exists()) {
+          // Update existing trip_orders document
+          await updateDoc(tripOrdersDocRef, {
+            orderIds: selectedOrderIds,
+            updatedAt: new Date(),
+          });
+        } else {
+          // Create new trip_orders document with same ID as trip
+          await setDoc(tripOrdersDocRef, {
             tripId,
             orderIds: selectedOrderIds,
             updatedAt: new Date(),
           });
         }
-      } else {
-        // Update existing trip_orders document
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        await updateDoc(doc(db, 'trip_orders', tripOrdersDoc.id), {
-          orderIds: selectedOrderIds,
-          updatedAt: new Date(),
-        });
+      } else if (tripOrdersSnap.exists()) {
+        // If no orders selected and document exists, delete it
+        await deleteDoc(tripOrdersDocRef);
       }
 
       toast.success('Trip updated successfully!');
@@ -358,10 +393,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
             <Input
+              disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
-              value={formData.numberOfStops}
+              value={selectedOrderIds.length}
               onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
               required
               min="0"
@@ -396,10 +432,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="truck">Truck Number</Label>
+            <Label htmlFor="truck">Vehicle Number</Label>
             <Input
               id="truck"
-              placeholder="Enter truck number"
+              placeholder="Enter Vehicle number"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
@@ -488,22 +524,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                               <span className="font-medium">{order.docket_id}:</span>
                               {order.client_details} <FaArrowRightLong /> {order.receiver_name},
                             </span>
-                            <span className="font-medium">TAT:</span>
+                            <span className="font-medium">Deadline:</span>
                             {(() => {
                               try {
-                                if (order.tat instanceof Date) {
-                                  return order.tat.toLocaleDateString();
+                                if (order.deadline instanceof Date) {
+                                  return order.deadline.toLocaleDateString();
                                 }
                                 if (
-                                  typeof order.tat === 'object' &&
-                                  order.tat &&
-                                  'seconds' in order.tat
+                                  typeof order.deadline === 'object' &&
+                                  order.deadline &&
+                                  'seconds' in order.deadline
                                 ) {
                                   return new Date(
-                                    (order.tat as any).seconds * 1000,
+                                    (order.deadline as any).seconds * 1000,
                                   ).toLocaleDateString();
                                 }
-                                return new Date(order.tat as string).toLocaleDateString();
+                                return new Date(order.deadline as string).toLocaleDateString();
                               } catch (error) {
                                 return 'Invalid Date';
                               }
@@ -540,22 +576,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                               <span className="font-medium">{order.docket_id}:</span>
                               {order.client_details} <FaArrowRightLong /> {order.receiver_name},
                             </span>
-                            <span className="font-medium">TAT:</span>
+                            <span className="font-medium">Dealine:</span>
                             {(() => {
                               try {
-                                if (order.tat instanceof Date) {
-                                  return order.tat.toLocaleDateString();
+                                if (order.deadline instanceof Date) {
+                                  return order.deadline.toLocaleDateString();
                                 }
                                 if (
-                                  typeof order.tat === 'object' &&
-                                  order.tat &&
-                                  'seconds' in order.tat
+                                  typeof order.deadline === 'object' &&
+                                  order.deadline &&
+                                  'seconds' in order.deadline
                                 ) {
                                   return new Date(
-                                    (order.tat as any).seconds * 1000,
+                                    (order.deadline as any).seconds * 1000,
                                   ).toLocaleDateString();
                                 }
-                                return new Date(order.tat as string).toLocaleDateString();
+                                return new Date(order.deadline as string).toLocaleDateString();
                               } catch (error) {
                                 return 'Invalid Date';
                               }
