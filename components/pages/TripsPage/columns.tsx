@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FaArrowRightLong } from "react-icons/fa6";
+import { FaArrowRightLong } from 'react-icons/fa6';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -106,7 +106,7 @@ const TypeCell = ({ row }: { row: any }) => {
 
           // Fetch all orders first to check their transfer status
           const orderDocs = await Promise.all(
-            orderIds.map((orderId: string) => getDoc(doc(db, 'orders', orderId)))
+            orderIds.map((orderId: string) => getDoc(doc(db, 'orders', orderId))),
           );
 
           // Process each order based on its transfer status
@@ -284,42 +284,39 @@ const ViewTripDialog = ({
         <div className="grid gap-6 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className='font-bold'>Trip ID</Label>
+              <Label className="font-bold">Trip ID</Label>
               <div className="mt-1 text-sm">{trip.tripId}</div>
             </div>
             <div>
-              <Label className='font-bold'>Driver</Label>
+              <Label className="font-bold">Driver</Label>
               <div className="mt-1 text-sm">
-                {
-                  (() => {
-                    const driverId = trip.driver;
-                    const { drivers } = useDrivers();
-                    const driver = drivers.find((d) => d.id === driverId);
-                    const showDriverName = driver ? driver.driverName : trip.driver;
-                    return showDriverName;
-                  }
-                  )()
-                }
+                {(() => {
+                  const driverId = trip.driver;
+                  const { drivers } = useDrivers();
+                  const driver = drivers.find((d) => d.id === driverId);
+                  const showDriverName = driver ? driver.driverName : trip.driver;
+                  return showDriverName;
+                })()}
               </div>
             </div>
             <div>
-              <Label className='font-bold'>Starting Point</Label>
+              <Label className="font-bold">Starting Point</Label>
               <div className="mt-1 text-sm">{trip.startingPoint}</div>
             </div>
             <div>
-              <Label className='font-bold'>Destination</Label>
+              <Label className="font-bold">Destination</Label>
               <div className="mt-1 text-sm">{trip.destination}</div>
             </div>
             <div>
-              <Label className='font-bold'>Number of Stops</Label>
+              <Label className="font-bold">Number of Stops</Label>
               <div className="mt-1 text-sm">{trip.numberOfStops}</div>
             </div>
             <div>
-              <Label className='font-bold'>Vehicle Number</Label>
+              <Label className="font-bold">Vehicle Number</Label>
               <div className="mt-1 text-sm">{trip.truck}</div>
             </div>
             <div>
-              <Label className='font-bold'>Start Date</Label>
+              <Label className="font-bold">Start Date</Label>
               <div className="mt-1 text-sm">
                 {(() => {
                   try {
@@ -344,7 +341,7 @@ const ViewTripDialog = ({
 
           {/* Orders Section */}
           <div className="space-y-4">
-            <Label className='font-bold'>Delivered Orders</Label>
+            <Label className="font-bold">Delivered Orders</Label>
             <ScrollArea className="h-[200px] border rounded-md p-4">
               {isLoading ? (
                 <div className="text-center py-4">Loading orders...</div>
@@ -401,7 +398,7 @@ const ViewTripDialog = ({
 // Update ActionCell component
 const ActionCell = ({ row }: { row: any }) => {
   const trip = row.original;
-  console.log({trip})
+  console.log({ trip });
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
