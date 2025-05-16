@@ -18,7 +18,7 @@ import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
 import { Trip } from '@/types';
 import { db } from '@/firebase/database';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
   Select,
@@ -50,6 +50,29 @@ const TypeCell = ({ row }: { row: any }) => {
       };
 
       await updateDoc(tripRef, updateData);
+
+      // If the trip is becoming active, update all associated orders
+      if (newType === 'active') {
+        // Get the trip_orders document
+        const tripOrdersRef = doc(db, 'trip_orders', trip.id);
+        const tripOrdersDoc = await getDoc(tripOrdersRef);
+
+        if (tripOrdersDoc.exists()) {
+          const orderIds = tripOrdersDoc.data().orderIds || [];
+
+          // Update all associated orders to "In Transit" status
+          const orderUpdatePromises = orderIds.map((orderId: string) =>
+            updateDoc(doc(db, 'orders', orderId), {
+              status: 'In Transit',
+              updated_at: new Date(),
+            }),
+          );
+
+          await Promise.all(orderUpdatePromises);
+          toast.success(`Updated ${orderIds.length} orders to In Transit status`);
+        }
+      }
+
       toast.success('Trip type updated successfully');
       setShowStatusDialog(false);
     } catch (error) {
