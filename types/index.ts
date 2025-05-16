@@ -46,6 +46,9 @@ export type Order = {
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
+  to_be_transferred: boolean; // if true, then this order is to be transferred to another center
+  transfer_center_location: string | "NA"; // if to_be_transferred is true, then this is the center's pincode to which the order is to be transferred
+  previous_center_location: string | "NA"; // if to_be_transferred is true, then this is the center's pincode from which the order is to be transferred
 };
 
 export type ProofOfDelivery = {

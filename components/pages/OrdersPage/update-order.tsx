@@ -20,6 +20,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useAuth } from '@/app/context/AuthContext';
+import useUsers from '@/hooks/useUsers';
+import useCenters from '@/hooks/useCenters';
 
 interface UpdateOrderFormProps {
   orderId: string;
@@ -31,6 +34,12 @@ interface UpdateOrderFormProps {
 const PRICE_PER_VOLUME = 0.01;
 
 export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFormProps) {
+  // Add centers hook
+  const { centers, isLoading: isLoadingCenters } = useCenters();
+  const { user } = useAuth();
+  const { users: currentUser } = useUsers(user?.uid);
+  const userLocation = currentUser?.[0]?.location;
+
   const [formData, setFormData] = useState({
     receiver_name: '',
     receiver_details: '',
@@ -50,6 +59,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     invoice: '',
     status: '',
     payment_mode: '-',
+    to_be_transferred: false,
+    transfer_center_location: 'NA',
+    previous_center_location: 'NA',
   });
 
   // Add state to store the existing proof_of_delivery value
@@ -103,6 +115,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             invoice: data.invoice || '',
             status: data.status || '',
             payment_mode: data.payment_mode || '-',
+            to_be_transferred: data.to_be_transferred || false,
+            transfer_center_location: data.transfer_center_location || 'NA',
+            previous_center_location: data.previous_center_location || 'NA',
           });
 
           // Set selected client and receiver based on existing data
@@ -354,7 +369,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
     try {
       // Parse and validate form data
-      const validatedData = {
+      let validatedData = {
         ...formData,
         total_boxes_count: parseInt(formData.total_boxes_count),
         total_order_weight: parseInt(formData.total_order_weight),
@@ -366,6 +381,23 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         updated_at: new Date(),
         proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
       };
+
+      // Handle status changes for transfers
+      if (formData.to_be_transferred && formData.status === 'In Transit') {
+        // If the order is in transit to be transferred
+        validatedData = {
+          ...validatedData,
+          previous_center_location: userLocation, // Current center becomes previous
+        };
+      } else if (formData.status === 'Transferred' && formData.to_be_transferred) {
+        // When order is marked as transferred, update the current location
+        validatedData = {
+          ...validatedData,
+          current_location: formData.transfer_center_location, // New center becomes current
+          to_be_transferred: false, // Reset transfer flag
+          transfer_center_location: 'NA', // Reset transfer location
+        };
+      }
 
       // Update the order in Firestore
       const orderRef = doc(db, 'orders', orderId);
@@ -643,7 +675,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         {/* Pricing Method Selection */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
-            <Label className='font-medium mb-4'>Pricing Method</Label>
+            <Label className="font-medium mb-4">Pricing Method</Label>
             <RadioGroup
               value={pricingMethod}
               onValueChange={(value: 'clientPreference' | 'volumetric') => {
@@ -825,7 +857,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
           {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
           {/* <div className="space-y-2">
             <Label htmlFor="status">Order Status</Label>
@@ -859,6 +890,87 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               required
             />
           </div>
+        </div>
+
+        {/* Add transfer fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="to_be_transferred">Transfer to Another Center?</Label>
+            <Select
+              value={formData.to_be_transferred.toString()}
+              onValueChange={(value) => {
+                const isTransfer = value === 'true';
+                setFormData((prev) => ({
+                  ...prev,
+                  to_be_transferred: isTransfer,
+                  transfer_center_location: isTransfer ? prev.transfer_center_location : 'NA',
+                }));
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select transfer option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="false">No</SelectItem>
+                <SelectItem value="true">Yes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.to_be_transferred && (
+            <div className="space-y-2">
+              <Label htmlFor="transfer_center_location">Transfer to Center</Label>
+              <Select
+                disabled={isLoadingCenters}
+                value={formData.transfer_center_location}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    transfer_center_location: value,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      isLoadingCenters ? 'Loading centers...' : 'Select destination center'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {centers
+                    .filter((center) => center.pincode !== userLocation)
+                    .map((center) => (
+                      <SelectItem key={center.id} value={center.pincode}>
+                        {center.name} ({center.pincode})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Add status selection */}
+        <div className="space-y-2">
+          <Label htmlFor="status">Order Status</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => handleInputChange('status', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select order status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
+              <SelectItem value="Assigned">Assigned</SelectItem>
+              <SelectItem value="In Transit">In Transit</SelectItem>
+              {formData.to_be_transferred && (
+                <SelectItem value="Transferred">Transferred</SelectItem>
+              )}
+              <SelectItem value="Delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex justify-between">

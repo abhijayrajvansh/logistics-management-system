@@ -20,6 +20,7 @@ export default function OrdersPage() {
     inTransitOrders,
     transferredOrders,
     deliveredOrders,
+    upcomingTransfers, // Add this
     isLoading: isLoadingOrders,
     error: errorOrders,
   } = useOrders(userLocation);
@@ -59,6 +60,11 @@ export default function OrdersPage() {
     ...order,
   }));
 
+  const formattedUpcomingTransfers = upcomingTransfers.map((order) => ({
+    id: order.order_id,
+    ...order,
+  }));
+
   return (
     <>
       <SiteHeader title="Orders" />
@@ -71,6 +77,7 @@ export default function OrdersPage() {
               inTransitData={formattedInTransit}
               transferredData={formattedTransferred}
               deliveredData={formattedDelivered}
+              upcomingTransfersData={formattedUpcomingTransfers}
             />
           </div>
         </div>

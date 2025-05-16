@@ -207,6 +207,7 @@ const ActionCell = ({ row }: { row: any }) => {
         orderId={order.order_id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
+        order={order} // Pass the full order object
       />
     </div>
   );
@@ -271,7 +272,7 @@ export const columns: ColumnDef<Order>[] = [
     cell: ({ row }) => {
       const tat: number = row.getValue('tat');
       return <div className="text-left font-medium">{tat} H</div>;
-    }
+    },
   },
   {
     accessorKey: 'deadline',
@@ -293,7 +294,11 @@ export const columns: ColumnDef<Order>[] = [
             formattedDate = new Date(deadlineValue).toLocaleDateString();
           }
           // Handle timestamp object
-          else if (deadlineValue && typeof deadlineValue === 'object' && 'seconds' in deadlineValue) {
+          else if (
+            deadlineValue &&
+            typeof deadlineValue === 'object' &&
+            'seconds' in deadlineValue
+          ) {
             formattedDate = new Date((deadlineValue.seconds as number) * 1000).toLocaleDateString();
           }
         } catch (error) {
