@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, onSnapshot, or } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, or } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Order } from '@/types';
 
@@ -20,14 +20,13 @@ export function useOrders(locationFilter?: string) {
     try {
       const ordersRef = collection(db, 'orders');
 
-      // Create a query that matches:
-      // 1. Orders where current_location matches locationFilter
-      // 2. Orders that are to be transferred to this location
+      // Query orders for current location and transferred orders
       const ordersQuery = query(
         ordersRef,
         or(
           where('current_location', '==', locationFilter),
           where('transfer_center_location', '==', locationFilter),
+          where('previous_center_location', '==', locationFilter),
         ),
       );
 
@@ -47,16 +46,25 @@ export function useOrders(locationFilter?: string) {
               ...data,
             } as Order;
 
-            // If this is an incoming transfer and status is "In Transit"
+            // Show transferred orders in the origin center's transferred list
             if (
-              order.transfer_center_location === locationFilter &&
-              order.status === 'In Transit'
+              order.previous_center_location === locationFilter &&
+              order.status === 'Transferred'
             ) {
-              upcoming.push(order);
+              transferred.push(order);
               return;
             }
 
-            // For orders at current location or transferred from here
+            // Show transferred orders as "Ready to Transport" in the destination center
+            if (
+              order.transfer_center_location === locationFilter &&
+              order.status === 'Transferred'
+            ) {
+              readyAndAssigned.push(order);
+              return;
+            }
+
+            // For orders at current location
             if (order.current_location === locationFilter) {
               switch (order.status) {
                 case 'Ready To Transport':
@@ -65,9 +73,6 @@ export function useOrders(locationFilter?: string) {
                   break;
                 case 'In Transit':
                   inTransit.push(order);
-                  break;
-                case 'Transferred':
-                  transferred.push(order);
                   break;
                 case 'Delivered':
                   delivered.push(order);
@@ -90,9 +95,7 @@ export function useOrders(locationFilter?: string) {
         },
       );
 
-      return () => {
-        unsubscribe();
-      };
+      return () => unsubscribe();
     } catch (err) {
       console.error('Error setting up orders listener:', err);
       setError(err as Error);
