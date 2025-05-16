@@ -1,35 +1,35 @@
-'use client';
+'use client'
 
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import useCenters from '@/hooks/useCenters';
+import useUsers from '@/hooks/useUsers';
+import React from 'react';
 
-export default function Playground() {
-  const showToasts = () => {
-    // Success toast (green)
-    toast.success('Operation successful', {
-      description: 'The action was completed successfully',
-    });
-
-    // Warning toast (yellow)
-    setTimeout(() => {
-      toast.warning('Warning message', {
-        description: 'Please review this information',
-      });
-    }, 1000);
-
-    // Error toast (red)
-    setTimeout(() => {
-      toast.error('Error occurred', {
-        description: 'Something went wrong',
-      });
-    }, 2000); 
-  };
-
-  return (
-    <div className="flex flex-col gap-4 items-start">
-      <Button variant="outline" onClick={showToasts}>
-        Show All Toasts
-      </Button>
+const Playground = () => {
+  const { users, error, isLoading } = useUsers('leXz5GEc87YiysJ2gMYYwQJHboa2');
+  console.log('centers', users);
+  console.log('error', error);
+  console.log('isLoading', isLoading);
+  if (isLoading) {
+    return <div className="p-4">Loading...</div>;
+  }
+  if (error) {
+    return <div className="p-4 text-red-500">Error: {error.message}</div>;
+  }
+  if (!users || users.length === 0) {
+    return <div className="p-4">No users found.</div>;
+  }
+  return (  
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">Centers</h1>
+      <ul>
+        {users.map((user) => (
+          <li key={user.userId} className="py-2">
+            <strong>{user.displayName}</strong> - ({user.role}, {user.location} , {user.email}, {user.userId})
+          </li>
+        ))}
+      </ul>
     </div>
   );
-}
+};
+
+export default Playground;

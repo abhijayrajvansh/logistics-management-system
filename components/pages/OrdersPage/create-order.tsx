@@ -1,15 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/firebase/database';
+import { useAuth } from '@/app/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
-import useClients from '@/hooks/useClients';
-import useReceivers from '@/hooks/useReceivers';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -17,7 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { db } from '@/firebase/database';
+import useClients from '@/hooks/useClients';
+import useReceivers from '@/hooks/useReceivers';
+import useTATs from '@/hooks/useTATs';
+import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
+import { addDoc, collection } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
@@ -29,11 +31,17 @@ const PRICE_PER_VOLUME = 0.01;
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { tats } = useTATs();
+
+  const { userData } = useAuth();
 
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+  const [selectedClientPincode, setSelectedClientPincode] = useState<string>('');
+  const [selectedReceiverPincode, setSelectedReceiverPincode] = useState<string>('');
+
   // Add state for pricing method selection
   const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
     'clientPreference',
@@ -50,7 +58,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     tat: '',
     charge_basis: '',
     docket_id: '',
-    current_location: '<manager-current-location>',
+    current_location: userData?.location,
     client_details: '',
     docket_price: '',
     calculated_price: '',
@@ -79,10 +87,31 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     generateUniqueId();
   }, []);
 
+  // Add effect to auto-populate TAT when all pincodes are available
+  useEffect(() => {
+    if (userData?.location && selectedClientPincode && selectedReceiverPincode) {
+      // Find matching TAT record
+      const matchingTat = tats.find(
+        (tat) =>
+          tat.center_pincode === userData.location &&
+          tat.client_pincode === selectedClientPincode &&
+          tat.receiver_pincode === selectedReceiverPincode,
+      );
+
+      if (matchingTat) {
+        setFormData((prev) => ({
+          ...prev,
+          tat: matchingTat.tat_value.toString(),
+        }));
+      }
+    }
+  }, [userData?.location, selectedClientPincode, selectedReceiverPincode, tats]);
+
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualClientEntry(true);
       setSelectedClient('');
+      setSelectedClientPincode('');
       setFormData((prev) => ({
         ...prev,
         client_details: '',
@@ -92,31 +121,10 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setSelectedClient(value);
       const client = clients.find((c) => c.id === value);
       if (client) {
-        let tatDate = '';
-        try {
-          if (client.current_tat) {
-            // Handle Firestore Timestamp
-            if (
-              typeof client.current_tat === 'object' &&
-              client.current_tat !== null &&
-              'seconds' in client.current_tat
-            ) {
-              const timestamp = client.current_tat as { seconds: number };
-              tatDate = new Date(timestamp.seconds * 1000).toISOString().split('T')[0];
-            }
-            // Handle regular Date object
-            else if (client.current_tat instanceof Date) {
-              tatDate = client.current_tat.toISOString().split('T')[0];
-            }
-          }
-        } catch (error) {
-          console.error('Error formatting TAT date:', error);
-        }
-
+        setSelectedClientPincode(client.pincode || '');
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
-          tat: tatDate,
           charge_basis: client.rateCard.preferance,
         }));
       }
@@ -247,6 +255,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
       setSelectedReceiver('');
+      setSelectedReceiverPincode('');
       setFormData((prev) => ({
         ...prev,
         receiver_name: '',
@@ -258,6 +267,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setSelectedReceiver(value);
       const receiver = receivers.find((r) => r.id === value);
       if (receiver) {
+        setSelectedReceiverPincode(receiver.pincode || '');
         setFormData((prev) => ({
           ...prev,
           receiver_name: receiver.receiverName,
@@ -311,9 +321,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         docket_price: parseFloat(formData.docket_price || '0'),
         calculated_price: parseFloat(formData.calculated_price || '0'),
         total_price: parseFloat(formData.total_price || '0'),
-        tat: new Date(formData.tat),
+        tat: parseInt(formData.tat), // Now parsing as integer instead of Date
+        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from tat hours
         proof_of_delivery: 'NA',
+        proof_of_payment: 'NA',
+        payment_mode: '-', // Set default payment mode
         created_at: new Date(),
+        updated_at: new Date(),
       };
 
       // Add the order to Firestore
@@ -566,13 +580,40 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tat">TAT (Turn Around Time)</Label>
+            <Label htmlFor="tat">TAT (Hours)</Label>
             <Input
               id="tat"
-              type="date"
+              type="number"
+              placeholder="Enter TAT in hours"
+              min="1"
               value={formData.tat}
-              onChange={(e) => handleInputChange('tat', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('tat', e.target.value);
+              }}
               required
+            />
+          </div>
+        </div>
+
+        {/* Show calculated deadline based on TAT */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline</Label>
+            <Input
+              id="deadline"
+              type="datetime-local"
+              value={
+          formData.tat
+            ? (() => {
+                const offsetInMilliseconds = 5.5 * 60 * 60 * 1000; // indian time offset (UTC+5:30)
+                const now = Date.now() + offsetInMilliseconds;
+                const tatHours = parseInt(formData.tat) * 60 * 60 * 1000;
+                const deadlineDate = new Date(now + tatHours);
+                return deadlineDate.toISOString().slice(0, 16);
+              })()
+            : ''
+              }
+              disabled
             />
           </div>
         </div>

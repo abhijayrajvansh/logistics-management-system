@@ -1,5 +1,6 @@
-'use client';
-
+import { useState } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { Center } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -7,25 +8,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ReceiverDetails } from '@/types';
-import { ColumnDef } from '@tanstack/react-table';
-import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
-import DeleteReceiverDialog from './delete-receiver';
-import UpdateReceiverForm from './update-receiver';
+import { UpdateCenterForm } from './update-center';
+import { DeleteCenterDialog } from './delete-center';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
-  const receiver = row.original;
+  const center = row.original;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
-  };
-
-  const handleDeleteSuccess = () => {
-    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -43,58 +37,49 @@ const ActionCell = ({ row }: { row: any }) => {
         <MdDeleteOutline size={15} />
       </button>
 
-      {/* Edit Receiver Dialog */}
+      {/* Edit Center Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Edit Receiver</DialogTitle>
+            <DialogTitle>Edit Center</DialogTitle>
             <DialogDescription>
-              Update the receiver details below. Click update when you're done.
+              Update the center details below. Click update when you're done.
             </DialogDescription>
           </DialogHeader>
-          <UpdateReceiverForm
-            receiverId={receiver.id}
+          <UpdateCenterForm
+            centerId={center.id}
             onSuccess={handleUpdateSuccess}
             onCancel={() => setIsEditDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Delete Receiver Dialog */}
-      <DeleteReceiverDialog
-        receiverId={receiver.id}
+      {/* Delete Center Dialog */}
+      <DeleteCenterDialog
+        centerId={center.id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onSuccess={handleDeleteSuccess}
       />
     </div>
   );
 };
 
-export const columns: ColumnDef<ReceiverDetails>[] = [
+export const columns: ColumnDef<Center>[] = [
   {
-    accessorKey: 'receiverId',
-    header: 'Receiver ID',
+    accessorKey: 'name',
+    header: 'Center Name',
   },
   {
-    accessorKey: 'receiverName',
-    header: 'Receiver Name',
-  },
-  {
-    accessorKey: 'receiverDetails',
-    header: 'Receiver Details',
+    accessorKey: 'location',
+    header: 'Location',
     cell: ({ row }) => {
-      const details: string = row.getValue('receiverDetails');
+      const location: string = row.getValue('location');
       return (
         <div className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[300px]">
-          {details}
+          {location}
         </div>
       );
     },
-  },
-  {
-    accessorKey: 'receiverContact',
-    header: 'Contact',
   },
   {
     accessorKey: 'pincode',

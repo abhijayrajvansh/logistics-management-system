@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { shippers, ShipperData } from '@/lib/mock-data';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
+import useTATs from '@/hooks/useTATs';
 import { Client, ReceiverDetails } from '@/types';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -18,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 
 interface UpdateOrderFormProps {
@@ -49,6 +49,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     total_price: '',
     invoice: '',
     status: '',
+    payment_mode: '-',
   });
 
   // Add state to store the existing proof_of_delivery value
@@ -56,6 +57,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
   const { clients, isLoading: isLoadingClients } = useClients();
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { tats } = useTATs();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +65,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
+  const [selectedClientPincode, setSelectedClientPincode] = useState<string>('');
+  const [selectedReceiverPincode, setSelectedReceiverPincode] = useState<string>('');
 
   // Add state for pricing method selection
   const [pricingMethod, setPricingMethod] = useState<'clientPreference' | 'volumetric'>(
@@ -80,18 +84,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           // Store existing proof_of_delivery separately
           setExistingProofOfDelivery(data.proof_of_delivery || 'NA');
 
-          // Format date for input field if it exists
-          let formattedTat = '';
-          if (data.tat) {
-            if (data.tat.toDate) {
-              formattedTat = data.tat.toDate().toISOString().split('T')[0];
-            } else if (data.tat instanceof Date) {
-              formattedTat = data.tat.toISOString().split('T')[0];
-            } else if (typeof data.tat === 'string') {
-              formattedTat = data.tat;
-            }
-          }
-
           setFormData({
             receiver_name: data.receiver_name || '',
             receiver_details: data.receiver_details || '',
@@ -100,7 +92,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             dimensions: data.dimensions || '',
             total_order_weight: data.total_order_weight?.toString() || '',
             lr_no: data.lr_no || '',
-            tat: formattedTat,
+            tat: data.tat?.toString() || '', // TAT is now a number (hours)
             charge_basis: data.charge_basis || '',
             docket_id: data.docket_id || '',
             current_location: data.current_location || '',
@@ -110,12 +102,14 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             total_price: data.total_price?.toString() || '',
             invoice: data.invoice || '',
             status: data.status || '',
+            payment_mode: data.payment_mode || '-',
           });
 
           // Set selected client and receiver based on existing data
           const client = clients.find((c: Client) => c.clientName === data.client_details);
           if (client) {
             setSelectedClient(client.id);
+            setSelectedClientPincode(client.pincode || '');
           } else {
             setIsManualClientEntry(true);
           }
@@ -125,6 +119,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           );
           if (receiver) {
             setSelectedReceiver(receiver.id);
+            setSelectedReceiverPincode(receiver.pincode || '');
           } else {
             setIsManualReceiverEntry(true);
           }
@@ -143,10 +138,31 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     fetchOrderData();
   }, [orderId, onCancel, clients, receivers]);
 
+  // Add effect to auto-populate TAT when all pincodes are available
+  useEffect(() => {
+    if (formData.current_location && selectedClientPincode && selectedReceiverPincode) {
+      // Find matching TAT record
+      const matchingTat = tats.find(
+        (tat) =>
+          tat.center_pincode === formData.current_location &&
+          tat.client_pincode === selectedClientPincode &&
+          tat.receiver_pincode === selectedReceiverPincode,
+      );
+
+      if (matchingTat) {
+        setFormData((prev) => ({
+          ...prev,
+          tat: matchingTat.tat_value.toString(),
+        }));
+      }
+    }
+  }, [formData.current_location, selectedClientPincode, selectedReceiverPincode, tats]);
+
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualClientEntry(true);
       setSelectedClient('');
+      setSelectedClientPincode('');
       setFormData((prev) => ({
         ...prev,
         client_details: '',
@@ -156,6 +172,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
       setSelectedClient(value);
       const client = clients.find((c: Client) => c.id === value);
       if (client) {
+        setSelectedClientPincode(client.pincode || '');
         setFormData((prev) => ({
           ...prev,
           client_details: client.clientName,
@@ -169,6 +186,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
       setSelectedReceiver('');
+      setSelectedReceiverPincode('');
       setFormData((prev) => ({
         ...prev,
         receiver_name: '',
@@ -180,6 +198,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
       setSelectedReceiver(value);
       const receiver = receivers.find((r: ReceiverDetails) => r.id === value);
       if (receiver) {
+        setSelectedReceiverPincode(receiver.pincode || '');
         setFormData((prev) => ({
           ...prev,
           receiver_name: receiver.receiverName,
@@ -342,7 +361,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         docket_price: formData.docket_price ? parseFloat(formData.docket_price) : 0,
         calculated_price: formData.calculated_price ? parseFloat(formData.calculated_price) : 0,
         total_price: formData.total_price ? parseFloat(formData.total_price) : 0,
-        tat: new Date(formData.tat),
+        tat: parseInt(formData.tat), // Parse TAT as integer (hours)
+        deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from TAT hours
         updated_at: new Date(),
         proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
       };
@@ -568,13 +588,38 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tat">TAT (Turn Around Time)</Label>
+            <Label htmlFor="tat">TAT (Hours)</Label>
             <Input
               id="tat"
-              type="date"
+              type="number"
+              placeholder="Enter TAT in hours"
+              min="1"
               value={formData.tat}
               onChange={(e) => handleInputChange('tat', e.target.value)}
               required
+            />
+          </div>
+        </div>
+
+        {/* Show calculated deadline based on TAT */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline</Label>
+            <Input
+              id="deadline"
+              type="datetime-local"
+              value={
+                formData.tat
+                  ? (() => {
+                      const offsetInMilliseconds = 5.5 * 60 * 60 * 1000; // indian time offset (UTC+5:30)
+                      const now = Date.now() + offsetInMilliseconds;
+                      const tatHours = parseInt(formData.tat) * 60 * 60 * 1000;
+                      const deadlineDate = new Date(now + tatHours);
+                      return deadlineDate.toISOString().slice(0, 16);
+                    })()
+                  : ''
+              }
+              disabled
             />
           </div>
         </div>
@@ -763,7 +808,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="invoice">Invoice</Label>
             <Select
@@ -795,6 +840,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </SelectContent>
             </Select>
           </div>
+          <div></div>
         </div>
 
         {/* handling location on backend for specific order update wrt to managers */}

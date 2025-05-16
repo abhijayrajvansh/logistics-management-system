@@ -3,19 +3,29 @@ import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestor
 import { db } from '@/firebase/database';
 import { Order } from '@/types';
 
-export function useOrders() {
+export function useOrders(locationFilter?: string) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+
+    // not running if location is not available
+    // todo: add a check for locationFilter if its equal to "all", i.e. admin wants to see all pincode orders
+    if (!locationFilter) return; 
+
     setIsLoading(true);
 
     try {
       // Set up real-time listener for orders collection
       const ordersRef = collection(db, 'orders');
+
+      const ordersQuery = locationFilter 
+        ? query(ordersRef, where('current_location', '==', locationFilter))
+        : ordersRef;
+
       const unsubscribe = onSnapshot(
-        ordersRef,
+        ordersQuery,
         (snapshot) => {
           const fetchedOrders = snapshot.docs.map((doc) => {
             const data = doc.data();
@@ -24,6 +34,8 @@ export function useOrders() {
               order_id: doc.id,
               ...data,  
             } as Order;
+
+            console.log({orderResponse})
             
             return orderResponse;
           });
@@ -48,7 +60,7 @@ export function useOrders() {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, []);
+  }, [locationFilter]);
 
   return {
     orders,

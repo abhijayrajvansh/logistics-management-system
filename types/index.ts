@@ -16,6 +16,7 @@ export type User = {
   email: string;
   password: string;
   displayName: string;
+  location: string;
   role: 'admin' | 'manager' | 'driver';
   createdAt: Date;
 };
@@ -28,10 +29,11 @@ export type Order = {
   client_details: string;
   created_at: Date;
   current_location: string;
+  deadline: Date; // deadline for delivery, calculated from order creation date + tat
   dimensions: string;
   invoice: 'paid' | 'to pay' | 'received';
   lr_no: string;
-  payment_mode: "cash" | "online" | '-';
+  payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
@@ -40,7 +42,7 @@ export type Order = {
   receiver_details: string;
   receiver_contact: string;
   status: string;
-  tat: Date;
+  tat: number; // whole numbers, format: hours
   total_boxes_count: number;
   total_order_weight: number;
   updated_at: Date;
@@ -102,7 +104,7 @@ export type Client = {
   clientId: string;
   clientName: string;
   clientDetails: string;
-  current_tat: Date;
+  pincode: string;
   rateCard: ClientRateCard;
 };
 
@@ -118,6 +120,7 @@ export type ReceiverDetails = {
   receiverName: string;
   receiverDetails: string;
   receiverContact: string;
+  pincode: string;
 };
 
 export type DriversAttendance = {
@@ -144,3 +147,21 @@ export type Truck = {
   odoCurrent: number;
   odoAtLastService: number;
 };
+
+export type Center = {
+  id: string;
+  name: string;
+  location: string;
+  pincode: string;
+};
+
+
+export type TAT_Mapping = {
+  id: string;
+  center_pincode: string;
+  client_pincode: string;
+  receiver_pincode: string;
+  tat_value: number; // in hours
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
