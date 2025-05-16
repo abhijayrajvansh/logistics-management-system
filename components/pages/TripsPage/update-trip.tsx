@@ -14,9 +14,9 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { useDrivers } from '@/hooks/useDrivers';
 import { Driver, Order } from '@/types';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
+import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
 import { FaArrowRightLong } from 'react-icons/fa6';
 
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,8 @@ interface UpdateTripFormProps {
 }
 
 export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormProps) {
-  const { drivers, isLoading: isLoadingDrivers } = useDrivers();
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [associatedOrders, setAssociatedOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -218,7 +219,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       setSelectedDriver(driver);
       setFormData((prev) => ({
         ...prev,
-        driver: driver.id,
+        driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
         truck: driver.driverTruckId || prev.truck,
       }));
@@ -293,15 +294,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     setIsSubmitting(true);
 
     try {
-      // Parse and validate form data, setting numberOfStops to selectedOrderIds length
-      const validatedData = {
-        ...formData,
-        numberOfStops: selectedOrderIds.length,
-        startDate: new Date(formData.startDate),
-        updated_at: new Date(),
-      };
-
-      // Get the trip document reference directly using the tripId
+      // Get current trip data to check for driver changes
       const tripDocRef = doc(db, 'trips', tripId);
       const tripDocSnap = await getDoc(tripDocRef);
 
@@ -310,8 +303,40 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         return;
       }
 
+      const currentTripData = tripDocSnap.data();
+      const previousDriverId = currentTripData.driver;
+
+      // Update trip data
+      const validatedData = {
+        ...formData,
+        numberOfStops: selectedOrderIds.length,
+        startDate: new Date(formData.startDate),
+        updated_at: new Date(),
+      };
+
       // Update the trip in Firestore
       await updateDoc(tripDocRef, validatedData);
+
+      // Handle driver status updates if driver assignment changed
+      if (previousDriverId !== formData.driver) {
+        // Set previous driver's status back to Active if there was one
+        if (previousDriverId && previousDriverId !== 'Not Assigned') {
+          const prevDriverRef = doc(db, 'drivers', previousDriverId);
+          await updateDoc(prevDriverRef, {
+            status: 'Active',
+            updated_at: new Date(),
+          });
+        }
+
+        // Set new driver's status to On Trip if one is assigned
+        if (formData.driver && formData.driver !== 'Not Assigned') {
+          const newDriverRef = doc(db, 'drivers', formData.driver);
+          await updateDoc(newDriverRef, {
+            status: 'On Trip',
+            updated_at: new Date(),
+          });
+        }
+      }
 
       // Get current trip_orders document using the same ID as the trip document
       const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
@@ -382,6 +407,44 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       setIsSubmitting(false);
     }
   };
+
+  // Load active drivers and current trip's driver
+  useEffect(() => {
+    const loadDrivers = async () => {
+      try {
+        setIsLoadingDrivers(true);
+        const activeDrivers = await fetchActiveDrivers();
+
+        // If this trip has a driver assigned, fetch their info too, even if not active
+        const tripDoc = await getDoc(doc(db, 'trips', tripId));
+        if (tripDoc.exists() && tripDoc.data().driver) {
+          const currentDriverId = tripDoc.data().driver;
+          const currentDriverDoc = await getDoc(doc(db, 'drivers', currentDriverId));
+
+          if (currentDriverDoc.exists()) {
+            const currentDriver = {
+              id: currentDriverDoc.id,
+              ...currentDriverDoc.data(),
+            } as Driver;
+
+            // Add current driver to list if not already included
+            if (!activeDrivers.find((d) => d.id === currentDriver.id)) {
+              activeDrivers.push(currentDriver);
+            }
+          }
+        }
+
+        setDrivers(activeDrivers);
+      } catch (error) {
+        console.error('Error loading drivers:', error);
+        toast.error('Failed to load drivers');
+      } finally {
+        setIsLoadingDrivers(false);
+      }
+    };
+
+    loadDrivers();
+  }, [tripId]);
 
   if (isLoading || isLoadingDrivers) {
     return <div className="py-8 text-center">Loading trip data...</div>;

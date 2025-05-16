@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { db } from '@/firebase/database';
-import { useDrivers } from '@/hooks/useDrivers';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import { Driver, Trip, Order } from '@/types';
 import { addDoc, collection, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -21,13 +20,15 @@ import { useEffect, useState } from 'react';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
+import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
 }
 
 export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
-  const { drivers, isLoading: isLoadingDrivers, error: driverError } = useDrivers();
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
@@ -67,6 +68,24 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     generateUniqueId();
   }, []);
 
+  // Load active drivers when component mounts
+  useEffect(() => {
+    const loadActiveDrivers = async () => {
+      try {
+        setIsLoadingDrivers(true);
+        const activeDrivers = await fetchActiveDrivers();
+        setDrivers(activeDrivers);
+      } catch (error) {
+        console.error('Error loading active drivers:', error);
+        toast.error('Failed to load active drivers');
+      } finally {
+        setIsLoadingDrivers(false);
+      }
+    };
+
+    loadActiveDrivers();
+  }, []);
+
   // Effect to update truck details when driver is selected
   useEffect(() => {
     if (selectedDriver) {
@@ -98,7 +117,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
-    setSelectedDriver(driver || null);
+    if (driver) {
+      setSelectedDriver(driver);
+      setFormData((prevData) => ({
+        ...prevData,
+        driver: driverId, // Use the same ID that's passed from the select
+        truck: driver.driverTruckId || '',
+      }));
+    }
   };
 
   const handleOrderSelection = (orderId: string, isSelected: boolean) => {
@@ -209,6 +235,15 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         created_at: new Date(),
       });
 
+      // If a driver was selected, update their status to "On Trip"
+      if (selectedDriver) {
+        const driverRef = doc(db, 'drivers', selectedDriver.id);
+        await updateDoc(driverRef, {
+          status: 'On Trip',
+          updated_at: new Date(),
+        });
+      }
+
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
         // Use setDoc with trip ID as document ID
@@ -301,13 +336,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 />
               </SelectTrigger>
               <SelectContent>
-                {driverError && (
-                  <SelectItem value="error" disabled>
-                    {driverError.message}
-                  </SelectItem>
-                )}
                 {!isLoadingDrivers &&
-                  !driverError &&
                   drivers.map((driver) => (
                     <SelectItem key={driver.id} value={driver.id}>
                       {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})

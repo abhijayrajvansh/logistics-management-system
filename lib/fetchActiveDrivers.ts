@@ -11,7 +11,7 @@ export async function fetchActiveDrivers(): Promise<Driver[]> {
     return querySnapshot.docs.map(
       (doc) =>
         ({
-          driverId: doc.id,
+          id: doc.id, // Changed from driverId to id to match Driver interface
           ...doc.data(),
         }) as Driver,
     );
