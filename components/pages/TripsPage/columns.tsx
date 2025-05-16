@@ -83,7 +83,7 @@ const TypeCell = ({ row }: { row: any }) => {
         if (tripOrdersDoc.exists()) {
           const orderIds = tripOrdersDoc.data().orderIds || [];
 
-          // Update all associated orders to "In Transit" status
+          // Update all associated orders to "Assigned" status
           const orderUpdatePromises = orderIds.map((orderId: string) =>
             updateDoc(doc(db, 'orders', orderId), {
               status: 'Assigned',
@@ -104,16 +104,38 @@ const TypeCell = ({ row }: { row: any }) => {
         if (tripOrdersDoc.exists()) {
           const orderIds = tripOrdersDoc.data().orderIds || [];
 
-          // Update all associated orders to "In Transit" status
-          const orderUpdatePromises = orderIds.map((orderId: string) =>
-            updateDoc(doc(db, 'orders', orderId), {
-              status: 'Delivered',
-              updated_at: new Date(),
-            }),
+          // Fetch all orders first to check their transfer status
+          const orderDocs = await Promise.all(
+            orderIds.map((orderId: string) => getDoc(doc(db, 'orders', orderId)))
           );
 
-          await Promise.all(orderUpdatePromises);
-          toast.success(`Updated ${orderIds.length} orders to Delivered status`);
+          // Process each order based on its transfer status
+          const orderUpdatePromises = orderDocs.map((orderDoc) => {
+            if (!orderDoc.exists()) return null;
+
+            const order = orderDoc.data();
+            const orderId = orderDoc.id;
+
+            if (order.to_be_transferred) {
+              // For orders being transferred
+              return updateDoc(doc(db, 'orders', orderId), {
+                status: 'Transferred',
+                previous_center_location: order.current_location, // Store current location as previous
+                current_location: order.transfer_center_location, // Update current location to transfer destination
+                updated_at: new Date(),
+              });
+            } else {
+              // For regular deliveries
+              return updateDoc(doc(db, 'orders', orderId), {
+                status: 'Delivered',
+                updated_at: new Date(),
+              });
+            }
+          });
+
+          // Execute all updates
+          await Promise.all(orderUpdatePromises.filter(Boolean));
+          toast.success(`Updated ${orderIds.length} orders status based on their transfer status`);
         }
       }
 
