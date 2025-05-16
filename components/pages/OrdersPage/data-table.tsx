@@ -57,12 +57,14 @@ export function DataTable<TData, TValue>({
   inTransitData = [],
   transferredData = [],
   deliveredData = [],
+  upcomingTransfersData = [], // Add this prop
 }: {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   inTransitData?: TData[];
   transferredData?: TData[];
   deliveredData?: TData[];
+  upcomingTransfersData?: TData[]; // Add type
 }) {
   const [data, setData] = React.useState(() => initialData);
 
@@ -132,6 +134,19 @@ export function DataTable<TData, TValue>({
 
   const deliveredTable = useReactTable({
     data: deliveredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
+
+  // Add table instance for upcoming transfers
+  const upcomingTransfersTable = useReactTable({
+    data: upcomingTransfersData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -288,11 +303,20 @@ export function DataTable<TData, TValue>({
         </Dialog>
       </div>
 
+
       {/* Ready to Transport & Assigned Orders Section */}
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <h2 className="text-xl font-semibold">Ready to Transport & Assigned Orders</h2>
         {renderTable(readyAndAssignedTable)}
         {renderPagination(readyAndAssignedTable)}
+      </div>
+
+      {/* Upcoming Transfers Section*/}
+      <div className="flex flex-col gap-4 px-4 lg:px-6">
+        <h2 className="text-xl font-semibold">Upcoming Transfers</h2>
+        <p className="text-sm text-gray-500 -mt-2">Orders being transferred to your center</p>
+        {renderTable(upcomingTransfersTable)}
+        {renderPagination(upcomingTransfersTable)}
       </div>
 
       {/* In Transit Orders Section */}

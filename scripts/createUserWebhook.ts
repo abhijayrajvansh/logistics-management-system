@@ -5,11 +5,11 @@ import env from '@/constants';
 
 const users: User[] = [
   {
-    userId: 'leXz5GEc87YiysJ2gMYYwQJHboa2',
-    email: 'managerl1' + env.USERID_EMAIL,
-    password: 'managerl1',
-    displayName: 'Manager L1',
-    location: '111111',
+    userId: 'j0iavmbzNWcry4sONwn1CKiCSNT2',
+    email: 'managerl2' + env.USERID_EMAIL,
+    password: 'managerl2',
+    displayName: 'Manager L2',
+    location: '222222',
     role: 'manager',
     createdAt: new Date(),
   },

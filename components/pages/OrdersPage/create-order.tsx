@@ -20,6 +20,8 @@ import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import { addDoc, collection } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import useUsers from '@/hooks/useUsers';
+import useCenters from '@/hooks/useCenters';
 
 interface CreateOrderFormProps {
   onSuccess?: () => void;
@@ -33,7 +35,10 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { receivers, isLoading: isLoadingReceivers } = useReceivers();
   const { tats } = useTATs();
 
-  const { userData } = useAuth();
+  const { user } = useAuth();
+  const { users: currentUser } = useUsers(user?.uid);
+  const { centers, isLoading: isLoadingCenters } = useCenters();
+  const userLocation = currentUser?.[0]?.location;
 
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
@@ -58,13 +63,16 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     tat: '',
     charge_basis: '',
     docket_id: '',
-    current_location: userData?.location,
+    current_location: userLocation,
     client_details: '',
     docket_price: '',
     calculated_price: '',
     total_price: '',
     invoice: '',
     status: 'Ready To Transport',
+    to_be_transferred: false,
+    transfer_center_location: 'NA',
+    previous_center_location: 'NA',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,11 +97,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
   // Add effect to auto-populate TAT when all pincodes are available
   useEffect(() => {
-    if (userData?.location && selectedClientPincode && selectedReceiverPincode) {
+    if (userLocation && selectedClientPincode && selectedReceiverPincode) {
       // Find matching TAT record
       const matchingTat = tats.find(
         (tat) =>
-          tat.center_pincode === userData.location &&
+          tat.center_pincode === userLocation &&
           tat.client_pincode === selectedClientPincode &&
           tat.receiver_pincode === selectedReceiverPincode,
       );
@@ -105,7 +113,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         }));
       }
     }
-  }, [userData?.location, selectedClientPincode, selectedReceiverPincode, tats]);
+  }, [userLocation, selectedClientPincode, selectedReceiverPincode, tats]);
 
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
@@ -329,6 +337,12 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         status: formData.status || 'Ready To Transport', // Set default status if not provided
         created_at: new Date(),
         updated_at: new Date(),
+        to_be_transferred: formData.to_be_transferred,
+        transfer_center_location: formData.to_be_transferred
+          ? formData.transfer_center_location
+          : 'NA',
+        previous_center_location: 'NA', // Initially NA since it's a new order
+        current_location: userLocation, // Set current location to user's center
       };
 
       // Add the order to Firestore
@@ -357,6 +371,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         total_price: '',
         invoice: '', // Default value for the invoice enum
         status: '',
+        to_be_transferred: false,
+        transfer_center_location: 'NA',
+        previous_center_location: 'NA',
       });
 
       // Call onSuccess callback if provided
@@ -597,7 +614,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         </div>
 
         {/* Show calculated deadline based on TAT */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="deadline">Deadline</Label>
             <Input
@@ -616,6 +633,22 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               }
               disabled
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="invoice">Invoice</Label>
+            <Select
+              value={formData.invoice}
+              onValueChange={(value) => handleInputChange('invoice', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select invoice type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paid">paid</SelectItem>
+                <SelectItem value="to pay">to pay</SelectItem>
+                <SelectItem value="received">received</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -789,41 +822,62 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Add transfer options */}
           <div className="space-y-2">
-            <Label htmlFor="invoice">Invoice</Label>
+            <Label htmlFor="to_be_transferred">Transfer to Another Center?</Label>
             <Select
-              value={formData.invoice}
-              onValueChange={(value) => handleInputChange('invoice', value)}
+              value={formData.to_be_transferred.toString()}
+              onValueChange={(value) => {
+                const isTransfer = value === 'true';
+                setFormData((prev) => ({
+                  ...prev,
+                  to_be_transferred: isTransfer,
+                  transfer_center_location: isTransfer ? prev.transfer_center_location : 'NA',
+                }));
+              }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select invoice type" />
+                <SelectValue placeholder="Select transfer option" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="paid">paid</SelectItem>
-                <SelectItem value="to pay">to pay</SelectItem>
-                <SelectItem value="received">received</SelectItem>
+                <SelectItem value="false">No</SelectItem>
+                <SelectItem value="true">Yes</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Order Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleInputChange('status', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select order status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ready To Transport">Ready To Transport</SelectItem>
-                {/* changing order status to assigned whithout trips while creating new orders doesnt make sense*/}
-                {/* <SelectItem value="Assigned">Assigned</SelectItem> */}
-                <SelectItem value="In Transit">In Transit</SelectItem>
-                <SelectItem value="Transferred">Transferred</SelectItem>
-                <SelectItem value="Delivered">Delivered</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
+          {formData.to_be_transferred && (
+            <div className="space-y-2">
+              <Label htmlFor="transfer_center_location">Transfer to Center</Label>
+              <Select
+                disabled={isLoadingCenters}
+                value={formData.transfer_center_location}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    transfer_center_location: value,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      isLoadingCenters ? 'Loading centers...' : 'Select destination center'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {centers
+                    .filter((center) => center.pincode !== userLocation)
+                    .map((center) => (
+                      <SelectItem key={center.id} value={center.pincode}>
+                        {center.name} ({center.pincode})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between">
@@ -854,6 +908,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 total_price: '',
                 invoice: '',
                 status: '',
+                to_be_transferred: false,
+                transfer_center_location: 'NA',
+                previous_center_location: 'NA',
               });
 
               // Generate a new unique docket ID after reset

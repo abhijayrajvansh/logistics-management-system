@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { db } from '@/firebase/database';
-import { useDrivers } from '@/hooks/useDrivers';
 import { getUniqueVerifiedTripId } from '@/lib/createUniqueTripId';
 import { Driver, Trip, Order } from '@/types';
 import { addDoc, collection, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -21,13 +20,15 @@ import { useEffect, useState } from 'react';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
+import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
 }
 
 export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
-  const { drivers, isLoading: isLoadingDrivers, error: driverError } = useDrivers();
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
@@ -41,7 +42,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     numberOfStops: 0,
     startDate: new Date().toISOString().split('T')[0], // Set default to current date
     truck: '',
-    type: 'unassigned',
+    type: 'ready to ship',
     currentStatus: 'NA', // Default to 'NA' for new trips
   });
 
@@ -65,6 +66,24 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   useEffect(() => {
     generateUniqueId();
+  }, []);
+
+  // Load active drivers when component mounts
+  useEffect(() => {
+    const loadActiveDrivers = async () => {
+      try {
+        setIsLoadingDrivers(true);
+        const activeDrivers = await fetchActiveDrivers();
+        setDrivers(activeDrivers);
+      } catch (error) {
+        console.error('Error loading active drivers:', error);
+        toast.error('Failed to load active drivers');
+      } finally {
+        setIsLoadingDrivers(false);
+      }
+    };
+
+    loadActiveDrivers();
   }, []);
 
   // Effect to update truck details when driver is selected
@@ -98,7 +117,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
-    setSelectedDriver(driver || null);
+    if (driver) {
+      setSelectedDriver(driver);
+      setFormData((prevData) => ({
+        ...prevData,
+        driver: driverId, // Use the same ID that's passed from the select
+        truck: driver.driverTruckId || '',
+      }));
+    }
   };
 
   const handleOrderSelection = (orderId: string, isSelected: boolean) => {
@@ -111,12 +137,21 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     setFormData((prev) => {
       if (field === 'type') {
         // Handle type change and set appropriate currentStatus
-        const newType = value as 'unassigned' | 'active' | 'past';
+        const newType = value as 'ready to ship' | 'active' | 'past';
+
+        // Validate driver and truck assignment when changing to active
+        if (newType === 'active') {
+          if (!selectedDriver || !formData.truck || formData.truck === 'Not Assigned') {
+            toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+            return prev; // Return previous state without changes
+          }
+        }
+
         return {
           ...prev,
           type: newType,
           currentStatus:
-            newType === 'unassigned'
+            newType === 'ready to ship'
               ? 'NA'
               : newType === 'active'
                 ? prev.currentStatus === 'NA'
@@ -142,7 +177,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       numberOfStops: 0,
       startDate: '',
       truck: '',
-      type: 'unassigned',
+      type: 'ready to ship',
       currentStatus: 'NA', // Reset to 'NA'
     });
     setSelectedDriver(null);
@@ -169,10 +204,16 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Only validate currentStatus for active trips
-    if (formData.type === 'active' && formData.currentStatus === 'NA') {
-      toast.error('Please select a valid status (Delivering or Returning) for active trip');
-      return;
+    // Only validate driver and truck assignment for active trips
+    if (formData.type === 'active') {
+      if (!selectedDriver || !formData.truck || formData.truck === 'Not Assigned') {
+        toast.error('Cannot create active trip: Driver and truck must be assigned first');
+        return;
+      }
+      if (formData.currentStatus === 'NA') {
+        toast.error('Please select a valid status (Delivering or Returning) for active trip');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -194,9 +235,26 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         created_at: new Date(),
       });
 
+      // If a driver was selected, create trip_driver mapping and update driver status
+      if (selectedDriver) {
+        // Create trip_driver mapping
+        await setDoc(doc(db, 'trip_drivers', tripRef.id), {
+          tripId: tripRef.id,
+          driverId: selectedDriver.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Update driver status to "OnTrip"
+        const driverRef = doc(db, 'drivers', selectedDriver.id);
+        await updateDoc(driverRef, {
+          status: 'On Trip',
+          updated_at: new Date(),
+        });
+      }
+
       // Create trip_orders document if there are selected orders
       if (selectedOrderIds.length > 0) {
-        
         // Use setDoc with trip ID as document ID
         await setDoc(doc(db, 'trip_orders', tripRef.id), {
           tripId: tripRef.id,
@@ -287,13 +345,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 />
               </SelectTrigger>
               <SelectContent>
-                {driverError && (
-                  <SelectItem value="error" disabled>
-                    {driverError.message}
-                  </SelectItem>
-                )}
                 {!isLoadingDrivers &&
-                  !driverError &&
                   drivers.map((driver) => (
                     <SelectItem key={driver.id} value={driver.id}>
                       {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
@@ -313,7 +365,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input disabled={true}
+            <Input
+              disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
@@ -347,7 +400,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 <SelectValue placeholder="Select trip type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="past">Past</SelectItem>
               </SelectContent>
@@ -406,7 +459,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                         </span>
                         <span className="font-medium">Deadline</span>:
                         {(() => {
-
                           try {
                             if (order.deadline instanceof Date) {
                               return order.deadline.toLocaleDateString();
