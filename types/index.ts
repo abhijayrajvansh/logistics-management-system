@@ -85,7 +85,7 @@ export type Driver = {
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;
   languages: string[];
-  wheelsCapability: number; // Example: 4, 6, 8, 12
+  wheelsCapability?: string[] | "NA"; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20 
   assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
   driverDocuments?: DriverDocuments | "NA";
   emergencyContact?: EmergencyContact | "NA";

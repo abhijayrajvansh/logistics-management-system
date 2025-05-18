@@ -45,7 +45,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
-    wheelsCapability: 4,
+    wheelsCapability: 'NA',
     assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
@@ -87,7 +87,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             driverName: data.driverName || '',
             phoneNumber: data.phoneNumber || '',
             languages: data.languages || [],
-            wheelsCapability: data.wheelsCapability || 4,
+            wheelsCapability: data.wheelsCapability || 'NA',
             assignedTruckId: data.assignedTruckId || 'NA',
             status: data.status || 'Inactive',
             emergencyContact: data.emergencyContact || 'NA',
@@ -122,6 +122,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     }));
   };
 
+  // Update the handleInputChange function to properly handle wheelsCapability
   const handleInputChange = (field: string, value: string | number | Date) => {
     setFormData((prev) => {
       if (field.startsWith('driverDocuments.')) {
@@ -147,13 +148,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             ...currentDocs,
             [documentField]: value,
           },
-        };
-      }
-
-      if (field === 'wheelsCapability') {
-        return {
-          ...prev,
-          wheelsCapability: typeof value === 'number' ? value : 4,
         };
       }
 
@@ -377,20 +371,68 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
           <div className="space-y-2">
             <Label htmlFor="wheelsCapability">Wheels Capability</Label>
             <Select
-              value={formData.wheelsCapability.toString()}
-              onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
+              value={
+                !formData.wheelsCapability || formData.wheelsCapability === 'NA'
+                  ? 'NA'
+                  : formData.wheelsCapability[0]
+              }
+              onValueChange={(value) => {
+                if (value === 'NA') {
+                  setFormData((prev) => ({ ...prev, wheelsCapability: 'NA' }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    wheelsCapability:
+                      !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                        ? [value]
+                        : Array.isArray(prev.wheelsCapability) &&
+                            prev.wheelsCapability.includes(value)
+                          ? prev.wheelsCapability.filter((w) => w !== value)
+                          : Array.isArray(prev.wheelsCapability)
+                            ? [...prev.wheelsCapability, value]
+                            : [value],
+                  }));
+                }
+              }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select wheels capability" />
               </SelectTrigger>
               <SelectContent>
-                {[4, 6, 8, 12].map((wheels) => (
-                  <SelectItem key={wheels} value={wheels.toString()}>
+                <SelectItem value="NA">Not Specified</SelectItem>
+                {['3', '4', '6', '8', '10', '12', '14', '16', '18', '20'].map((wheels) => (
+                  <SelectItem key={wheels} value={wheels}>
                     {wheels} Wheeler
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {formData.wheelsCapability && formData.wheelsCapability !== 'NA' && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.wheelsCapability.map((wheel, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {wheel} Wheeler
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          wheelsCapability:
+                            !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                              ? ['3']
+                              : Array.isArray(prev.wheelsCapability)
+                                ? prev.wheelsCapability.filter((_, i) => i !== index)
+                                : ['3'],
+                        }));
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Status */}

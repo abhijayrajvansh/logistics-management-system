@@ -49,7 +49,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
-    wheelsCapability: 4,
+    wheelsCapability: 'NA',
     assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
@@ -254,7 +254,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         driverName: '',
         phoneNumber: '',
         languages: [],
-        wheelsCapability: 4,
+        wheelsCapability: 'NA',
         assignedTruckId: 'NA',
         status: 'Inactive',
         emergencyContact: 'NA',
@@ -348,20 +348,63 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <div className="space-y-2">
             <Label htmlFor="wheelsCapability">Wheels Capability</Label>
             <Select
-              value={formData.wheelsCapability.toString()}
-              onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
+              value={
+                !formData.wheelsCapability || formData.wheelsCapability === 'NA'
+                  ? 'NA'
+                  : formData.wheelsCapability[0]
+              }
+              onValueChange={(value) => {
+                if (value === 'NA') {
+                  setFormData((prev) => ({ ...prev, wheelsCapability: 'NA' }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    wheelsCapability:
+                      !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                        ? [value]
+                        : prev.wheelsCapability.includes(value)
+                          ? prev.wheelsCapability.filter((w) => w !== value)
+                          : [...prev.wheelsCapability, value],
+                  }));
+                }
+              }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select wheels capability" />
               </SelectTrigger>
               <SelectContent>
-                {[4, 6, 8, 12].map((wheels) => (
-                  <SelectItem key={wheels} value={wheels.toString()}>
+                <SelectItem value="NA">Not Specified</SelectItem>
+                {['3', '4', '6', '8', '10', '12', '14', '16', '18', '20'].map((wheels) => (
+                  <SelectItem key={wheels} value={wheels}>
                     {wheels} Wheeler
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {formData.wheelsCapability && formData.wheelsCapability !== 'NA' && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.wheelsCapability.map((wheel, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {wheel} Wheeler
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          wheelsCapability:
+                            !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                              ? ['3']
+                              : prev.wheelsCapability.filter((_, i) => i !== index),
+                        }));
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

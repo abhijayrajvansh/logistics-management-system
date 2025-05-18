@@ -129,10 +129,10 @@ const PasswordCell = ({ driverId }: { driverId: string }) => {
 // Add TruckCell component before the columns definition
 const TruckCell = ({ truckId }: { truckId: string }) => {
   const { trucks } = useTrucks();
-  
+
   if (truckId === 'NA') return <span>Not Assigned</span>;
-  
-  const truck = trucks.find(t => t.id === truckId);
+
+  const truck = trucks.find((t) => t.id === truckId);
   return <span>{truck ? truck.regNumber : truckId}</span>;
 };
 
@@ -159,7 +159,7 @@ export const columns: ColumnDef<Driver>[] = [
     cell: ({ row }) => {
       const truckId = row.getValue('assignedTruckId') as string;
       return <TruckCell truckId={truckId} />;
-    }
+    },
   },
   {
     accessorKey: 'status',
@@ -193,8 +193,25 @@ export const columns: ColumnDef<Driver>[] = [
     accessorKey: 'wheelsCapability',
     header: 'Wheels',
     cell: ({ row }) => {
-      const wheels: number = row.getValue('wheelsCapability');
-      return <span>{wheels} Wheeler</span>;
+      const wheels = row.getValue('wheelsCapability');
+
+      // Return early for NA or undefined cases
+      if (!wheels || wheels === 'NA') {
+        return <span>Not Specified</span>;
+      }
+
+      // Ensure we're working with an array
+      const wheelsArray = Array.isArray(wheels) ? wheels : [];
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {wheelsArray.map((wheel, index) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {wheel} Wheeler
+            </Badge>
+          ))}
+        </div>
+      );
     },
   },
   {
