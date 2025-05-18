@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import useTrucks from '@/hooks/useTrucks';
 import useUsers from '@/hooks/useUsers';
+import { ViewDriverDetails } from './ViewDriverDetails';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row, table }: { row: any; table: any }) => {
@@ -36,6 +37,7 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
   return (
     <>
       <div className="text-center space-x-2">
+        <ViewDriverDetails driver={driver} />
         <button
           className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
           onClick={() => setIsEditDialogOpen(true)}
