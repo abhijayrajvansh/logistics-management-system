@@ -644,7 +644,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
         {/* Emergency Contact Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_name">Name</Label>
               <Input
@@ -660,6 +660,10 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                           number:
                             prev.emergencyContact !== 'NA'
                               ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyAddress:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyAddress
                               : '',
                           residencyProof:
                             prev.emergencyContact !== 'NA'
@@ -694,6 +698,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                         : {
                             name: '',
                             number,
+                            residencyAddress: '',
                             residencyProof: '',
                           },
                   }));
@@ -705,8 +710,38 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 }
               />
             </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="emergency_address">Residency Address</Label>
+              <Input
+                id="emergency_address"
+                placeholder="Enter complete residency address"
+                onChange={(e) => {
+                  const residencyAddress = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            residencyAddress,
+                          }
+                        : {
+                            name: '',
+                            number: '',
+                            residencyAddress,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).residencyAddress
+                    : ''
+                }
+              />
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="residency_proof">Update Residency Proof</Label>
+              <Label htmlFor="residency_proof">Residency Proof</Label>
               <Input
                 id="residency_proof"
                 type="file"

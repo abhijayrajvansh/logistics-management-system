@@ -638,7 +638,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         {/* Emergency Contact Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_name">Name</Label>
               <Input
@@ -654,6 +654,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                           number:
                             prev.emergencyContact !== 'NA'
                               ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyAddress:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyAddress
                               : '',
                           residencyProof:
                             prev.emergencyContact !== 'NA'
@@ -688,6 +692,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                         : {
                             name: '',
                             number,
+                            residencyAddress: '',
                             residencyProof: '',
                           },
                   }));
@@ -695,6 +700,36 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 value={
                   formData.emergencyContact !== 'NA'
                     ? (formData.emergencyContact as EmergencyContact).number
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="emergency_address">Residency Address</Label>
+              <Input
+                id="emergency_address"
+                placeholder="Enter complete residency address"
+                onChange={(e) => {
+                  const residencyAddress = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            residencyAddress,
+                          }
+                        : {
+                            name: '',
+                            number: '',
+                            residencyAddress,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).residencyAddress
                     : ''
                 }
               />
@@ -709,7 +744,6 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                   if (e.target.files?.[0]) {
                     const file = e.target.files[0];
                     handleFileChange('residency_proof', file);
-                    // We'll upload this file later during form submission
                   }
                 }}
               />

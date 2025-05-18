@@ -95,6 +95,7 @@ export type Driver = {
 export type EmergencyContact = {
   name: string;
   number: string;
+  residencyAddress: string; // address of the emergency contact
   residencyProof: string;
 };
 
