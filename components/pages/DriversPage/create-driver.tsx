@@ -22,6 +22,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import useTrucks from '@/hooks/useTrucks';
+import { ReferralBySelector } from './ReferralBySelector';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -283,6 +284,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
   return (
     <form onSubmit={handleSubmit}>
       <div className="grid gap-6 py-4">
+        {/* Basic Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="driverName">Driver Name</Label>
@@ -307,6 +309,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
         </div>
 
+        {/* Additional Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="language">Languages</Label>
@@ -343,30 +346,29 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignedTruckId">Assign Truck</Label>
+            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
             <Select
-              value={formData.assignedTruckId}
-              onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+              value={formData.wheelsCapability.toString()}
+              onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select truck" />
+                <SelectValue placeholder="Select wheels capability" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NA">Not Assigned</SelectItem>
-                {trucks.map((truck) => (
-                  <SelectItem key={truck.id} value={truck.id}>
-                    {truck.regNumber} ({truck.axleConfig})
+                {[4, 6, 8, 12].map((wheels) => (
+                  <SelectItem key={wheels} value={wheels.toString()}>
+                    {wheels} Wheeler
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-2 w-full">
+          <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
-              value={formData.status || 'Inactive'}
-              onValueChange={(value) => handleInputChange('status', value)}
+              value={formData.status}
+              onValueChange={(value: Driver['status']) => handleInputChange('status', value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select driver status" />
@@ -382,6 +384,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
         </div>
 
+        {/* Documents Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -563,29 +566,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
         </div>
 
-        {/* New Truck Assignment and Additional Fields Section */}
+        {/* Truck Assignment Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Truck Assignment and Additional Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="wheelsCapability">Wheels Capability</Label>
-              <Select
-                value={formData.wheelsCapability.toString()}
-                onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select wheels capability" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[4, 6, 8, 12].map((wheels) => (
-                    <SelectItem key={wheels} value={wheels.toString()}>
-                      {wheels} Wheeler
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <h3 className="text-lg font-medium">Truck Assignment</h3>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="assignedTruckId">Assign Truck</Label>
               <Select
@@ -602,25 +586,6 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                       {truck.regNumber} ({truck.axleConfig})
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 w-full">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status || 'Inactive'}
-                onValueChange={(value) => handleInputChange('status', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select driver status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="On Leave">On Leave</SelectItem>
-                  <SelectItem value="On Trip">On Trip</SelectItem>
-                  <SelectItem value="Suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -712,65 +677,10 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         {/* Referral Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="referral_type">Referred By</Label>
-              <Select
-                onValueChange={(value: User['role']) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    referredBy: value
-                      ? {
-                          type: value,
-                          userId:
-                            prev.referredBy !== 'NA' ? (prev.referredBy as ReferredBy).userId : '',
-                        }
-                      : 'NA',
-                  }));
-                }}
-                value={
-                  formData.referredBy !== 'NA'
-                    ? (formData.referredBy as ReferredBy).type
-                    : undefined
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select referral type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="driver">Driver</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="referral_id">Referrer ID</Label>
-              <Input
-                id="referral_id"
-                placeholder="Enter referrer's ID"
-                onChange={(e) => {
-                  const userId = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    referredBy:
-                      prev.referredBy !== 'NA'
-                        ? {
-                            ...(prev.referredBy as ReferredBy),
-                            userId,
-                          }
-                        : {
-                            type: 'admin',
-                            userId,
-                          },
-                  }));
-                }}
-                value={
-                  formData.referredBy !== 'NA' ? (formData.referredBy as ReferredBy).userId : ''
-                }
-              />
-            </div>
-          </div>
+          <ReferralBySelector
+            value={formData.referredBy || 'NA'}
+            onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
+          />
         </div>
 
         <div className="flex justify-end gap-4 pt-4">

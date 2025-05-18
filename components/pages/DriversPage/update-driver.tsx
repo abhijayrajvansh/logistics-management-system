@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
 import useTrucks from '@/hooks/useTrucks';
 import { Badge } from '@/components/ui/badge';
+import { ReferralBySelector } from './ReferralBySelector';
 
 interface UpdateDriverFormProps {
   driverId: string;
@@ -311,6 +312,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
   return (
     <form onSubmit={handleFormSubmit}>
       <div className="grid gap-6 py-4">
+        {/* Basic Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="driverName">Driver Name</Label>
@@ -335,6 +337,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
           </div>
         </div>
 
+        {/* Additional Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="language">Languages</Label>
@@ -370,6 +373,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </div>
           </div>
 
+          {/* Wheels Capability */}
           <div className="space-y-2">
             <Label htmlFor="wheelsCapability">Wheels Capability</Label>
             <Select
@@ -389,26 +393,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="assignedTruckId">Assign Truck</Label>
-            <Select
-              value={formData.assignedTruckId}
-              onValueChange={(value) => handleInputChange('assignedTruckId', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select truck" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NA">Not Assigned</SelectItem>
-                {trucks.map((truck) => (
-                  <SelectItem key={truck.id} value={truck.id}>
-                    {truck.regNumber} ({truck.axleConfig})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+          {/* Status */}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
@@ -421,163 +406,15 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
               <SelectContent>
                 <SelectItem value="Active">Active</SelectItem>
                 <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="On Leave">On Leave</SelectItem>
-                <SelectItem value="On Trip">On Trip</SelectItem>
+                <SelectItem value="OnLeave">On Leave</SelectItem>
+                <SelectItem value="OnTrip">On Trip</SelectItem>
                 <SelectItem value="Suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Emergency Contact Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="emergency_name">Name</Label>
-              <Input
-                id="emergency_name"
-                placeholder="Emergency contact name"
-                onChange={(e) => {
-                  const name = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    emergencyContact: name
-                      ? {
-                          name,
-                          number:
-                            prev.emergencyContact !== 'NA'
-                              ? (prev.emergencyContact as EmergencyContact).number
-                              : '',
-                          residencyProof:
-                            prev.emergencyContact !== 'NA'
-                              ? (prev.emergencyContact as EmergencyContact).residencyProof
-                              : '',
-                        }
-                      : 'NA',
-                  }));
-                }}
-                value={
-                  formData.emergencyContact !== 'NA'
-                    ? (formData.emergencyContact as EmergencyContact).name
-                    : ''
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="emergency_number">Phone Number</Label>
-              <Input
-                id="emergency_number"
-                placeholder="Emergency contact number"
-                onChange={(e) => {
-                  const number = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    emergencyContact:
-                      prev.emergencyContact !== 'NA'
-                        ? {
-                            ...(prev.emergencyContact as EmergencyContact),
-                            number,
-                          }
-                        : {
-                            name: '',
-                            number,
-                            residencyProof: '',
-                          },
-                  }));
-                }}
-                value={
-                  formData.emergencyContact !== 'NA'
-                    ? (formData.emergencyContact as EmergencyContact).number
-                    : ''
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="residency_proof">Update Residency Proof</Label>
-              <Input
-                id="residency_proof"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    const file = e.target.files[0];
-                    handleFileChange('residency_proof', file);
-                  }
-                }}
-              />
-              {formData.emergencyContact !== 'NA' &&
-                (formData.emergencyContact as EmergencyContact).residencyProof && (
-                  <div className="text-sm text-muted-foreground">Current file uploaded</div>
-                )}
-            </div>
-          </div>
-        </div>
-
-        {/* Referral Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="referral_type">Referred By</Label>
-              <Select
-                onValueChange={(value: User['role']) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    referredBy: value
-                      ? {
-                          type: value,
-                          userId:
-                            prev.referredBy !== 'NA' ? (prev.referredBy as ReferredBy).userId : '',
-                        }
-                      : 'NA',
-                  }));
-                }}
-                value={
-                  formData.referredBy !== 'NA'
-                    ? (formData.referredBy as ReferredBy).type
-                    : undefined
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select referral type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="driver">Driver</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="referral_id">Referrer ID</Label>
-              <Input
-                id="referral_id"
-                placeholder="Enter referrer's ID"
-                onChange={(e) => {
-                  const userId = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    referredBy:
-                      prev.referredBy !== 'NA'
-                        ? {
-                            ...(prev.referredBy as ReferredBy),
-                            userId,
-                          }
-                        : {
-                            type: 'admin',
-                            userId,
-                          },
-                  }));
-                }}
-                value={
-                  formData.referredBy !== 'NA' ? (formData.referredBy as ReferredBy).userId : ''
-                }
-              />
-            </div>
-          </div>
-        </div>
-
+        {/* Documents Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -734,6 +571,126 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
               </Select>
             </div>
           </div>
+        </div>
+
+        {/* Truck Assignment Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Truck Assignment</h3>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="assignedTruckId">Assign Truck</Label>
+              <Select
+                value={formData.assignedTruckId}
+                onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select truck" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">Not Assigned</SelectItem>
+                  {trucks.map((truck) => (
+                    <SelectItem key={truck.id} value={truck.id}>
+                      {truck.regNumber} ({truck.axleConfig})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emergency_name">Name</Label>
+              <Input
+                id="emergency_name"
+                placeholder="Emergency contact name"
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact: name
+                      ? {
+                          name,
+                          number:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyProof:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyProof
+                              : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).name
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency_number">Phone Number</Label>
+              <Input
+                id="emergency_number"
+                placeholder="Emergency contact number"
+                onChange={(e) => {
+                  const number = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            number,
+                          }
+                        : {
+                            name: '',
+                            number,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).number
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="residency_proof">Update Residency Proof</Label>
+              <Input
+                id="residency_proof"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    handleFileChange('residency_proof', file);
+                  }
+                }}
+              />
+              {formData.emergencyContact !== 'NA' &&
+                (formData.emergencyContact as EmergencyContact).residencyProof && (
+                  <div className="text-sm text-muted-foreground">Current file uploaded</div>
+                )}
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
+          <ReferralBySelector
+            value={formData.referredBy || 'NA'}
+            onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
+          />
         </div>
 
         <div className="flex justify-between">
