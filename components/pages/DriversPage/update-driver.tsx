@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { Driver, DriverDocuments } from '@/types';
+import { Driver, DriverDocuments, EmergencyContact, ReferredBy, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -17,6 +16,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
+import useTrucks from '@/hooks/useTrucks';
+import { Badge } from '@/components/ui/badge';
 
 interface UpdateDriverFormProps {
   driverId: string;
@@ -24,13 +25,30 @@ interface UpdateDriverFormProps {
   onCancel?: () => void;
 }
 
+// Update type guard helpers
+function isDriverDocuments(docs: Driver['driverDocuments']): docs is DriverDocuments {
+  return docs !== 'NA';
+}
+
+function isEmergencyContact(contact: Driver['emergencyContact']): contact is EmergencyContact {
+  return contact !== 'NA';
+}
+
+function isReferredBy(referral: Driver['referredBy']): referral is ReferredBy {
+  return referral !== 'NA';
+}
+
 export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriverFormProps) {
+  const { trucks } = useTrucks();
   const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
-    driverTruckId: '',
+    wheelsCapability: 4,
+    assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
+    emergencyContact: 'NA',
+    referredBy: 'NA',
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -68,8 +86,11 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             driverName: data.driverName || '',
             phoneNumber: data.phoneNumber || '',
             languages: data.languages || [],
-            driverTruckId: data.driverTruckId || '',
+            wheelsCapability: data.wheelsCapability || 4,
+            assignedTruckId: data.assignedTruckId || 'NA',
             status: data.status || 'Inactive',
+            emergencyContact: data.emergencyContact || 'NA',
+            referredBy: data.referredBy || 'NA',
             driverDocuments: {
               ...data.driverDocuments,
               dob: data.driverDocuments?.dob?.toDate() || new Date(),
@@ -100,22 +121,42 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     }));
   };
 
-  const handleInputChange = (field: string, value: string | Date) => {
+  const handleInputChange = (field: string, value: string | number | Date) => {
     setFormData((prev) => {
       if (field.startsWith('driverDocuments.')) {
         const [_, documentField] = field.split('.');
+        const currentDocs = isDriverDocuments(prev.driverDocuments)
+          ? prev.driverDocuments
+          : {
+              aadhar_front: '',
+              aadhar_back: '',
+              aadhar_number: '',
+              dob: new Date(),
+              dob_certificate: '',
+              license: '',
+              license_number: '',
+              license_expiry: new Date(),
+              medicalCertificate: '',
+              status: 'Pending' as const,
+            };
+
         return {
           ...prev,
           driverDocuments: {
-            ...prev.driverDocuments,
+            ...currentDocs,
             [documentField]: value,
-          } as DriverDocuments,
+          },
         };
       }
-      return {
-        ...prev,
-        [field]: value,
-      };
+
+      if (field === 'wheelsCapability') {
+        return {
+          ...prev,
+          wheelsCapability: typeof value === 'number' ? value : 4,
+        };
+      }
+
+      return { ...prev, [field]: value };
     });
   };
 
@@ -147,78 +188,95 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     }
   };
 
+  const handleDocumentUpdate = async () => {
+    let updatedDocuments = isDriverDocuments(formData.driverDocuments)
+      ? { ...formData.driverDocuments }
+      : {
+          aadhar_front: '',
+          aadhar_back: '',
+          aadhar_number: '',
+          dob: new Date(),
+          dob_certificate: '',
+          license: '',
+          license_number: '',
+          license_expiry: new Date(),
+          medicalCertificate: '',
+          status: 'Pending' as const,
+        };
+
+    // Upload any new documents that were added
+    const documentUploadPromises = [];
+
+    if (documentFiles.aadhar_front) {
+      documentUploadPromises.push(
+        uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front').then((url) => {
+          if (url) updatedDocuments.aadhar_front = url;
+        }),
+      );
+    }
+
+    if (documentFiles.aadhar_back) {
+      documentUploadPromises.push(
+        uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back').then((url) => {
+          if (url) updatedDocuments.aadhar_back = url;
+        }),
+      );
+    }
+
+    if (documentFiles.license) {
+      documentUploadPromises.push(
+        uploadDriverDocument(documentFiles.license, driverId, 'license').then((url) => {
+          if (url) updatedDocuments.license = url;
+        }),
+      );
+    }
+
+    if (documentFiles.medicalCertificate) {
+      documentUploadPromises.push(
+        uploadDriverDocument(
+          documentFiles.medicalCertificate,
+          driverId,
+          'medical_certificate',
+        ).then((url) => {
+          if (url) updatedDocuments.medicalCertificate = url;
+        }),
+      );
+    }
+
+    if (documentFiles.dob_certificate) {
+      documentUploadPromises.push(
+        uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate').then(
+          (url) => {
+            if (url) updatedDocuments.dob_certificate = url;
+          },
+        ),
+      );
+    }
+
+    // Wait for all document uploads to complete
+    await Promise.all(documentUploadPromises);
+
+    // Update the driver in Firestore with new document URLs
+    const driverRef = doc(db, 'drivers', driverId);
+    await updateDoc(driverRef, {
+      ...formData,
+      driverDocuments: updatedDocuments,
+      updated_at: new Date(),
+    });
+
+    toast.success('Driver updated successfully!');
+
+    if (onSuccess) {
+      onSuccess();
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      let updatedDocuments = { ...formData.driverDocuments };
-
-      // Upload any new documents that were added
-      const documentUploadPromises = [];
-
-      if (documentFiles.aadhar_front) {
-        documentUploadPromises.push(
-          uploadDriverDocument(documentFiles.aadhar_front, driverId, 'aadhar_front').then((url) => {
-            if (url) updatedDocuments.aadhar_front = url;
-          }),
-        );
-      }
-
-      if (documentFiles.aadhar_back) {
-        documentUploadPromises.push(
-          uploadDriverDocument(documentFiles.aadhar_back, driverId, 'aadhar_back').then((url) => {
-            if (url) updatedDocuments.aadhar_back = url;
-          }),
-        );
-      }
-
-      if (documentFiles.license) {
-        documentUploadPromises.push(
-          uploadDriverDocument(documentFiles.license, driverId, 'license').then((url) => {
-            if (url) updatedDocuments.license = url;
-          }),
-        );
-      }
-
-      if (documentFiles.medicalCertificate) {
-        documentUploadPromises.push(
-          uploadDriverDocument(
-            documentFiles.medicalCertificate,
-            driverId,
-            'medical_certificate',
-          ).then((url) => {
-            if (url) updatedDocuments.medicalCertificate = url;
-          }),
-        );
-      }
-
-      if (documentFiles.dob_certificate) {
-        documentUploadPromises.push(
-          uploadDriverDocument(documentFiles.dob_certificate, driverId, 'dob_certificate').then(
-            (url) => {
-              if (url) updatedDocuments.dob_certificate = url;
-            },
-          ),
-        );
-      }
-
-      // Wait for all document uploads to complete
-      await Promise.all(documentUploadPromises);
-
-      // Update the driver in Firestore with new document URLs
-      const driverRef = doc(db, 'drivers', driverId);
-      await updateDoc(driverRef, {
-        ...formData,
-        driverDocuments: updatedDocuments,
-        updated_at: new Date(),
-      });
-
-      toast.success('Driver updated successfully!');
-
-      if (onSuccess) {
-        onSuccess();
-      }
+      await handleDocumentUpdate();
     } catch (error) {
       console.error('Error updating driver:', error);
       toast.error('Failed to update driver', {
@@ -229,9 +287,26 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     }
   };
 
-  if (isLoading) {
-    return <div className="py-8 text-center">Loading driver data...</div>;
-  }
+  const isDocumentExists = (field: keyof DriverDocuments): boolean => {
+    if (!formData?.driverDocuments || formData.driverDocuments === 'NA') return false;
+    const value = formData.driverDocuments[field];
+    return Boolean(value) && typeof value === 'string' && value !== '';
+  };
+
+  // Update helper function to handle possible undefined case
+  const getDocumentFieldValue = (field: keyof DriverDocuments): string => {
+    if (!formData?.driverDocuments || !isDriverDocuments(formData.driverDocuments)) return '';
+    const value = formData.driverDocuments[field];
+    if (value instanceof Date) return value.toISOString().split('T')[0];
+    return value || '';
+  };
+
+  // Update helper function to handle possible undefined case
+  const hasDocument = (field: keyof DriverDocuments): boolean => {
+    if (!formData?.driverDocuments || !isDriverDocuments(formData.driverDocuments)) return false;
+    const value = formData.driverDocuments[field];
+    return Boolean(value) && value !== '';
+  };
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -296,14 +371,44 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="driverTruckId">Truck ID (Optional)</Label>
-            <Input
-              id="driverTruckId"
-              placeholder="Enter truck ID"
-              value={formData.driverTruckId}
-              onChange={(e) => handleInputChange('driverTruckId', e.target.value)}
-            />
+            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
+            <Select
+              value={formData.wheelsCapability.toString()}
+              onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select wheels capability" />
+              </SelectTrigger>
+              <SelectContent>
+                {[4, 6, 8, 12].map((wheels) => (
+                  <SelectItem key={wheels} value={wheels.toString()}>
+                    {wheels} Wheeler
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignedTruckId">Assign Truck</Label>
+            <Select
+              value={formData.assignedTruckId}
+              onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select truck" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NA">Not Assigned</SelectItem>
+                {trucks.map((truck) => (
+                  <SelectItem key={truck.id} value={truck.id}>
+                    {truck.regNumber} ({truck.axleConfig})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
@@ -324,6 +429,155 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
           </div>
         </div>
 
+        {/* Emergency Contact Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emergency_name">Name</Label>
+              <Input
+                id="emergency_name"
+                placeholder="Emergency contact name"
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact: name
+                      ? {
+                          name,
+                          number:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyProof:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyProof
+                              : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).name
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency_number">Phone Number</Label>
+              <Input
+                id="emergency_number"
+                placeholder="Emergency contact number"
+                onChange={(e) => {
+                  const number = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            number,
+                          }
+                        : {
+                            name: '',
+                            number,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).number
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="residency_proof">Update Residency Proof</Label>
+              <Input
+                id="residency_proof"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    handleFileChange('residency_proof', file);
+                  }
+                }}
+              />
+              {formData.emergencyContact !== 'NA' &&
+                (formData.emergencyContact as EmergencyContact).residencyProof && (
+                  <div className="text-sm text-muted-foreground">Current file uploaded</div>
+                )}
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="referral_type">Referred By</Label>
+              <Select
+                onValueChange={(value: User['role']) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    referredBy: value
+                      ? {
+                          type: value,
+                          userId:
+                            prev.referredBy !== 'NA' ? (prev.referredBy as ReferredBy).userId : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.referredBy !== 'NA'
+                    ? (formData.referredBy as ReferredBy).type
+                    : undefined
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select referral type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="referral_id">Referrer ID</Label>
+              <Input
+                id="referral_id"
+                placeholder="Enter referrer's ID"
+                onChange={(e) => {
+                  const userId = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    referredBy:
+                      prev.referredBy !== 'NA'
+                        ? {
+                            ...(prev.referredBy as ReferredBy),
+                            userId,
+                          }
+                        : {
+                            type: 'admin',
+                            userId,
+                          },
+                  }));
+                }}
+                value={
+                  formData.referredBy !== 'NA' ? (formData.referredBy as ReferredBy).userId : ''
+                }
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -339,7 +593,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.driverDocuments?.aadhar_front && (
+              {hasDocument('aadhar_front') && (
                 <div className="text-sm text-muted-foreground">Current file uploaded</div>
               )}
             </div>
@@ -356,7 +610,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.driverDocuments?.aadhar_back && (
+              {hasDocument('aadhar_back') && (
                 <div className="text-sm text-muted-foreground">Current file uploaded</div>
               )}
             </div>
@@ -367,7 +621,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 id="aadhar_number"
                 placeholder="Enter Aadhar number"
                 required
-                value={formData.driverDocuments?.aadhar_number}
+                value={getDocumentFieldValue('aadhar_number')}
                 onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
               />
             </div>
@@ -384,7 +638,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.driverDocuments?.license && (
+              {hasDocument('license') && (
                 <div className="text-sm text-muted-foreground">Current file uploaded</div>
               )}
             </div>
@@ -395,7 +649,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 id="license_number"
                 placeholder="Enter license number"
                 required
-                value={formData.driverDocuments?.license_number}
+                value={getDocumentFieldValue('license_number')}
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_number', e.target.value)
                 }
@@ -411,11 +665,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
                 }
-                value={
-                  formData.driverDocuments?.license_expiry instanceof Date
-                    ? formData.driverDocuments.license_expiry.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('license_expiry')}
               />
             </div>
 
@@ -431,7 +681,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.driverDocuments?.medicalCertificate && (
+              {hasDocument('medicalCertificate') && (
                 <div className="text-sm text-muted-foreground">Current file uploaded</div>
               )}
             </div>
@@ -443,11 +693,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 type="date"
                 required
                 onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
-                value={
-                  formData.driverDocuments?.dob instanceof Date
-                    ? formData.driverDocuments.dob.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('dob')}
               />
             </div>
 
@@ -463,7 +709,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.driverDocuments?.dob_certificate && (
+              {hasDocument('dob_certificate') && (
                 <div className="text-sm text-muted-foreground">Current file uploaded</div>
               )}
             </div>
@@ -471,7 +717,11 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             <div className="space-y-2">
               <Label htmlFor="documentStatus">Document Status</Label>
               <Select
-                value={formData.driverDocuments?.status}
+                value={
+                  isDriverDocuments(formData.driverDocuments)
+                    ? formData.driverDocuments.status
+                    : 'Pending'
+                }
                 onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
               >
                 <SelectTrigger className="w-full">

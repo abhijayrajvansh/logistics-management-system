@@ -16,21 +16,27 @@ import { createNewUser, createUserWebhook } from '@/firebase/auth/createUserWebh
 import { db } from '@/firebase/database';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
-import { Driver, DriverDocuments } from '@/types';
+import { Driver, DriverDocuments, EmergencyContact, ReferredBy, User } from '@/types';
 import { IconLoader } from '@tabler/icons-react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import useTrucks from '@/hooks/useTrucks';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
+// Add this helper at the top of the file
+function isDriverDocuments(docs: Driver['driverDocuments']): docs is DriverDocuments {
+  return docs !== 'NA';
+}
+
 export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps) {
+  const { trucks } = useTrucks();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
-  // Add validation state for required documents
   const [validDocuments, setValidDocuments] = useState<{ [key: string]: boolean }>({
     aadhar_front: false,
     aadhar_back: false,
@@ -42,8 +48,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
-    driverTruckId: '',
+    wheelsCapability: 4,
+    assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
+    emergencyContact: 'NA',
+    referredBy: 'NA',
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -69,23 +78,43 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     }));
   };
 
-  const handleInputChange = (field: string, value: string | Date) => {
+  const handleInputChange = (field: string, value: string | number | Date) => {
     setFormData((prev) => {
       if (field.startsWith('driverDocuments.')) {
         const [_, documentField] = field.split('.');
+        const currentDocs = isDriverDocuments(prev.driverDocuments)
+          ? prev.driverDocuments
+          : {
+              aadhar_front: '',
+              aadhar_back: '',
+              aadhar_number: '',
+              dob: new Date(),
+              dob_certificate: '',
+              license: '',
+              license_number: '',
+              license_expiry: new Date(),
+              medicalCertificate: '',
+              status: 'Pending' as const,
+            };
+
         return {
           ...prev,
           driverDocuments: {
-            ...prev.driverDocuments,
+            ...currentDocs,
             [documentField]: value,
-          } as DriverDocuments,
+          },
         };
       }
-      return {
-        ...prev,
-        [field]: value,
-      };
+      return { ...prev, [field]: value };
     });
+  };
+
+  // Add these helper functions inside CreateDriverForm component
+  const getDocumentFieldValue = (field: keyof DriverDocuments): string => {
+    if (!isDriverDocuments(formData.driverDocuments)) return '';
+    const value = formData.driverDocuments[field];
+    if (value instanceof Date) return value.toISOString().split('T')[0];
+    return value || '';
   };
 
   const handleFileChange = (field: string, file: File | null) => {
@@ -172,14 +201,27 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
       const driverData = {
         driverId,
         ...formData,
-        driverDocuments: {
-          ...formData.driverDocuments,
-          aadhar_front: aadhar_front_url || '',
-          aadhar_back: aadhar_back_url || '',
-          license: license_url || '',
-          medicalCertificate: medical_certificate_url || '',
-          dob_certificate: dob_certificate_url || '',
-        },
+        driverDocuments: isDriverDocuments(formData.driverDocuments)
+          ? {
+              ...formData.driverDocuments,
+              aadhar_front: aadhar_front_url || '',
+              aadhar_back: aadhar_back_url || '',
+              license: license_url || '',
+              medicalCertificate: medical_certificate_url || '',
+              dob_certificate: dob_certificate_url || '',
+            }
+          : {
+              aadhar_front: aadhar_front_url || '',
+              aadhar_back: aadhar_back_url || '',
+              aadhar_number: '',
+              dob: new Date(),
+              dob_certificate: dob_certificate_url || '',
+              license: license_url || '',
+              license_number: '',
+              license_expiry: new Date(),
+              medicalCertificate: medical_certificate_url || '',
+              status: 'Pending' as const,
+            },
       };
 
       // Generate random 6-digit password
@@ -211,8 +253,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         driverName: '',
         phoneNumber: '',
         languages: [],
-        driverTruckId: '',
+        wheelsCapability: 4,
+        assignedTruckId: 'NA',
         status: 'Inactive',
+        emergencyContact: 'NA',
+        referredBy: 'NA',
         driverDocuments: {
           aadhar_front: '',
           aadhar_back: '',
@@ -298,14 +343,25 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="driverTruckId">Truck ID (Optional)</Label>
-            <Input
-              id="driverTruckId"
-              placeholder="Enter truck ID"
-              value={formData.driverTruckId}
-              onChange={(e) => handleInputChange('driverTruckId', e.target.value)}
-            />
+            <Label htmlFor="assignedTruckId">Assign Truck</Label>
+            <Select
+              value={formData.assignedTruckId}
+              onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select truck" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NA">Not Assigned</SelectItem>
+                {trucks.map((truck) => (
+                  <SelectItem key={truck.id} value={truck.id}>
+                    {truck.regNumber} ({truck.axleConfig})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="space-y-2 w-full">
             <Label htmlFor="status">Status</Label>
             <Select
@@ -379,7 +435,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="aadhar_number"
                 placeholder="Enter Aadhar number"
                 required
-                value={formData.driverDocuments?.aadhar_number}
+                value={getDocumentFieldValue('aadhar_number')}
                 onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
               />
             </div>
@@ -410,7 +466,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="license_number"
                 placeholder="Enter license number"
                 required
-                value={formData.driverDocuments?.license_number}
+                value={getDocumentFieldValue('license_number')}
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_number', e.target.value)
                 }
@@ -426,11 +482,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
                 }
-                value={
-                  formData.driverDocuments?.license_expiry instanceof Date
-                    ? formData.driverDocuments.license_expiry.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('license_expiry')}
               />
             </div>
 
@@ -463,11 +515,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 type="date"
                 required
                 onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
-                value={
-                  formData.driverDocuments?.dob instanceof Date
-                    ? formData.driverDocuments.dob.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('dob')}
               />
             </div>
 
@@ -496,7 +544,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="documentStatus">Document Status</Label>
               <Select
-                value={formData.driverDocuments?.status}
+                value={
+                  isDriverDocuments(formData.driverDocuments)
+                    ? formData.driverDocuments.status
+                    : 'Pending'
+                }
                 onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
               >
                 <SelectTrigger className="w-full">
@@ -507,6 +559,216 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                   <SelectItem value="Verified">Verified</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* New Truck Assignment and Additional Fields Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Truck Assignment and Additional Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="wheelsCapability">Wheels Capability</Label>
+              <Select
+                value={formData.wheelsCapability.toString()}
+                onValueChange={(value) => handleInputChange('wheelsCapability', parseInt(value))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select wheels capability" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[4, 6, 8, 12].map((wheels) => (
+                    <SelectItem key={wheels} value={wheels.toString()}>
+                      {wheels} Wheeler
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignedTruckId">Assign Truck</Label>
+              <Select
+                value={formData.assignedTruckId}
+                onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select truck" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">Not Assigned</SelectItem>
+                  {trucks.map((truck) => (
+                    <SelectItem key={truck.id} value={truck.id}>
+                      {truck.regNumber} ({truck.axleConfig})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 w-full">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status || 'Inactive'}
+                onValueChange={(value) => handleInputChange('status', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select driver status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="On Leave">On Leave</SelectItem>
+                  <SelectItem value="On Trip">On Trip</SelectItem>
+                  <SelectItem value="Suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emergency_name">Name</Label>
+              <Input
+                id="emergency_name"
+                placeholder="Emergency contact name"
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact: name
+                      ? {
+                          name,
+                          number:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyProof:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyProof
+                              : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).name
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency_number">Phone Number</Label>
+              <Input
+                id="emergency_number"
+                placeholder="Emergency contact number"
+                onChange={(e) => {
+                  const number = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            number,
+                          }
+                        : {
+                            name: '',
+                            number,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).number
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="residency_proof">Residency Proof</Label>
+              <Input
+                id="residency_proof"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    handleFileChange('residency_proof', file);
+                    // We'll upload this file later during form submission
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="referral_type">Referred By</Label>
+              <Select
+                onValueChange={(value: User['role']) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    referredBy: value
+                      ? {
+                          type: value,
+                          userId:
+                            prev.referredBy !== 'NA' ? (prev.referredBy as ReferredBy).userId : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.referredBy !== 'NA'
+                    ? (formData.referredBy as ReferredBy).type
+                    : undefined
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select referral type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="referral_id">Referrer ID</Label>
+              <Input
+                id="referral_id"
+                placeholder="Enter referrer's ID"
+                onChange={(e) => {
+                  const userId = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    referredBy:
+                      prev.referredBy !== 'NA'
+                        ? {
+                            ...(prev.referredBy as ReferredBy),
+                            userId,
+                          }
+                        : {
+                            type: 'admin',
+                            userId,
+                          },
+                  }));
+                }}
+                value={
+                  formData.referredBy !== 'NA' ? (formData.referredBy as ReferredBy).userId : ''
+                }
+              />
             </div>
           </div>
         </div>

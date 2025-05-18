@@ -83,10 +83,24 @@ export type Driver = {
   driverId: string;
   driverName: string;
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
-  phoneNumber?: string;
+  phoneNumber: string;
   languages: string[];
-  driverTruckId?: string;
-  driverDocuments?: DriverDocuments;
+  wheelsCapability: number; // Example: 4, 6, 8, 12
+  assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
+  driverDocuments?: DriverDocuments | "NA";
+  emergencyContact?: EmergencyContact | "NA";
+  referredBy?: ReferredBy | "NA";
+};
+
+export type EmergencyContact = {
+  name: string;
+  number: string;
+  residencyProof: string;
+};
+
+export type ReferredBy = {
+  type: User['role'];
+  userId: string; // ID of the user who referred the driver
 };
 
 export type DriverDocuments = {

@@ -105,7 +105,7 @@ const PasswordCell = ({ driverId }: { driverId: string }) => {
     try {
       const userDocRef = doc(db, 'users', driverId);
       const userDocSnap = await getDoc(userDocRef);
-      
+
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         setPassword(userData.password);
@@ -143,8 +143,12 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Name',
   },
   {
-    accessorKey: 'driverTruckId',
+    accessorKey: 'assignedTruckId',
     header: 'Assigned Truck',
+    cell: ({ row }) => {
+      const truckId = row.getValue('assignedTruckId') as string;
+      return <span>{truckId === 'NA' ? 'Not Assigned' : truckId}</span>;
+    },
   },
   {
     accessorKey: 'status',
@@ -175,11 +179,49 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Phone',
   },
   {
+    accessorKey: 'wheelsCapability',
+    header: 'Wheels',
+    cell: ({ row }) => {
+      const wheels: number = row.getValue('wheelsCapability');
+      return <span>{wheels} Wheeler</span>;
+    },
+  },
+  {
+    accessorKey: 'emergencyContact',
+    header: 'Emergency Contact',
+    cell: ({ row }) => {
+      const contact = row.getValue('emergencyContact');
+      return (
+        <Badge
+          variant="outline"
+          className={contact === 'NA' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+        >
+          {contact === 'NA' ? 'Not Found' : 'Provided'}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'referredBy',
+    header: 'Referred By',
+    cell: ({ row }) => {
+      const referral = row.getValue('referredBy');
+      return (
+        <Badge
+          variant="outline"
+          className={referral === 'NA' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+        >
+          {referral === 'NA' ? 'Not Found' : 'Provided'}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: 'driverDocuments',
     header: 'Documents Status',
     cell: ({ row }) => {
-      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || undefined;
-      const status = docs?.status || 'Pending';
+      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || 'NA';
+      const status = docs === 'NA' ? 'Pending' : docs.status;
       return (
         <Badge
           variant="outline"

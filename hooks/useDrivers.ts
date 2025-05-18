@@ -27,15 +27,17 @@ export function useDrivers() {
               status: data.status || 'Inactive',
               phoneNumber: data.phoneNumber || '',
               languages: Array.isArray(data.languages) ? data.languages : [],
-              driverTruckId: data.driverTruckId || '',
-              driverDocuments: data.driverDocuments || {
-                aadhar: '',
-                dob: new Date(),
-                license: '',
-                insurance: '',
-                medicalCertificate: '',
-                panCard: '',
-              },
+              wheelsCapability: data.wheelsCapability || 0,
+              assignedTruckId: data.assignedTruckId || 'NA',
+              driverDocuments: data.driverDocuments
+                ? {
+                    ...data.driverDocuments,
+                    dob: data.driverDocuments.dob?.toDate() || new Date(),
+                    license_expiry: data.driverDocuments.license_expiry?.toDate() || new Date(),
+                  }
+                : 'NA',
+              emergencyContact: data.emergencyContact || 'NA',
+              referredBy: data.referredBy || 'NA',
             } as Driver;
 
             return driverResponse;
