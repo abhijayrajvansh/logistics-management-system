@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import useTrucks from '@/hooks/useTrucks';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row, table }: { row: any; table: any }) => {
@@ -125,6 +126,16 @@ const PasswordCell = ({ driverId }: { driverId: string }) => {
   return <span className="text-sm text-gray-500">{password}</span>;
 };
 
+// Add TruckCell component before the columns definition
+const TruckCell = ({ truckId }: { truckId: string }) => {
+  const { trucks } = useTrucks();
+  
+  if (truckId === 'NA') return <span>Not Assigned</span>;
+  
+  const truck = trucks.find(t => t.id === truckId);
+  return <span>{truck ? truck.regNumber : truckId}</span>;
+};
+
 export const columns: ColumnDef<Driver>[] = [
   {
     accessorKey: 'driverId',
@@ -147,8 +158,8 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Assigned Truck',
     cell: ({ row }) => {
       const truckId = row.getValue('assignedTruckId') as string;
-      return <span>{truckId === 'NA' ? 'Not Assigned' : truckId}</span>;
-    },
+      return <TruckCell truckId={truckId} />;
+    }
   },
   {
     accessorKey: 'status',
