@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import useUsers from '@/hooks/useUsers';
 import useTrucks from '@/hooks/useTrucks';
+import { Timestamp } from 'firebase/firestore';
 
 interface ViewDriverDetailsProps {
   driver: Driver;
@@ -23,8 +24,11 @@ function isReferredBy(referral: Driver['referredBy']): referral is ReferredBy {
   return referral !== 'NA';
 }
 
-const getFormattedDate = (date: Date | undefined) => {
+const getFormattedDate = (date: Date | Timestamp | undefined) => {
   if (!date) return 'Not specified';
+  if (date instanceof Timestamp) {
+    return date.toDate().toLocaleDateString();
+  }
   return date.toLocaleDateString();
 };
 

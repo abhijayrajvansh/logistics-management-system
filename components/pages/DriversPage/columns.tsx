@@ -151,10 +151,10 @@ const ReferrerCell = ({ referral }: { referral: ReferredBy | 'NA' }) => {
     );
   }
 
-  const referrer = users.find((user) => user.userId === referral.userId);
+  const referrer = users.find((user) => user.userId === referral?.userId);
   return (
-    <Badge variant="outline" className="bg-green-100 text-green-800">
-      {referrer?.displayName || 'Unknown'}
+    <Badge variant="default" className="bg-gray-100 text-gray-800">
+      {referrer?.displayName || 'Self'}
     </Badge>
   );
 };
