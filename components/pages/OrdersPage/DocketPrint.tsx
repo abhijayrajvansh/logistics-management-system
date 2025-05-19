@@ -105,10 +105,10 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
 
   const handlePrint = () => {
     const printContent = document.querySelector('.print-container');
-    const windowPrint = window.open('', '', 'width=800,height=600');
+    const printTab = window.open('', '_blank');
 
-    if (windowPrint && printContent) {
-      windowPrint.document.write(`
+    if (printTab && printContent) {
+      printTab.document.write(`
         <html>
           <head>
             <title>Print Logistics Receipt</title>
@@ -119,14 +119,23 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                   margin: 0;
                 }
                 .print-container {
-                  width: 210mm;
-                  height: 99mm;
+                  width: 100%;
+                  height: auto;
+                  min-height: 120mm;  /* Increased height to prevent cropping */
                   page-break-after: always;
-                  overflow: hidden;
+                  overflow: visible;  /* Changed from hidden to visible */
                 }
                 .receipt-content {
+                  width: 100%;
                   transform-origin: top left;
-                  transform: scale(0.9);
+                  transform: scale(1);  /* Full scale to use entire width */
+                  margin: 0;
+                  padding: 8px;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  width: 100%;
                 }
               }
               /* Copy all existing styles */
@@ -149,11 +158,10 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
           </body>
         </html>
       `);
-      windowPrint.document.close();
-      windowPrint.focus();
+      printTab.document.close();
+      printTab.focus();
       setTimeout(() => {
-        windowPrint.print();
-        windowPrint.close();
+        printTab.print();
       }, 250);
     }
   };
@@ -175,38 +183,47 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
               margin: 0;
             }
             .print-container {
-              width: 210mm;
-              height: 99mm; /* One-third of A4 height (297/3) */
+              width: 100%;
+              height: auto;
+              min-height: 120mm; /* Increased height to prevent cropping */
               page-break-after: always;
-              overflow: hidden;
+              overflow: visible; /* Changed from hidden to visible */
             }
             .receipt-content {
+              width: 100%;
               transform-origin: top left;
-              transform: scale(0.9); /* Slightly reduce size to ensure fit */
+              transform: scale(1); /* Full scale to use entire width */
+              margin: 0;
+              padding: 8px;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              width: 100%;
             }
           }
         `}</style>
 
-        <div className="receipt-content max-w-[210mm] mx-auto bg-white border border-gray-300 p-2 font-sans text-[10px]">
+        <div className="receipt-content bg-white border border-gray-300 p-2 font-sans text-[8px]">
           <div className="border border-black">
             {/* Header Row */}
             <div className="flex border-b border-black">
-              {/* Logo and Company Info - Reduced size */}
-              <div className="w-1/4 border-r border-black p-1">
+              {/* Logo and Company Info - Further reduced size */}
+              <div className="w-1/4 border-r border-black p-0.5">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-blue-900 flex items-center justify-center text-white">
+                  <div className="w-10 h-10 bg-blue-900 flex items-center justify-center text-white">
                     <div className="relative w-full h-full">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-base font-bold">JAI'Z</span>
+                        <span className="text-sm font-bold">JAI'Z</span>
                       </div>
-                      <div className="absolute bottom-0 w-full text-center text-[8px]">
+                      <div className="absolute bottom-0 w-full text-center text-[6px]">
                         Logistics Inc
                       </div>
                     </div>
                   </div>
                   <div className="ml-1">
-                    <div className="text-red-600 font-bold text-xs">JAI'Z LOGISTICS INC.</div>
-                    <div className="text-[8px]">
+                    <div className="text-red-600 font-bold text-[10px]">JAI'Z LOGISTICS INC.</div>
+                    <div className="text-[6px]">
                       Jaiz Logistics Park, Near Mount Carmel School
                       <br />
                       Rakkar Colony - Una HP - 174303
@@ -219,69 +236,66 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                 </div>
               </div>
 
-              {/* Rest of the header sections with reduced padding */}
-              <div className="w-1/4 border-r border-black p-1">
-                <div className="text-center font-bold text-xs">INTERNATIONAL</div>
+              {/* Rest of the header with reduced padding */}
+              <div className="w-1/4 border-r border-black p-0.5">
+                <div className="text-center font-bold text-[10px]">INTERNATIONAL</div>
                 <div className="flex justify-around mt-0.5">
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">DOX</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">DOX</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">NON-DOX</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">NON-DOX</span>
                   </div>
                 </div>
-                <div className="text-center font-bold text-xs mt-1">DOMESTIC</div>
+                <div className="text-center font-bold text-[10px] mt-0.5">DOMESTIC</div>
                 <div className="flex justify-around mt-0.5">
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">DOX</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">DOX</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">NON-DOX</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">NON-DOX</span>
                   </div>
                 </div>
               </div>
 
-              {/* Mode of Transport - Compressed */}
-              <div className="w-1/4 border-r border-black p-1">
-                <div className="text-center font-bold text-xs mb-1">MODE OF TRANSPORT</div>
+              <div className="w-1/4 border-r border-black p-0.5">
+                <div className="text-center font-bold text-[10px] mb-0.5">MODE OF TRANSPORT</div>
                 <div className="flex justify-around">
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">AIR</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">AIR</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">TRAIN</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">TRAIN</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="border border-black w-3 h-3 mr-0.5"></div>
-                    <span className="text-[8px]">ROAD</span>
+                    <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                    <span className="text-[6px]">ROAD</span>
                   </div>
                 </div>
               </div>
 
-              {/* Receipt Number - Compressed */}
-              <div className="w-1/4 p-1 flex flex-col justify-center items-center">
-                <div className="text-lg font-bold">{receiptNumber}</div>
-                <div className="mt-1 w-full flex justify-between">
-                  <div className="text-red-600 text-[8px]">DATE</div>
-                  <div className="border-b border-black px-1 text-[10px]">{date}</div>
+              <div className="w-1/4 p-0.5 flex flex-col justify-center items-center">
+                <div className="text-base font-bold">{receiptNumber}</div>
+                <div className="mt-0.5 w-full flex justify-between">
+                  <div className="text-red-600 text-[6px]">DATE</div>
+                  <div className="border-b border-black px-1 text-[8px]">{date}</div>
                 </div>
               </div>
             </div>
 
-            {/* Origin and Destination */}
+            {/* Origin and Destination - Reduced padding */}
             <div className="flex">
-              {/* Origin */}
               <div className="w-1/2 border-r border-black">
-                <div className="bg-gray-100 border-b border-black px-2 py-1">
-                  <span className="font-bold">ORIGIN</span>
+                <div className="bg-gray-100 border-b border-black px-1 py-0.5">
+                  <span className="font-bold text-[8px]">ORIGIN</span>
                 </div>
-                <div className="p-2">
+                <div className="p-1">
                   <div className="mb-1">
                     <span className="text-xs align-top">From (Shipper's Name)</span>
                     <span className="border-b border-black w-full inline-block ml-1">
@@ -343,21 +357,20 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                 </div>
               </div>
 
-              {/* Destination */}
               <div className="w-1/2">
                 <div className="flex">
-                  <div className="bg-gray-100 border-b border-r border-black px-2 py-1 w-full">
-                    <span className="text-red-600 font-bold">DESTINATION</span>
+                  <div className="bg-gray-100 border-b border-r border-black px-1 py-0.5 w-full">
+                    <span className="text-red-600 font-bold text-[8px]">DESTINATION</span>
                   </div>
-                  <div className="bg-gray-100 border-b border-black px-2 py-1 w-32 text-center">
-                    <span className="text-red-600 font-bold">CHARGES</span>
+                  <div className="bg-gray-100 border-b border-black px-1 py-0.5 w-24 text-center">
+                    <span className="text-red-600 font-bold text-[8px]">CHARGES</span>
                   </div>
-                  <div className="bg-gray-100 border-b border-black px-2 py-1 w-24 text-center">
-                    <span className="text-red-600 font-bold">AMOUNT</span>
+                  <div className="bg-gray-100 border-b border-black px-1 py-0.5 w-20 text-center">
+                    <span className="text-red-600 font-bold text-[8px]">AMOUNT</span>
                   </div>
                 </div>
                 <div className="flex">
-                  <div className="p-2 w-full border-r border-black">
+                  <div className="p-1 w-full border-r border-black">
                     <div className="mb-1">
                       <span className="text-xs align-top">To (Receiver's Name)</span>
                       <span className="border-b border-black w-full inline-block ml-1">
@@ -417,44 +430,44 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                       </span>
                     </div>
                   </div>
-                  <div className="w-32 border-r border-black">
-                    <div className="border-b border-black p-1">
+                  <div className="w-24 border-r border-black">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">FREIGHT CHARGE</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">SER. TAX</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">LABOUR CHARGE</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">G. R. CHARGE</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">HANDLING CHARGE</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">SUB -TOTAL</div>
                     </div>
-                    <div className="border-b border-black p-1">
+                    <div className="border-b border-black p-0.5">
                       <div className="text-xs font-bold">TOTAL</div>
                     </div>
-                    <div className="p-1">
+                    <div className="p-0.5">
                       <div className="text-xs font-bold">GRAND TOTAL</div>
                     </div>
                   </div>
-                  <div className="w-24 flex flex-col"></div>
-                  <div className="border-b border-black p-1 h-8 flex">
+                  <div className="w-20 flex flex-col"></div>
+                  <div className="border-b border-black p-0.5 h-8 flex">
                     <div className="border-r border-black w-8 text-center">Rs.</div>
                     <div className="w-8 text-center">P.</div>
                   </div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="border-b border-black p-1 h-6"></div>
-                  <div className="p-1 h-6 relative">
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="border-b border-black p-0.5 h-6"></div>
+                  <div className="p-0.5 h-6 relative">
                     <div className="absolute right-4 top-1/2 transform -translate-y-1/2 font-bold text-2xl">
                       {charges.grandTotal || '-'}
                     </div>
@@ -464,52 +477,57 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
             </div>
           </div>
 
-          {/* Package Details */}
+          {/* Package Details - Reduced padding */}
           <div className="border-t border-black">
             <div className="flex">
-              <div className="w-20 border-r border-black p-1 text-center">
-                <div className="text-xs">No. of Pkgs.</div>
-                <div className="text-lg font-bold mt-2">{packages.count}</div>
+              <div className="w-16 border-r border-black p-0.5 text-center">
+                <div className="text-[6px]">No. of Pkgs.</div>
+                <div className="text-sm font-bold">{packages.count}</div>
               </div>
-              <div className="w-20 border-r border-black p-1 text-center">
-                <div className="text-xs">Packing</div>
-                <div className="text-lg font-bold mt-2">{packages.packing}</div>
+              <div className="w-16 border-r border-black p-0.5 text-center">
+                <div className="text-[6px]">Packing</div>
+                <div className="text-sm font-bold">{packages.packing}</div>
               </div>
-              <div className="flex-1 border-r border-black p-1">
-                <div className="text-xs text-center italic">Said to be Contain</div>
+              <div className="flex-1 border-r border-black p-0.5">
+                <div className="text-[6px] text-center italic">Said to be Contain</div>
               </div>
-              <div className="w-1/3 p-1">
-                <div className="flex mb-1">
-                  <div className="w-1/2 text-center text-xs">
+              <div className="w-1/3 p-0.5">
+                <div className="flex mb-0.5">
+                  <div className="w-1/2 text-center text-[6px]">
                     Dimensions (Cms)
                     <br />
                     Length x Width x Height
                   </div>
-                  <div className="w-1/4 text-center text-xs">
+                  <div className="w-1/4 text-center text-[6px]">
                     Actual
                     <br />
                     Weight
                   </div>
-                  <div className="w-1/4 text-center text-xs">
+                  <div className="w-1/4 text-center text-[6px]">
                     Charged
                     <br />
                     Weight
                   </div>
                 </div>
-                <div className="flex mt-2">
-                  <div className="w-1/2 text-center font-bold">{packages.dimensions}</div>
-                  <div className="w-1/4 text-center font-bold">{packages.actualWeight}</div>
-                  <div className="w-1/4 text-center font-bold">{packages.chargedWeight || ''}</div>
+                <div className="flex mt-1">
+                  <div className="w-1/2 text-center font-bold text-[8px]">
+                    {packages.dimensions}
+                  </div>
+                  <div className="w-1/4 text-center font-bold text-[8px]">
+                    {packages.actualWeight}
+                  </div>
+                  <div className="w-1/4 text-center font-bold text-[8px]">
+                    {packages.chargedWeight || ''}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Footer Section */}
+          {/* Footer Section - Reduced padding */}
           <div className="flex border-t border-black">
-            {/* Disclaimer and GST Information */}
-            <div className="w-1/2 p-2 border-r border-black">
-              <div className="text-xs mb-2">
+            <div className="w-1/2 p-1 border-r border-black">
+              <div className="text-[6px] mb-1">
                 The goods of in this G.R. have booked AT OWNER'S RISK.
                 <br />
                 A carbon copy has been received by consignor is taken of all
@@ -518,17 +536,19 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                 <br />
                 leakage & breakage.
               </div>
-              <div className="flex mt-4">
+              <div className="flex mt-2">
                 <div className="w-1/3">
-                  <div className="text-xs">Driver's Name</div>
-                  <div className="mt-4 text-xs">Signature</div>
+                  <div className="text-[6px]">Driver's Name</div>
+                  <div className="mt-2 text-[6px]">Signature</div>
                 </div>
-                <div className="w-2/3 border border-black p-1">
-                  <div className="font-bold">PAN : {gstInfo.pan}</div>
-                  <div className="font-bold">GSTIN : {gstInfo.gstin}</div>
-                  <div className="font-bold">TRANSPORTER ID : {gstInfo.transporterId}</div>
+                <div className="w-2/3 border border-black p-0.5">
+                  <div className="font-bold text-[6px]">PAN : {gstInfo.pan}</div>
+                  <div className="font-bold text-[6px]">GSTIN : {gstInfo.gstin}</div>
+                  <div className="font-bold text-[6px]">
+                    TRANSPORTER ID : {gstInfo.transporterId}
+                  </div>
                   {gstInfo.gstinTaxPayableInfo.map((info, index) => (
-                    <div key={index} className="font-bold">
+                    <div key={index} className="font-bold text-[6px]">
                       {info}
                     </div>
                   ))}
@@ -536,12 +556,13 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
               </div>
             </div>
 
-            {/* Delivery and Receipt Information */}
             <div className="w-1/2">
-              <div className="border-b border-black p-2">
+              <div className="border-b border-black p-1">
                 <div className="flex">
-                  <div className="w-1/3 text-red-600 font-bold">DELIVERY AT</div>
-                  <div className="w-1/3 text-red-600 font-bold text-center">PAYMENT MODE</div>
+                  <div className="w-1/3 text-red-600 font-bold text-[8px]">DELIVERY AT</div>
+                  <div className="w-1/3 text-red-600 font-bold text-[8px] text-center">
+                    PAYMENT MODE
+                  </div>
                   <div className="w-1/3"></div>
                 </div>
                 <div className="flex mt-2">
@@ -582,7 +603,7 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
                   <div className="w-1/3"></div>
                 </div>
               </div>
-              <div className="p-2">
+              <div className="p-1">
                 <div className="font-bold">RECEIVED IN GOOD CONDITION</div>
                 <div className="mt-2">
                   <div className="flex">
@@ -604,24 +625,26 @@ const LogisticsReceipt: React.FC<LogisticsReceiptProps> = ({
             </div>
           </div>
 
-          {/* Received By Footer */}
-          <div className="border-t border-black p-2 flex justify-between items-center">
-            <div className="font-bold text-red-600">Received By : JAI'Z LOGISTICS INC.</div>
+          {/* Received By Footer - Reduced padding */}
+          <div className="border-t border-black p-1 flex justify-between items-center">
+            <div className="font-bold text-red-600 text-[8px]">
+              Received By : JAI'Z LOGISTICS INC.
+            </div>
             <div className="flex">
-              <div className="mr-4">
-                <div className="mb-1">Signature</div>
-                <div className="mb-1">Date :</div>
-                <div>Time :</div>
+              <div className="mr-2">
+                <div className="mb-0.5 text-[6px]">Signature</div>
+                <div className="mb-0.5 text-[6px]">Date :</div>
+                <div className="text-[6px]">Time :</div>
               </div>
-              <div className="border-b border-black h-6 w-32 relative">
-                <div className="absolute -top-4 right-0 text-4xl font-bold">-</div>
+              <div className="border-b border-black h-4 w-24 relative">
+                <div className="absolute -top-3 right-0 text-2xl font-bold">-</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Shipper Copy Tag */}
-        <div className="absolute top-0 right-0 -rotate-90 origin-bottom-right text-[8px] transform translate-y-8 -translate-x-2 bg-white px-2 border border-black">
+        <div className="absolute top-0 right-0 -rotate-90 origin-bottom-right text-[6px] transform translate-y-6 -translate-x-1 bg-white px-1 border border-black">
           SHIPPER COPY
         </div>
       </div>
