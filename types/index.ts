@@ -85,11 +85,11 @@ export type Driver = {
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;
   languages: string[];
-  wheelsCapability?: string[] | "NA"; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20 
+  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20
   assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
-  driverDocuments?: DriverDocuments | "NA";
-  emergencyContact?: EmergencyContact | "NA";
-  referredBy?: ReferredBy | "NA";
+  driverDocuments?: DriverDocuments | 'NA';
+  emergencyContact?: EmergencyContact | 'NA';
+  referredBy?: ReferredBy | 'NA';
 };
 
 export type EmergencyContact = {
@@ -188,4 +188,14 @@ export type TripDriver = {
   driverId: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type Request = {
+  id: string;
+  type: 'leave' | 'money' | 'food' | 'Others';
+  status: 'Pending' | 'Approve' | 'Rejected';
+  title: string;
+  description: string;
+  createdAt: Date;
+  driverId: string; // reference to the driver who created the request
 };

@@ -47,7 +47,7 @@ const navMain = [
   },
   {
     title: 'Drivers Attendance',
-    url: '/dashboard/attendance',
+    url: '/dashboard/drivers/attendance',
     icon: PiUserSquareFill,
   },
   {
