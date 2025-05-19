@@ -190,12 +190,12 @@ export type TripDriver = {
   updatedAt: Date;
 };
 
-export type Request = {
+export type DriversRequest = {
   id: string;
-  type: 'leave' | 'money' | 'food' | 'Others';
+  driverId: string; // reference to the driver who created the request
+  type: 'leave' | 'money' | 'food' | 'others';
   status: 'Pending' | 'Approve' | 'Rejected';
   title: string;
   description: string;
   createdAt: Date;
-  driverId: string; // reference to the driver who created the request
 };

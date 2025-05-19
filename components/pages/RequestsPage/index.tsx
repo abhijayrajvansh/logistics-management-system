@@ -2,14 +2,16 @@
 
 import React from 'react';
 import { columns } from './columns';
-import { Request } from '@/types';
+import { DriversRequest } from '@/types';
 import { DataTable } from './data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRequests } from '@/hooks/useRequests';
+import { useDrivers } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
 
 const RequestsPage = () => {
   const { requests, approveRequest, rejectRequest } = useRequests();
+  const { drivers } = useDrivers();
 
   const pendingRequests = requests.filter((req) => req.status === 'Pending');
   const approvedRequests = requests.filter((req) => req.status === 'Approve');
@@ -36,8 +38,8 @@ const RequestsPage = () => {
   };
 
   const columnConfig = React.useMemo(
-    () => columns({ onApprove: handleApprove, onReject: handleReject }),
-    [handleApprove, handleReject],
+    () => columns({ onApprove: handleApprove, onReject: handleReject, drivers }),
+    [handleApprove, handleReject, drivers],
   );
 
   return (
@@ -51,7 +53,7 @@ const RequestsPage = () => {
           </p>
         </div>
       </div>
-      
+
       {/* Pending Requests Table */}
       <Card>
         <CardHeader>

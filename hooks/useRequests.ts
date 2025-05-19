@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Request } from '@/types';
+import { DriversRequest } from '@/types';
 
 // Mock data for initial testing
-const initialRequests: Request[] = [
+const initialRequests: DriversRequest[] = [
   {
     id: "1",
     type: "leave",
@@ -24,7 +24,7 @@ const initialRequests: Request[] = [
 ];
 
 export const useRequests = () => {
-  const [requests, setRequests] = useState<Request[]>(initialRequests);
+  const [requests, setRequests] = useState<DriversRequest[]>(initialRequests);
 
   const approveRequest = useCallback(async (requestId: string) => {
     try {
