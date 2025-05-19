@@ -199,3 +199,83 @@ export type DriversRequest = {
   description: string;
   createdAt: Date;
 };
+
+export type PrintDocketSchema = {
+  docketNumber: string;             // 1047256
+  date: string;                     // 31/03/25
+
+  consignor: {
+    name: string;                   // G M Mobile Devices
+    city?: string;                  // PUN
+    address?: string;
+    mobile?: string;
+    tin?: string;
+    truckNumber?: string;
+  };
+
+  consignee: {
+    name: string;                   // Shree Shyam Mobiles
+    city?: string;                  // Baddi
+    address?: string;
+    mobile?: string;
+    tin?: string;
+    truckNumber?: string;
+  };
+
+  noOfPackages: number;             // 6
+  packingType: string;             // Box
+  saidToContain: string;           // GHP2580159
+  actualWeight: number;            // 25
+  chargedWeight?: number;
+
+  modeOfTransport: {
+    air: boolean;
+    train: boolean;
+    road: boolean;
+    international: {
+      dox: boolean;
+      nonDox: boolean;
+    };
+    domestic: {
+      dox: boolean;
+      nonDox: boolean;
+    };
+  };
+
+  charges: {
+    freightCharge?: number;
+    serviceTax?: number;
+    labourCharge?: number;
+    grCharge?: number;
+    handlingCharge?: number;
+    subTotal?: number;
+    total?: number;
+    grandTotal?: number;
+  };
+
+  deliveryAt: {
+    billNumber: string;            // 364895
+    value: number;                 // 364895
+    paymentMode: 'Paid' | 'To Pay' | 'Credit';
+  };
+
+  driverName?: string;
+  driverSignature?: string;
+
+  receivedBy: string;              // Jaiz Logistics Inc.
+  receivedSignature?: string;
+  receivedDate?: string;
+  receivedTime?: string;
+
+  transporterDetails: {
+    pan: string;                   // APJPB6449Q
+    gstin: string;                 // 02APJPB6449Q1ZK
+    transporterId: string;        // 88APJPB6449Q1ZI
+    gstinTaxPayableBy: {
+      consignor: boolean;
+      consignee: boolean;
+      transporter: boolean;
+      notPayable: boolean;
+    };
+  };
+};
