@@ -193,14 +193,14 @@ export async function updateDriverLeaveBalance(
 //   })
 
 // runs every month on the first day of the month
-initializeCurrentMonthLeaveBalance()
-  .then(() => {
-    console.log('Leave balance update completed successfully');
-  })
-  .catch((error) => {
-    console.error('Error during leave balance update:', error);
-  })
-  .finally(() => {
-    console.log('Leave balance update process finished');
-    process.exit(0);
-  });
+// initializeCurrentMonthLeaveBalance()
+//   .then(() => {
+//     console.log('Leave balance update completed successfully');
+//   })
+//   .catch((error) => {
+//     console.error('Error during leave balance update:', error);
+//   })
+//   .finally(() => {
+//     console.log('Leave balance update process finished');
+//     process.exit(0);
+//   });
