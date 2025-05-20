@@ -41,7 +41,7 @@ function isReferredBy(referral: Driver['referredBy']): referral is ReferredBy {
 
 export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriverFormProps) {
   const { trucks } = useTrucks();
-  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
+  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId' | 'leaveBalance'>>({
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],

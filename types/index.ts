@@ -85,11 +85,18 @@ export type Driver = {
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;
   languages: string[];
+  leaveBalance: LeaveBalance;
   wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20
   assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
   driverDocuments?: DriverDocuments | 'NA';
   emergencyContact?: EmergencyContact | 'NA';
   referredBy?: ReferredBy | 'NA';
+};
+
+export type LeaveBalance = {
+  currentMonthLeaves: 0 | 1 | 2 | 3 | 4; // number of leaves left in the current month
+  transferredLeaves: 0 | 1 | 2 | 3 | 4; // number of leaves transferred from the previous month
+  cycleMonth: 1 | 2; // can have only 1 or 2. if 1 then left currentMonthLeaves will be transferred to the next month, if 2 then the left currentMonthLeaves will not be transferred to the next month
 };
 
 export type EmergencyContact = {

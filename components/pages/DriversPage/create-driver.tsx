@@ -16,7 +16,7 @@ import { createNewUser, createUserWebhook } from '@/firebase/auth/createUserWebh
 import { db } from '@/firebase/database';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
-import { Driver, DriverDocuments, EmergencyContact, ReferredBy, User } from '@/types';
+import { Driver, DriverDocuments, EmergencyContact, LeaveBalance, ReferredBy, User } from '@/types';
 import { IconLoader } from '@tabler/icons-react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
@@ -45,7 +45,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     medicalCertificate: false,
     dob_certificate: false,
   });
-  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
+  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId' | 'leaveBalance'>>({
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
@@ -199,9 +199,17 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         dob_certificate_url,
       ] = documentUploads;
 
+      // driver's default leave balance while onboading
+      const leaveBalance: LeaveBalance = {
+        currentMonthLeaves: 4,
+        transferredLeaves: 0,
+        cycleMonth: 1,
+      };
+
       const driverData = {
         driverId,
         ...formData,
+        leaveBalance,
         driverDocuments: isDriverDocuments(formData.driverDocuments)
           ? {
               ...formData.driverDocuments,
