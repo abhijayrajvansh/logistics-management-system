@@ -43,6 +43,10 @@ export function DeleteDriverDialog({ driverId, isOpen, onClose, onSuccess }: Del
       const userRef = doc(db, 'users', driverId);
       await deleteDoc(userRef);
 
+      // Delete from attendance collection
+      const attendanceRef = doc(db, 'attendance', driverId);
+      await deleteDoc(attendanceRef);
+
       // Delete from drivers collection
       await deleteDoc(driverRef);
 

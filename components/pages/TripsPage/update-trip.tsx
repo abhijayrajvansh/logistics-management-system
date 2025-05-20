@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import useTrucks from '@/hooks/useTrucks';
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -61,6 +62,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const {trucks} = useTrucks();
 
   const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
@@ -213,6 +215,17 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     }
   }, [drivers, fetchTripData]);
 
+  useEffect(() => {
+    if (selectedDriver) {
+      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      setFormData((prevData) => ({
+        ...prevData,
+        driver: selectedDriver.id,
+        truck: truckRegNumber || '',
+      }));
+    }
+  }, [selectedDriver]);
+
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
@@ -221,7 +234,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         ...prev,
         driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
-        truck: driver.driverTruckId || prev.truck,
+        truck: driver.assignedTruckId || 'Not Assigned', // Use assignedTruckId if available
       }));
     }
   };
@@ -319,7 +332,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
       // Handle driver status updates if driver assignment changed
       if (previousDriverId !== formData.driver) {
-        // Handle previous driver: Set status back to Active and remove from trip_drivers
+        // Handle previous driver: Set status back to Active
         if (previousDriverId && previousDriverId !== 'Not Assigned') {
           // Update previous driver's status
           const prevDriverRef = doc(db, 'drivers', previousDriverId);
@@ -327,20 +340,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             status: 'Active',
             updated_at: new Date(),
           });
-
-          // Remove previous trip-driver mapping
-          await deleteDoc(doc(db, 'trip_drivers', tripId));
         }
 
-        // Handle new driver: Set status to OnTrip and create trip_drivers mapping
+        // Handle new driver: Set status to OnTrip
         if (formData.driver && formData.driver !== 'Not Assigned') {
-          // Create new trip-driver mapping
-          await setDoc(doc(db, 'trip_drivers', tripId), {
-            tripId: tripId,
-            driverId: formData.driver,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
 
           // Update new driver's status
           const newDriverRef = doc(db, 'drivers', formData.driver);
@@ -350,6 +353,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           });
         }
       }
+
 
       // Get current trip_orders document using the same ID as the trip document
       const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
@@ -522,7 +526,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               <SelectContent>
                 {drivers.map((driver) => (
                   <SelectItem key={driver.id} value={driver.id}>
-                    {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
+                    {driver.driverName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -530,7 +534,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           </div>
           <div className="space-y-2">
             <Label htmlFor="truck">Vehicle Number</Label>
-            <Input
+            <Input disabled={true}
               id="truck"
               placeholder="Enter Vehicle number"
               value={formData.truck}

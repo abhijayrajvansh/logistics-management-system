@@ -398,7 +398,6 @@ const ViewTripDialog = ({
 // Update ActionCell component
 const ActionCell = ({ row }: { row: any }) => {
   const trip = row.original;
-  console.log({ trip });
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);

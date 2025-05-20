@@ -83,10 +83,32 @@ export type Driver = {
   driverId: string;
   driverName: string;
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
-  phoneNumber?: string;
+  phoneNumber: string;
   languages: string[];
-  driverTruckId?: string;
-  driverDocuments?: DriverDocuments;
+  leaveBalance: LeaveBalance;
+  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20
+  assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
+  driverDocuments?: DriverDocuments | 'NA';
+  emergencyContact?: EmergencyContact | 'NA';
+  referredBy?: ReferredBy | 'NA';
+};
+
+export type LeaveBalance = {
+  currentMonthLeaves: 0 | 1 | 2 | 3 | 4; // number of leaves left in the current month
+  transferredLeaves: 0 | 1 | 2 | 3 | 4; // number of leaves transferred from the previous month
+  cycleMonth: 1 | 2; // can have only 1 or 2. if 1 then left currentMonthLeaves will be transferred to the next month, if 2 then the left currentMonthLeaves will not be transferred to the next month
+};
+
+export type EmergencyContact = {
+  name: string;
+  number: string;
+  residencyAddress: string; // address of the emergency contact
+  residencyProof: string;
+};
+
+export type ReferredBy = {
+  type: User['role'];
+  userId: string; // ID of the user who referred the driver
 };
 
 export type DriverDocuments = {
@@ -168,9 +190,97 @@ export type TAT_Mapping = {
   updated_at: Timestamp;
 };
 
-export type TripDriver = {
-  tripId: string;
-  driverId: string;
+
+export type DriversRequest = {
+  id: string;
+  driverId: string; // reference to the driver who created the request
+  type: 'leave' | 'money' | 'food' | 'others';
+  proofImageUrl?: string; // URL of the proof image
+  
+  reason: string;
+  startDate: Date;
+  endDate: Date;
+  
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: Date;
-  updatedAt: Date;
+};
+
+export type PrintDocketSchema = {
+  docketNumber: string;             // 1047256
+  date: string;                     // 31/03/25
+
+  consignor: {
+    name: string;                   // G M Mobile Devices
+    city?: string;                  // PUN
+    address?: string;
+    mobile?: string;
+    tin?: string;
+    truckNumber?: string;
+  };
+
+  consignee: {
+    name: string;                   // Shree Shyam Mobiles
+    city?: string;                  // Baddi
+    address?: string;
+    mobile?: string;
+    tin?: string;
+    truckNumber?: string;
+  };
+
+  noOfPackages: number;             // 6
+  packingType: string;             // Box
+  saidToContain: string;           // GHP2580159
+  actualWeight: number;            // 25
+  chargedWeight?: number;
+
+  modeOfTransport: {
+    air: boolean;
+    train: boolean;
+    road: boolean;
+    international: {
+      dox: boolean;
+      nonDox: boolean;
+    };
+    domestic: {
+      dox: boolean;
+      nonDox: boolean;
+    };
+  };
+
+  charges: {
+    freightCharge?: number;
+    serviceTax?: number;
+    labourCharge?: number;
+    grCharge?: number;
+    handlingCharge?: number;
+    subTotal?: number;
+    total?: number;
+    grandTotal?: number;
+  };
+
+  deliveryAt: {
+    billNumber: string;            // 364895
+    value: number;                 // 364895
+    paymentMode: 'Paid' | 'To Pay' | 'Credit';
+  };
+
+  driverName?: string;
+  driverSignature?: string;
+
+  receivedBy: string;              // Jaiz Logistics Inc.
+  receivedSignature?: string;
+  receivedDate?: string;
+  receivedTime?: string;
+
+  transporterDetails: {
+    pan: string;                   // APJPB6449Q
+    gstin: string;                 // 02APJPB6449Q1ZK
+    transporterId: string;        // 88APJPB6449Q1ZI
+    gstinTaxPayableBy: {
+      consignor: boolean;
+      consignee: boolean;
+      transporter: boolean;
+      notPayable: boolean;
+    };
+  };
 };
