@@ -1,12 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FaRegEye } from 'react-icons/fa';
 import Image from 'next/image';
@@ -36,12 +31,7 @@ export function ProofCell({ imageUrl }: ProofCellProps) {
           </DialogHeader>
           {imageUrl ? (
             <div className="relative aspect-square w-full">
-              <Image
-                src={imageUrl}
-                alt="Proof Image"
-                className="object-contain"
-                fill
-              />
+              <Image src={imageUrl} alt="Proof Image" className="object-contain" fill />
             </div>
           ) : (
             <div className="text-center py-8">No proof image available</div>
