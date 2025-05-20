@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { Driver, DriversRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { ProofCell } from './ProofCell';
 
 type RequestColumnsProps = {
@@ -29,7 +28,7 @@ export const columns = ({
       header: 'Driver',
       cell: ({ row }) => {
         const driverId = row.getValue('driverId') as string;
-        const driver = drivers.find((d) => d.driverId === driverId);
+        const driver = drivers.find((d) => d.id === driverId);
         return driver?.driverName || 'Unknown Driver';
       },
     },

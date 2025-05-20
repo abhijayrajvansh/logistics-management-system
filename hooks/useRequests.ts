@@ -24,7 +24,6 @@ export const useRequests = () => {
             // endDate: doc.data().endDate?.toDate(),
             // createdAt: doc.data().createdAt?.toDate(),
           })) as DriversRequest[];
-          console.log({requestsData})
           setRequests(requestsData);
           setIsLoading(false);
         },

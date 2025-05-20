@@ -13,7 +13,6 @@ const RequestsPage = () => {
   const { drivers } = useDrivers();
 
   const pendingRequests = requests.filter((req) => req.status === 'pending');
-  // console.log({pendingRequests})
   const approvedRequests = requests.filter((req) => req.status === 'approved');
   const rejectedRequests = requests.filter((req) => req.status === 'rejected');
 
