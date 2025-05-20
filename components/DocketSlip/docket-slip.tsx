@@ -11,7 +11,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
           {/* Logo and Company Info - Further reduced size */}
           <div className="w-1/4 border-r border-black p-0.5">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-900 flex items-center justify-center text-white">
+              <div className="w-10 h-10 bg-[#065398] flex items-center justify-center text-white">
                 <div className="relative w-full h-full">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-sm font-bold">JAI'Z</span>
@@ -90,7 +90,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
         </div>
 
         {/* Origin and Destination */}
-        <div className="flex">
+        <div className="flex ">
           <div className="w-1/2 border-r border-black">
             <div className="bg-gray-100 border-b border-black px-1 py-0.5">
               <span className="font-bold text-[8px]">ORIGIN</span>
@@ -305,7 +305,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             <div className="text-sm font-bold">{docketPayload.packages?.packing}</div>
           </div>
           <div className="flex-1 border-r border-black p-0.5">
-            <div className="text-[6px] text-center italic">Said to be Contain</div>
+            <div className="text-xs text-center italic">Said to be Contain</div>
           </div>
           <div className="w-1/3 p-0.5">
             <div className="flex mt-1">
@@ -325,7 +325,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
 
       {/* Footer Section */}
       <div className="flex border border-black">
-        <div className="flex w-full">
+        <div className="flex w-full text-[#223455]">
           <div className="w-1/2 p-1 border-r border-black flex flex-col justify-between">
             <div className="text-xs mb-1">
               The goods of in this G.R. have booked AT OWNER'S RISK. A carbon copy has been received
@@ -334,13 +334,13 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             </div>
             <div className="flex mt-2">
               <div className="w-1/3">
-                <div className="text-xs">Driver's Name:</div>
-                <div className="mt-2 text-xs">Signature:</div>
+                <div className="">Driver's Name:</div>
+                <div className="mt-2 ">Signature:</div>
               </div>
             </div>
           </div>
 
-          <div className=" p-1 flex flex-col justify-between">
+          <div className=" p-1 flex flex-col justify-between text-[#223455]">
             <div className="font-bold text-xs">PAN : {docketPayload.gstInfo?.pan}</div>
             <div className="font-bold text-xs">GSTIN : {docketPayload.gstInfo?.gstin}</div>
             <div className="font-bold text-xs">
@@ -354,18 +354,12 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
           </div>
         </div>
 
-        <div className="w-full border-l border-black">
+        <div className="w-full border-l border-black ">
           <div className="border-b border-black p-1">
             <div className="flex">
-              <div className="w-1/3 text-red-600 font-bold text-[8px]">DELIVERY AT</div>
-              <div className="w-1/3 text-red-600 font-bold text-[8px] text-center">
-                PAYMENT MODE
-              </div>
-              <div className="w-1/3"></div>
-            </div>
-            <div className="flex mt-2">
-              <div className="w-1/3">
-                <div className="flex items-center">
+              <div className="w-full">
+                <div className="w-full text-red-600 font-bold text-[8px]">DELIVERY AT</div>
+                <div className="flex mt-2">
                   <div className="text-xs">Bill No</div>
                   <div className="ml-2 border-b border-black flex-1 text-center font-bold">
                     {docketPayload.billInfo?.billNo}
@@ -378,30 +372,36 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
                   </div>
                 </div>
               </div>
-              <div className="w-1/3 flex justify-center space-x-4">
-                <div className="flex items-center">
-                  <div
-                    className={`border border-black w-4 h-4 mr-1 ${
-                      docketPayload.billInfo?.paymentMode === 'PAID' ? 'bg-black' : ''
-                    }`}
-                  ></div>
-                  <span className="text-xs">PAID</span>
+
+              <div className="w-full p-1">
+                <div className="text-red-600 font-bold text-[8px] text-center mb-1">
+                  PAYMENT MODE
                 </div>
-                <div className="flex items-center">
-                  <div
-                    className={`border border-black w-4 h-4 mr-1 ${
-                      docketPayload.billInfo?.paymentMode === 'TO PAY' ? 'bg-black' : ''
-                    }`}
-                  ></div>
-                  <span className="text-xs">TO PAY</span>
-                </div>
-                <div className="flex items-center">
-                  <div
-                    className={`border border-black w-4 h-4 mr-1 ${
-                      docketPayload.billInfo?.paymentMode === 'CREDIT' ? 'bg-black' : ''
-                    }`}
-                  ></div>
-                  <span className="text-xs">CREDIT</span>
+                <div className="flex justify-center space-x-4">
+                  <div className="flex items-center">
+                    <div
+                      className={`border border-black w-4 h-4 mr-1 ${
+                        docketPayload.billInfo?.paymentMode === 'PAID' ? 'bg-black' : ''
+                      }`}
+                    ></div>
+                    <span className="">PAID</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div
+                      className={`border border-black w-4 h-4 mr-1 ${
+                        docketPayload.billInfo?.paymentMode === 'TO PAY' ? 'bg-black' : ''
+                      }`}
+                    ></div>
+                    <span className="">TO PAY</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div
+                      className={`border border-black w-4 h-4 mr-1 ${
+                        docketPayload.billInfo?.paymentMode === 'CREDIT' ? 'bg-black' : ''
+                      }`}
+                    ></div>
+                    <span className="">CREDIT</span>
+                  </div>
                 </div>
               </div>
             </div>
