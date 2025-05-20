@@ -1,6 +1,6 @@
 "use client";
 
-import DocketSlipUI from "./docket-slip";
+import DocketSlipUI from "./DocketSlipUI";
 
 const LogisticsReceipt = () => {
   return (

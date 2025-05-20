@@ -2,7 +2,7 @@ import React from 'react';
 import { LogisticsReceiptProps } from './docketSlipInterface';
 import docketPayload from './data-json';
 
-const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
+const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
   return (
     <div className="receipt-content bg-white border border-gray-300 p-2 font-sans text-[8px] text-black print:border print:border-black">
       <div className="border border-black h-full w-full">
@@ -448,4 +448,4 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
   );
 };
 
-export default DocketSlip;
+export default DocketSlipUI;
