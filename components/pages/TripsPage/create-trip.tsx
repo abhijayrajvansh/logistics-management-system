@@ -222,6 +222,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
     setIsSubmitting(true);
 
+    const truckRegNumber = trucks.find(truck => truck.id === selectedDriver?.assignedTruckId)?.regNumber || 'Not Assigned';
+
     try {
       // Parse and validate form data
       const validatedData: Omit<Trip, 'id'> = {
@@ -230,7 +232,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         numberOfStops: selectedOrderIds.length,
         currentStatus: formData.currentStatus,
         driver: selectedDriver?.id || 'Not Assigned',
-        truck: selectedDriver?.assignedTruckId || 'Not Assigned',
+        truck: truckRegNumber || 'Not Assigned',
       };
 
       // Add the trip to Firestore
@@ -239,16 +241,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         created_at: new Date(),
       });
 
-      // If a driver was selected, create trip_driver mapping and update driver status
+      // If a driver was selected, update driver status
       if (selectedDriver) {
-        // Create trip_driver mapping
-        await setDoc(doc(db, 'trip_drivers', tripRef.id), {
-          tripId: tripRef.id,
-          driverId: selectedDriver.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
+        
         // Update driver status to "OnTrip"
         const driverRef = doc(db, 'drivers', selectedDriver.id);
         await updateDoc(driverRef, {
