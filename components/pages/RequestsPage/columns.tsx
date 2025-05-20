@@ -43,30 +43,84 @@ export const columns = ({
           </Badge>
         );
       },
-        },
-        {
+    },
+    {
       accessorKey: 'reason',
       header: 'Reason',
-        },
-        {
+    },
+    {
       accessorKey: 'startDate',
       header: 'Start Date',
       cell: ({ row }) => {
-        const date = row.getValue('startDate') as string;
-        return date ? date.split('T')[0] : 'N/A';
+        const startDateValue = row.getValue('startDate');
+
+        // Handle different date formats that might come from Firestore
+        let formattedDate = '';
+
+        if (startDateValue) {
+          try {
+            // Handle if it's a Date object
+            if (startDateValue instanceof Date) {
+              formattedDate = startDateValue.toLocaleDateString();
+            }
+            // Handle string date format
+            else if (typeof startDateValue === 'string') {
+              formattedDate = new Date(startDateValue).toLocaleDateString();
+            }
+            // Handle timestamp object
+            else if (
+              startDateValue &&
+              typeof startDateValue === 'object' &&
+              'seconds' in startDateValue
+            ) {
+              formattedDate = new Date(
+                (startDateValue.seconds as number) * 1000,
+              ).toLocaleDateString();
+            }
+          } catch (error) {
+            console.error('Error formatting TAT date:', error);
+          }
+        }
+
+        return <div className="text-left">{formattedDate}</div>;
       },
-        },
-        {
+    },
+    {
       accessorKey: 'endDate',
       header: 'End Date',
       cell: ({ row }) => {
-        const date = row.getValue('endDate') as string;
-        return date ? date.split('T')[0] : 'N/A';
+        const endDateValue = row.getValue('endDate');
+
+        // Handle different date formats that might come from Firestore
+        let formattedDate = '';
+
+        if (endDateValue) {
+          try {
+            // Handle if it's a Date object
+            if (endDateValue instanceof Date) {
+              formattedDate = endDateValue.toLocaleDateString();
+            }
+            // Handle string date format
+            else if (typeof endDateValue === 'string') {
+              formattedDate = new Date(endDateValue).toLocaleDateString();
+            }
+            // Handle timestamp object
+            else if (
+              endDateValue &&
+              typeof endDateValue === 'object' &&
+              'seconds' in endDateValue
+            ) {
+              formattedDate = new Date(
+                (endDateValue.seconds as number) * 1000,
+              ).toLocaleDateString();
+            }
+          } catch (error) {
+            console.error('Error formatting TAT date:', error);
+          }
+        }
+
+        return <div className="text-left">{formattedDate}</div>;
       },
-      // cell: ({ row }) => {
-      //   const date = row.getValue('endDate') as Date;
-      //   return date ? date.toLocaleDateString() : 'N/A';
-      // },
     },
     {
       accessorKey: 'proofImageUrl',
@@ -104,9 +158,38 @@ export const columns = ({
     {
       accessorKey: 'createdAt',
       header: 'Created At',
-      cell: ({ row }) => {
-        const date = row.getValue('createdAt') as string;
-        return date ? date.split('T')[0] : 'N/A';
+     cell: ({ row }) => {
+        const createdAtValue = row.getValue('createdAt');
+
+        // Handle different date formats that might come from Firestore
+        let formattedDate = '';
+
+        if (createdAtValue) {
+          try {
+            // Handle if it's a Date object
+            if (createdAtValue instanceof Date) {
+              formattedDate = createdAtValue.toLocaleDateString();
+            }
+            // Handle string date format
+            else if (typeof createdAtValue === 'string') {
+              formattedDate = new Date(createdAtValue).toLocaleDateString();
+            }
+            // Handle timestamp object
+            else if (
+              createdAtValue &&
+              typeof createdAtValue === 'object' &&
+              'seconds' in createdAtValue
+            ) {
+              formattedDate = new Date(
+                (createdAtValue.seconds as number) * 1000,
+              ).toLocaleDateString();
+            }
+          } catch (error) {
+            console.error('Error formatting TAT date:', error);
+          }
+        }
+
+        return <div className="text-left">{formattedDate}</div>;
       },
     },
     {
