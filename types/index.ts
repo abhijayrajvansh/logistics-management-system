@@ -183,12 +183,6 @@ export type TAT_Mapping = {
   updated_at: Timestamp;
 };
 
-export type TripDriver = {
-  tripId: string;
-  driverId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 export type DriversRequest = {
   id: string;
