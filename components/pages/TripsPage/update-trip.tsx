@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import useTrucks from '@/hooks/useTrucks';
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -61,6 +62,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const {trucks} = useTrucks();
 
   const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
@@ -213,6 +215,17 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     }
   }, [drivers, fetchTripData]);
 
+  useEffect(() => {
+    if (selectedDriver) {
+      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      setFormData((prevData) => ({
+        ...prevData,
+        driver: selectedDriver.id,
+        truck: truckRegNumber || '',
+      }));
+    }
+  }, [selectedDriver]);
+
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
@@ -221,7 +234,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         ...prev,
         driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
-        truck: driver.driverTruckId || prev.truck,
+        truck: driver.assignedTruckId || 'Not Assigned', // Use assignedTruckId if available
       }));
     }
   };
@@ -522,7 +535,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               <SelectContent>
                 {drivers.map((driver) => (
                   <SelectItem key={driver.id} value={driver.id}>
-                    {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
+                    {driver.driverName}
                   </SelectItem>
                 ))}
               </SelectContent>

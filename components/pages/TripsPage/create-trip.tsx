@@ -21,6 +21,7 @@ import { FaArrowRightLong } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
 import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
+import useTrucks from '@/hooks/useTrucks';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -32,6 +33,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const { trucks } = useTrucks();
 
   // Define form data with proper types matching the Trip interface
   const [formData, setFormData] = useState<Omit<Trip, 'id' | 'startDate'> & { startDate: string }>({
@@ -89,10 +91,11 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   // Effect to update truck details when driver is selected
   useEffect(() => {
     if (selectedDriver) {
+      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
       setFormData((prevData) => ({
         ...prevData,
         driver: selectedDriver.id,
-        truck: selectedDriver.driverTruckId || '',
+        truck: truckRegNumber || '',
       }));
     }
   }, [selectedDriver]);
@@ -118,11 +121,12 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
+      const truckRegNumber = trucks.find(truck => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
       setSelectedDriver(driver);
       setFormData((prevData) => ({
         ...prevData,
         driver: driverId, // Use the same ID that's passed from the select
-        truck: driver.driverTruckId || '',
+        // truck: truckRegNumber,
       }));
     }
   };
@@ -226,7 +230,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
         numberOfStops: selectedOrderIds.length,
         currentStatus: formData.currentStatus,
         driver: selectedDriver?.id || 'Not Assigned',
-        truck: selectedDriver?.driverTruckId || 'Not Assigned',
+        truck: selectedDriver?.assignedTruckId || 'Not Assigned',
       };
 
       // Add the trip to Firestore
@@ -348,7 +352,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                 {!isLoadingDrivers &&
                   drivers.map((driver) => (
                     <SelectItem key={driver.id} value={driver.id}>
-                      {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
+                      {driver.driverName}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -356,7 +360,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="truck">Vehicle Number</Label>
-            <Input
+            <Input disabled={true}
               id="truck"
               placeholder="Enter vehicle number (or select driver)"
               value={formData.truck}
