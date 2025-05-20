@@ -1,79 +1,80 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DriversRequest } from '@/types';
-
-// Mock data for initial testing
-const initialRequests: DriversRequest[] = [
-  {
-    id: "1",
-    type: "leave",
-    status: "Pending",
-    title: "Annual Leave Request",
-    description: "Need 5 days off for family function",
-    createdAt: new Date(),
-    driverId: "driver1"
-  },
-  {
-    id: "2",
-    type: "money",
-    status: "Approve",
-    title: "Advance Payment",
-    description: "Request for advance salary",
-    createdAt: new Date(),
-    driverId: "driver2"
-  },
-];
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/firebase/database';
 
 export const useRequests = () => {
-  const [requests, setRequests] = useState<DriversRequest[]>(initialRequests);
+  const [requests, setRequests] = useState<DriversRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const DRIVER_REQUEST_COLLECTION = 'driver_requests';
+
+  useEffect(() => {
+    try {
+      const requestsRef = collection(db, DRIVER_REQUEST_COLLECTION);
+      const unsubscribe = onSnapshot(
+        requestsRef,
+        (snapshot) => {
+          const requestsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            proofImageUrl: doc.data().proofImageUrl || '',
+            // startDate: doc.data().startDate?.toDate(),
+            // endDate: doc.data().endDate?.toDate(),
+            // createdAt: doc.data().createdAt?.toDate(),
+          })) as DriversRequest[];
+          console.log({requestsData})
+          setRequests(requestsData);
+          setIsLoading(false);
+        },
+        (err) => {
+          console.error('Error fetching requests:', err);
+          setError(err as Error);
+          setIsLoading(false);
+        },
+      );
+
+      return () => {
+        unsubscribe();
+      };
+    } catch (err) {
+      console.error('Error setting up requests listener:', err);
+      setError(err as Error);
+      setIsLoading(false);
+    }
+  }, []);
 
   const approveRequest = useCallback(async (requestId: string) => {
     try {
-      // Mock API call - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock database update
-      console.log("Updating request status in database...");
-      
-      setRequests(prev =>
-        prev.map(request =>
-          request.id === requestId
-            ? { ...request, status: "Approve" }
-            : request
-        )
-      );
-
+      const requestRef = doc(db, DRIVER_REQUEST_COLLECTION, requestId);
+      await updateDoc(requestRef, {
+        status: 'approved',
+      });
       return true;
     } catch (error) {
-      console.error("Error approving request:", error);
+      console.error('Error approving request:', error);
       return false;
     }
   }, []);
 
   const rejectRequest = useCallback(async (requestId: string) => {
     try {
-      // Mock API call - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock database update
-      console.log("Updating request status in database...");
-      
-      setRequests(prev =>
-        prev.map(request =>
-          request.id === requestId
-            ? { ...request, status: "Rejected" }
-            : request
-        )
-      );
-
+      const requestRef = doc(db, DRIVER_REQUEST_COLLECTION, requestId);
+      await updateDoc(requestRef, {
+        status: 'rejected',
+      });
       return true;
     } catch (error) {
-      console.error("Error rejecting request:", error);
+      console.error('Error rejecting request:', error);
       return false;
     }
   }, []);
 
   return {
     requests,
+    isLoading,
+    error,
     approveRequest,
     rejectRequest,
   };

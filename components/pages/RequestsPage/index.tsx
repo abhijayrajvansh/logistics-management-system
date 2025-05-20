@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { columns } from './columns';
-import { DriversRequest } from '@/types';
 import { DataTable } from './data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRequests } from '@/hooks/useRequests';
@@ -13,9 +12,10 @@ const RequestsPage = () => {
   const { requests, approveRequest, rejectRequest } = useRequests();
   const { drivers } = useDrivers();
 
-  const pendingRequests = requests.filter((req) => req.status === 'Pending');
-  const approvedRequests = requests.filter((req) => req.status === 'Approve');
-  const rejectedRequests = requests.filter((req) => req.status === 'Rejected');
+  const pendingRequests = requests.filter((req) => req.status === 'pending');
+  // console.log({pendingRequests})
+  const approvedRequests = requests.filter((req) => req.status === 'approved');
+  const rejectedRequests = requests.filter((req) => req.status === 'rejected');
 
   const handleApprove = async (id: string) => {
     try {

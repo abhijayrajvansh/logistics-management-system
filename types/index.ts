@@ -195,9 +195,13 @@ export type DriversRequest = {
   id: string;
   driverId: string; // reference to the driver who created the request
   type: 'leave' | 'money' | 'food' | 'others';
-  status: 'Pending' | 'Approve' | 'Rejected';
-  title: string;
-  description: string;
+  proofImageUrl?: string; // URL of the proof image
+  
+  reason: string;
+  startDate: Date;
+  endDate: Date;
+  
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: Date;
 };
 

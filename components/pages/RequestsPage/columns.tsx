@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { Driver, DriversRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 
 type RequestColumnsProps = {
   onApprove: (id: string) => Promise<void>;
@@ -36,16 +37,53 @@ export const columns = ({
       header: 'Type',
       cell: ({ row }) => {
         const type = row.getValue('type') as DriversRequest['type'];
-        return <Badge variant="outline">{type}</Badge>;
+        return (
+          <Badge variant="outline" className="capitalize">
+            {type}
+          </Badge>
+        );
       },
+        },
+        {
+      accessorKey: 'reason',
+      header: 'Reason',
+        },
+        {
+      accessorKey: 'startDate',
+      header: 'Start Date',
+      cell: ({ row }) => {
+        const date = row.getValue('startDate') as string;
+        return date ? date.split('T')[0] : 'N/A';
+      },
+        },
+        {
+      accessorKey: 'endDate',
+      header: 'End Date',
+      cell: ({ row }) => {
+        const date = row.getValue('endDate') as string;
+        return date ? date.split('T')[0] : 'N/A';
+      },
+      // cell: ({ row }) => {
+      //   const date = row.getValue('endDate') as Date;
+      //   return date ? date.toLocaleDateString() : 'N/A';
+      // },
     },
     {
-      accessorKey: 'title',
-      header: 'Title',
-    },
-    {
-      accessorKey: 'description',
-      header: 'Description',
+      accessorKey: 'proofImageUrl',
+      header: 'Proof',
+      cell: ({ row }) => {
+        const imageUrl = row.getValue('proofImageUrl') as string | undefined;
+        if (!imageUrl) return 'No proof provided';
+        return (
+          <Image
+            src={imageUrl}
+            alt="Proof"
+            width={50}
+            height={50}
+            className="rounded-md object-cover"
+          />
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -55,7 +93,7 @@ export const columns = ({
         return (
           <Badge
             variant={
-              status === 'Pending' ? 'outline' : status === 'Approve' ? 'default' : 'destructive'
+              status === 'pending' ? 'outline' : status === 'approved' ? 'default' : 'destructive'
             }
           >
             {status}
@@ -67,7 +105,8 @@ export const columns = ({
       accessorKey: 'createdAt',
       header: 'Created At',
       cell: ({ row }) => {
-        return new Date(row.getValue('createdAt')).toLocaleDateString();
+        const date = row.getValue('createdAt') as string;
+        return date ? date.split('T')[0] : 'N/A';
       },
     },
     {
@@ -75,7 +114,7 @@ export const columns = ({
       cell: ({ row }) => {
         const request = row.original;
 
-        if (request.status === 'Pending') {
+        if (request.status === 'pending') {
           return (
             <div className="flex gap-2">
               <Button
@@ -83,6 +122,7 @@ export const columns = ({
                 variant="outline"
                 className="h-8 w-8 p-0 text-green-500 hover:text-green-600"
                 onClick={() => onApprove(request.id)}
+                title="Approve Request"
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -91,6 +131,7 @@ export const columns = ({
                 variant="outline"
                 className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                 onClick={() => onReject(request.id)}
+                title="Reject Request"
               >
                 <X className="h-4 w-4" />
               </Button>
