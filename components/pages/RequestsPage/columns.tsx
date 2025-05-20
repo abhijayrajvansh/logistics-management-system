@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react';
 import { Driver, DriversRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { ProofCell } from './ProofCell';
 
 type RequestColumnsProps = {
   onApprove: (id: string) => Promise<void>;
@@ -127,16 +128,7 @@ export const columns = ({
       header: 'Proof',
       cell: ({ row }) => {
         const imageUrl = row.getValue('proofImageUrl') as string | undefined;
-        if (!imageUrl) return 'No proof provided';
-        return (
-          <Image
-            src={imageUrl}
-            alt="Proof"
-            width={50}
-            height={50}
-            className="rounded-md object-cover"
-          />
-        );
+        return <ProofCell imageUrl={imageUrl} />;
       },
     },
     {
@@ -158,7 +150,7 @@ export const columns = ({
     {
       accessorKey: 'createdAt',
       header: 'Created At',
-     cell: ({ row }) => {
+      cell: ({ row }) => {
         const createdAtValue = row.getValue('createdAt');
 
         // Handle different date formats that might come from Firestore
