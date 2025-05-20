@@ -97,59 +97,59 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             </div>
             <div className="p-1">
               <div className="mb-1">
-                <span className="text-xs align-top">From (Shipper's Name)</span>
+                <span className="text-[10px] align-top">From (Shipper's Name)</span>
                 <span className="border-b border-black w-full inline-block ml-1">
                   {docketPayload.origin?.name}
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-xs">Company</span>
+                <span className="text-[10px]">Company</span>
                 <span className="border-b border-black w-full inline-block ml-1">
                   {docketPayload.origin?.company}
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-xs">Address</span>
+                <span className="text-[10px]">Address</span>
                 <span className="border-b border-black w-full inline-block ml-1">
                   {docketPayload.origin?.address || ''}
                 </span>
               </div>
               <div className="mb-1 flex">
                 <div className="flex-1">
-                  <span className="text-xs">City</span>
+                  <span className="text-[10px]">City</span>
                   <span className="border-b border-black w-3/4 inline-block ml-1">
                     {docketPayload.origin?.city || ''}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <span className="text-xs">Country</span>
+                  <span className="text-[10px]">Country</span>
                   <span className="border-b border-black w-3/4 inline-block ml-1">
                     {docketPayload.origin?.country || ''}
                   </span>
                 </div>
               </div>
               <div className="mb-1">
-                <span className="text-xs">Tin</span>
+                <span className="text-[10px]">Tin</span>
                 <span className="border-b border-black w-full inline-block ml-1">
                   {docketPayload.origin?.tin || ''}
                 </span>
               </div>
               <div className="mb-1 flex">
                 <div className="flex-1">
-                  <span className="text-xs">Mobile No</span>
+                  <span className="text-[10px]">Mobile No</span>
                   <span className="border-b border-black w-3/4 inline-block ml-1">
                     {docketPayload.origin?.mobileNo || ''}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <span className="text-xs">Dated</span>
+                  <span className="text-[10px]">Dated</span>
                   <span className="border-b border-black w-3/4 inline-block ml-1">
                     {docketPayload.origin?.dated || ''}
                   </span>
                 </div>
               </div>
               <div className="mb-1">
-                <span className="text-xs">Truck No.</span>
+                <span className="text-[10px]">Truck No.</span>
                 <span className="border-b border-black w-full inline-block ml-1">
                   {docketPayload.origin?.truckNo || ''}
                 </span>
@@ -172,59 +172,59 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             <div className="flex">
               <div className="p-1 w-full border-r border-black">
                 <div className="mb-1">
-                  <span className="text-xs align-top">To (Receiver's Name)</span>
+                  <span className="text-[10px] align-top">To (Receiver's Name)</span>
                   <span className="border-b border-black w-full inline-block ml-1">
                     {docketPayload.destination?.name}
                   </span>
                 </div>
                 <div className="mb-1">
-                  <span className="text-xs">Company</span>
+                  <span className="text-[10px]">Company</span>
                   <span className="border-b border-black w-full inline-block ml-1">
                     {docketPayload.destination?.company || ''}
                   </span>
                 </div>
                 <div className="mb-1">
-                  <span className="text-xs">Address</span>
+                  <span className="text-[10px]">Address</span>
                   <span className="border-b border-black w-full inline-block ml-1">
                     {docketPayload.destination?.address || ''}
                   </span>
                 </div>
                 <div className="mb-1 flex">
                   <div className="flex-1">
-                    <span className="text-xs">City</span>
+                    <span className="text-[10px]">City</span>
                     <span className="border-b border-black w-3/4 inline-block ml-1">
                       {docketPayload.destination?.city || ''}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs">Country</span>
+                    <span className="text-[10px]">Country</span>
                     <span className="border-b border-black w-3/4 inline-block ml-1">
                       {docketPayload.destination?.country}
                     </span>
                   </div>
                 </div>
                 <div className="mb-1">
-                  <span className="text-xs">Tin</span>
+                  <span className="text-[10px]">Tin</span>
                   <span className="border-b border-black w-full inline-block ml-1">
                     {docketPayload.destination?.tin || ''}
                   </span>
                 </div>
                 <div className="mb-1 flex">
                   <div className="flex-1">
-                    <span className="text-xs">Mobile No</span>
+                    <span className="text-[10px]">Mobile No</span>
                     <span className="border-b border-black w-3/4 inline-block ml-1">
                       {docketPayload.destination?.mobileNo || ''}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs">Dated</span>
+                    <span className="text-[10px]">Dated</span>
                     <span className="border-b border-black w-3/4 inline-block ml-1">
                       {docketPayload.destination?.dated || ''}
                     </span>
                   </div>
                 </div>
                 <div className="mb-1">
-                  <span className="text-xs">Truck No.</span>
+                  <span className="text-[10px]">Truck No.</span>
                   <span className="border-b border-black w-full inline-block ml-1">
                     {docketPayload.destination?.truckNo || ''}
                   </span>
@@ -305,7 +305,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             <div className="text-sm font-bold">{docketPayload.packages?.packing}</div>
           </div>
           <div className="flex-1 border-r border-black p-0.5">
-            <div className="text-xs text-center italic">Said to be Contain</div>
+            <div className="text-[10px] text-center italic">Said to be Contain</div>
           </div>
           <div className="w-1/3 p-0.5">
             <div className="flex mt-1">
@@ -327,7 +327,7 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
       <div className="flex border border-black">
         <div className="flex w-full text-[#223455]">
           <div className="w-1/2 p-1 border-r border-black flex flex-col justify-between">
-            <div className="text-xs mb-1">
+            <div className="text-[10px] mb-1">
               The goods of in this G.R. have booked AT OWNER'S RISK. A carbon copy has been received
               by consignor is taken of all terms & conditions. The company is not responsible for
               leakage & breakage.
@@ -341,13 +341,13 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
           </div>
 
           <div className=" p-1 flex flex-col justify-between text-[#223455]">
-            <div className="font-bold text-xs">PAN : {docketPayload.gstInfo?.pan}</div>
-            <div className="font-bold text-xs">GSTIN : {docketPayload.gstInfo?.gstin}</div>
-            <div className="font-bold text-xs">
+            <div className="font-bold text-[10px]">PAN : {docketPayload.gstInfo?.pan}</div>
+            <div className="font-bold text-[10px]">GSTIN : {docketPayload.gstInfo?.gstin}</div>
+            <div className="font-bold text-[10px]">
               TRANSPORTER ID : {docketPayload.gstInfo?.transporterId}
             </div>
             {docketPayload.gstInfo?.gstinTaxPayableInfo.map((info, index) => (
-              <div key={index} className="font-bold text-xs">
+              <div key={index} className="font-bold text-[10px]">
                 {info}
               </div>
             ))}
@@ -360,13 +360,13 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
               <div className="w-full">
                 <div className="w-full text-red-600 font-bold text-[8px]">DELIVERY AT</div>
                 <div className="flex mt-2">
-                  <div className="text-xs">Bill No</div>
+                  <div className="text-[10px]">Bill No</div>
                   <div className="ml-2 border-b border-black flex-1 text-center font-bold">
                     {docketPayload.billInfo?.billNo}
                   </div>
                 </div>
                 <div className="flex items-center mt-2">
-                  <div className="text-xs">Value</div>
+                  <div className="text-[10px]">Value</div>
                   <div className="ml-2 border-b border-black flex-1 text-center font-bold">
                     {docketPayload.billInfo?.value}
                   </div>
@@ -410,17 +410,17 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
             <div className="font-bold">RECEIVED IN GOOD CONDITION</div>
             <div className="mt-2">
               <div className="flex">
-                <div className="text-xs w-16">NAME :</div>
+                <div className="text-[10px] w-16">NAME :</div>
                 <div className="border-b border-black flex-1"></div>
               </div>
               <div className="flex mt-2">
-                <div className="text-xs w-16">MOB :</div>
+                <div className="text-[10px] w-16">MOB :</div>
                 <div className="border-b border-black flex-1"></div>
               </div>
               <div className="flex mt-2">
-                <div className="text-xs w-16">DATE :</div>
+                <div className="text-[10px] w-16">DATE :</div>
                 <div className="border-b border-black flex-1"></div>
-                <div className="text-xs w-24 ml-4">SIGNATURE</div>
+                <div className="text-[10px] w-24 ml-4">SIGNATURE</div>
                 <div className="border-b border-black w-32"></div>
               </div>
             </div>
@@ -431,14 +431,16 @@ const DocketSlip: React.FC<LogisticsReceiptProps> = () => {
       {/* Received By Footer - Reduced padding */}
       <div className="border-t border-black p-1 flex justify-between items-center">
         <div className="font-bold text-red-600 text-[8px]">Received By : JAI'Z LOGISTICS INC.</div>
-        <div className="flex">
-          <div className="mr-2">
-            <div className="mb-0.5 text-[6px]">Signature</div>
-            <div className="mb-0.5 text-[6px]">Date :</div>
-            <div className="text-[6px]">Time :</div>
+
+        <div className="mr-2 flex gap-3 w-1/2 p-1">
+          <div className="mb-0.5 flex">
+            Signature: <div className="border-b border-black h-4 w-24"></div>
           </div>
-          <div className="border-b border-black h-4 w-24 relative">
-            <div className="absolute -top-3 right-0 text-2xl font-bold">-</div>
+          <div className="mb-0.5 flex">
+            Date: <div className="border-b border-black h-4 w-24"></div>
+          </div>
+          <div className="flex">
+            Time: <div className="border-b border-black h-4 w-24"></div>
           </div>
         </div>
       </div>

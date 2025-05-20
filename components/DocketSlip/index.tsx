@@ -35,6 +35,7 @@ const LogisticsReceipt = () => {
         `}</style>
 
         <DocketSlipUI />
+        <DocketSlipUI />
       </div>
     </div>
   );
