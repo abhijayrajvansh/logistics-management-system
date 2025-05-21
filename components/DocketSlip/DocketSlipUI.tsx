@@ -37,27 +37,34 @@ const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
           </div>
 
           {/* Rest of the header with reduced padding */}
-          <div className="w-1/4 border-r border-black p-0.5">
-            <div className="text-center font-bold text-[10px]">INTERNATIONAL</div>
-            <div className="flex justify-around mt-0.5">
-              <div className="flex items-center">
+          <div className="w-1/4 border-r border-black pt-2">
+
+            <div className="flex justify-around">
+              <div className="text-left ml-5 w-full font-bold text-[10px]">INTERNATIONAL</div>
+              <div className='flex w-full gap-3'>
+                <div className="flex items-center">
                 <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
                 <span className="text-[6px]">DOX</span>
               </div>
               <div className="flex items-center">
                 <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
                 <span className="text-[6px]">NON-DOX</span>
+              </div>
               </div>
             </div>
-            <div className="text-center font-bold text-[10px] mt-0.5">DOMESTIC</div>
-            <div className="flex justify-around mt-0.5">
-              <div className="flex items-center">
+
+
+            <div className="flex justify-around">
+              <div className="text-left ml-5 w-full font-bold text-[10px] mt-0.5">DOMESTIC</div>
+              <div className='flex w-full gap-3'>
+                <div className="flex items-center">
                 <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
                 <span className="text-[6px]">DOX</span>
               </div>
               <div className="flex items-center">
                 <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
                 <span className="text-[6px]">NON-DOX</span>
+              </div>
               </div>
             </div>
           </div>
