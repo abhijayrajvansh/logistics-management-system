@@ -11,15 +11,9 @@ const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
           {/* Logo and Company Info - Further reduced size */}
           <div className="w-1/4 border-r border-black p-0.5">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-[#065398] flex items-center justify-center text-white">
-                <div className="relative w-full h-full">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-bold">JAI'Z</span>
-                  </div>
-                  <div className="absolute bottom-0 w-full text-center text-[6px]">
-                    Logistics Inc
-                  </div>
-                </div>
+              <div className="p-1 border border-[#065398] ">
+                <img src="/logo/jaiz-logistics-logo.png" alt="jaiz-logo" className="h-10" />
+                <div className='text-[4px] text-center mt-1 w-full'>- Your Choice for Logistics -</div>
               </div>
               <div className="ml-1">
                 <div className="text-red-600 font-bold text-[10px]">JAI'Z LOGISTICS INC.</div>
@@ -38,40 +32,38 @@ const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
 
           {/* Rest of the header with reduced padding */}
           <div className="w-1/4 border-r border-black pt-2">
-
             <div className="flex justify-around">
               <div className="text-left ml-5 w-full font-bold text-[10px]">INTERNATIONAL</div>
-              <div className='flex w-full gap-3'>
+              <div className="flex w-full gap-3">
                 <div className="flex items-center">
-                <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
-                <span className="text-[6px]">DOX</span>
-              </div>
-              <div className="flex items-center">
-                <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
-                <span className="text-[6px]">NON-DOX</span>
-              </div>
+                  <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                  <span className="text-[6px]">DOX</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                  <span className="text-[6px]">NON-DOX</span>
+                </div>
               </div>
             </div>
 
-
             <div className="flex justify-around">
               <div className="text-left ml-5 w-full font-bold text-[10px] mt-0.5">DOMESTIC</div>
-              <div className='flex w-full gap-3'>
+              <div className="flex w-full gap-3">
                 <div className="flex items-center">
-                <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
-                <span className="text-[6px]">DOX</span>
-              </div>
-              <div className="flex items-center">
-                <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
-                <span className="text-[6px]">NON-DOX</span>
-              </div>
+                  <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                  <span className="text-[6px]">DOX</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
+                  <span className="text-[6px]">NON-DOX</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="w-1/4 border-r border-black p-0.5">
             <div className="text-center font-bold text-[10px] mb-0.5">MODE OF TRANSPORT</div>
-            <div className="flex justify-around">
+            <div className="flex justify-around pt-2">
               <div className="flex items-center">
                 <div className="border border-black w-2.5 h-2.5 mr-0.5"></div>
                 <span className="text-[6px]">AIR</span>
