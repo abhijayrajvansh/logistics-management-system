@@ -13,7 +13,7 @@ const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
             <div className="flex items-center">
               <div className="p-1 border border-[#065398] ">
                 <img src="/logo/jaiz-logistics-logo.png" alt="jaiz-logo" className="h-10" />
-                <div className='text-[4px] text-center mt-1 w-full'>- Your Choice for Logistics -</div>
+                {/* <div className='text-[4px] text-center mt-1 w-full'>- Your Choice for Logistics -</div> */}
               </div>
               <div className="ml-1">
                 <div className="text-red-600 font-bold text-[10px]">JAI'Z LOGISTICS INC.</div>
