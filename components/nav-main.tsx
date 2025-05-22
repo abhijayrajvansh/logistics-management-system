@@ -16,6 +16,9 @@ import { FaHandshake } from "react-icons/fa6";
 import { RiUserReceived2Fill } from "react-icons/ri";
 import { PiUserSquareFill } from "react-icons/pi";
 import { FaTruck } from "react-icons/fa";
+import { MdHub } from "react-icons/md";
+import { FaClock } from "react-icons/fa6";
+import { FaHandHoldingMedical } from "react-icons/fa";
 
 const navMain = [
   {
@@ -45,8 +48,18 @@ const navMain = [
   },
   {
     title: 'Drivers Attendance',
-    url: '/dashboard/attendance',
+    url: '/dashboard/drivers/attendance',
     icon: PiUserSquareFill,
+  },
+  {
+    title: 'Drivers Requests',
+    url: '/dashboard/drivers/requests',
+    icon: FaHandHoldingMedical,
+  },
+  {
+    title: 'Centers',
+    url: '/dashboard/centers',
+    icon: MdHub,
   },
   {
     title: 'Clients',
@@ -57,6 +70,11 @@ const navMain = [
     title: 'Receivers',
     url: '/dashboard/receivers',
     icon: RiUserReceived2Fill,
+  },
+  {
+    title: 'TAT Mappings',
+    url: '/dashboard/tats',
+    icon: FaClock,
   },
 ];
 

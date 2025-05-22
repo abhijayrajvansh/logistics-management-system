@@ -6,7 +6,7 @@ import { DataTable } from './data-tabel';
 import { useTrips } from '@/hooks/useTrips';
 
 export function TripsPage() {
-  const { unassignedTrips, activeTrips, pastTrips, isLoading, error } = useTrips();
+  const { readyToShipTrips, activeTrips, pastTrips, isLoading, error } = useTrips();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading trips...</div>;
@@ -28,7 +28,7 @@ export function TripsPage() {
           <div className="h-full flex-1 flex-col space-y-8 py-8">
             <DataTable
               columns={columns}
-              data={unassignedTrips}
+              data={readyToShipTrips}
               activeTripData={activeTrips}
               pastTripData={pastTrips}
             />

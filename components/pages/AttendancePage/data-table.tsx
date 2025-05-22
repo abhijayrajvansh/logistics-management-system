@@ -110,7 +110,7 @@ export function DataTable<TData, TValue>({
       {/* Title and header */}
       <div className="flex justify-between px-4 lg:px-6">
         <div>
-          <h1 className="text-3xl font-semibold">Drivers Attendance</h1>
+          <h1 className="text-3xl font-semibold">Monitor Driver's Attendance</h1>
           <p className="text-[14px] text-black/70 mt-1">
             Monitor and manage your drivers' attendance records
           </p>

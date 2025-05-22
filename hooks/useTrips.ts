@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -7,7 +7,7 @@ import { Trip } from '@/types';
 import { serializeData } from '@/lib/serializeData';
 
 export function useTrips() {
-  const [unassignedTrips, setUnassignedTrips] = useState<Trip[]>([]);
+  const [readyToShipTrips, setReadyToShipTrips] = useState<Trip[]>([]);
   const [activeTrips, setActiveTrips] = useState<Trip[]>([]);
   const [pastTrips, setPastTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -22,7 +22,7 @@ export function useTrips() {
       const unsubscribe = onSnapshot(
         tripsRef,
         (snapshot) => {
-          const unassigned: Trip[] = [];
+          const readyToShip: Trip[] = [];
           const active: Trip[] = [];
           const past: Trip[] = [];
 
@@ -39,14 +39,14 @@ export function useTrips() {
               numberOfStops: serializedData.numberOfStops,
               startDate: serializedData.startDate,
               truck: serializedData.truck,
-              type: serializedData.type || 'unassigned',
+              type: serializedData.type || 'ready to ship',
               currentStatus: serializedData.currentStatus || undefined,
             };
 
             // Categorize trips based on type
             switch (trip.type) {
-              case 'unassigned':
-                unassigned.push(trip);
+              case 'ready to ship':
+                readyToShip.push(trip);
                 break;
               case 'active':
                 active.push(trip);
@@ -55,11 +55,11 @@ export function useTrips() {
                 past.push(trip);
                 break;
               default:
-                unassigned.push(trip);
+                readyToShip.push(trip);
             }
           });
 
-          setUnassignedTrips(unassigned);
+          setReadyToShipTrips(readyToShip);
           setActiveTrips(active);
           setPastTrips(past);
           setIsLoading(false);
@@ -83,7 +83,7 @@ export function useTrips() {
   }, []);
 
   return {
-    unassignedTrips,
+    readyToShipTrips,
     activeTrips,
     pastTrips,
     isLoading,

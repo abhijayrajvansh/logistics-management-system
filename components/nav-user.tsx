@@ -29,12 +29,14 @@ import {
 } from '@/components/ui/sidebar';
 import { auth } from '@/firebase/auth';
 import { signOut } from 'firebase/auth';
+import useUsers from '@/hooks/useUsers';
+import { User } from '@/types';
 
 export function UserNavProfile() {
   const { isMobile } = useSidebar();
-  const { user } = useAuth();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { userData } = useAuth();
 
   const getUsername = (email: string | null | undefined) => {
     if (!email) return '';
@@ -70,9 +72,9 @@ export function UserNavProfile() {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="text-black truncate text-xs">{user?.displayName}</span>
+                <span className="text-black truncate text-xs">{userData?.displayName}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  ID: {getUsername(user?.email)}
+                  ID: {getUsername(userData?.email)}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -92,9 +94,9 @@ export function UserNavProfile() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="text-black truncate text-xs">{user?.displayName}</span>
+                  <span className="text-black truncate text-xs">{userData?.displayName}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    ID: {getUsername(user?.email)}
+                    ID: {getUsername(userData?.email)}
                   </span>
                 </div>
               </div>

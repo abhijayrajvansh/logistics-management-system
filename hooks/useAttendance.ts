@@ -96,7 +96,7 @@ export function useAttendance() {
     const totalAbsent = currentMonthAttendance.filter((day) => day.status === 'Absent').length;
     const totalDays = currentMonthAttendance.length;
     const attendancePercentage = totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0;
-    const driverName = driver.driverName;
+    const driverName = driver?.driverName || "Unknown Driver";
 
     return {
       ...record,

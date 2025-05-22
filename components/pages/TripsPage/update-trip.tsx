@@ -10,11 +10,13 @@ import {
   where,
   getDocs,
   addDoc,
+  setDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
-import { useDrivers } from '@/hooks/useDrivers';
 import { Driver, Order } from '@/types';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
+import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
 import { FaArrowRightLong } from 'react-icons/fa6';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import useTrucks from '@/hooks/useTrucks';
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -38,7 +41,8 @@ interface UpdateTripFormProps {
 }
 
 export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormProps) {
-  const { drivers, isLoading: isLoadingDrivers } = useDrivers();
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [associatedOrders, setAssociatedOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -58,12 +62,35 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const {trucks} = useTrucks();
 
-  const fetchAssociatedOrders = async (orderIds: string[]) => {
+  const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
-      const ordersPromises = orderIds.map((id) => getDoc(doc(db, 'orders', id)));
+      // Use the same document ID tripDocId to fetch from trip_orders collection
+      const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', tripDocId));
+      // console.log('Trip orders doc exists?', tripOrdersDoc.exists());
+      // console.log('Trip orders data:', tripOrdersDoc.data());
+
+      if (!tripOrdersDoc.exists()) {
+        // console.log('No trip_orders document found for tripDocId:', tripDocId);
+        return [];
+      }
+
+      // Get the orderIds array
+      const orderIds = tripOrdersDoc.data().orderIds || [];
+      // console.log('Found orderIds:', orderIds);
+
+      if (orderIds.length === 0) {
+        // console.log('No orderIds found in trip_orders document');
+        return [];
+      }
+
+      // Now fetch all the orders in parallel
+      // console.log('Fetching orders for IDs:', orderIds);
+      const ordersPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
       const orderDocs = await Promise.all(ordersPromises);
-      return orderDocs
+
+      const orders = orderDocs
         .filter((doc) => doc.exists())
         .map(
           (doc) =>
@@ -72,8 +99,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               ...doc.data(),
             }) as Order,
         );
+
+      // console.log('Successfully fetched orders:', orders);
+      return orders;
     } catch (error) {
-      console.error('Error fetching associated orders:', error);
+      console.error('Error in fetchAssociatedOrders:', error);
       return [];
     }
   };
@@ -98,15 +128,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   const fetchTripData = useCallback(async () => {
     try {
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         onCancel?.();
         return;
       }
+
+      // Create a structure similar to querySnapshot to maintain compatibility with the rest of the code
+      const querySnapshot = {
+        docs: [
+          {
+            data: () => tripDocSnap.data(),
+            id: tripDocSnap.id,
+          },
+        ],
+        empty: false,
+      };
 
       const tripDoc = querySnapshot.docs[0];
       const data = tripDoc.data();
@@ -152,7 +192,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         setSelectedOrderIds(orderIds);
 
         // Fetch the actual order documents
-        const associatedOrders = await fetchAssociatedOrders(orderIds);
+        const associatedOrders = await fetchAssociatedOrders(tripId);
         setAssociatedOrders(associatedOrders);
       }
 
@@ -175,15 +215,26 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     }
   }, [drivers, fetchTripData]);
 
+  useEffect(() => {
+    if (selectedDriver) {
+      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      setFormData((prevData) => ({
+        ...prevData,
+        driver: selectedDriver.id,
+        truck: truckRegNumber || '',
+      }));
+    }
+  }, [selectedDriver]);
+
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
       setSelectedDriver(driver);
       setFormData((prev) => ({
         ...prev,
-        driver: driver.id,
+        driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
-        truck: driver.driverTruckId || prev.truck,
+        truck: driver.assignedTruckId || 'Not Assigned', // Use assignedTruckId if available
       }));
     }
   };
@@ -199,6 +250,20 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       if (field === 'type') {
         // Handle type change and set appropriate currentStatus
         const newType = value as 'unassigned' | 'active' | 'past';
+
+        // Validate driver and truck assignment when changing to active
+        if (newType === 'active') {
+          if (
+            !prev.driver ||
+            prev.driver === 'Not Assigned' ||
+            !prev.truck ||
+            prev.truck === 'Not Assigned'
+          ) {
+            toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+            return prev; // Return previous state without changes
+          }
+        }
+
         return {
           ...prev,
           type: newType,
@@ -221,52 +286,83 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDriver) {
-      toast.error('Please select a driver');
-      return;
-    }
 
-    // Validate currentStatus for active trips
-    if (formData.type === 'active' && formData.currentStatus === 'NA') {
-      toast.error('Please select a valid status (Delivering or Returning) for active trip');
-      return;
+    // Only validate currentStatus for active trips
+    if (formData.type === 'active') {
+      if (
+        !formData.driver ||
+        formData.driver === 'Not Assigned' ||
+        !formData.truck ||
+        formData.truck === 'Not Assigned'
+      ) {
+        toast.error('Cannot set trip to active: Driver and truck must be assigned first');
+        return;
+      }
+      if (formData.currentStatus === 'NA') {
+        toast.error('Please select a valid status (Delivering or Returning) for active trip');
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
-      // Parse and validate form data
-      const validatedData = {
-        ...formData,
-        numberOfStops: parseInt(formData.numberOfStops),
-        startDate: new Date(formData.startDate),
-        updated_at: new Date(),
-      };
+      // Get current trip data to check for driver changes
+      const tripDocRef = doc(db, 'trips', tripId);
+      const tripDocSnap = await getDoc(tripDocRef);
 
-      // Find the document with the given tripId
-      const tripsRef = collection(db, 'trips');
-      const tripQuery = query(tripsRef, where('tripId', '==', tripId));
-      const querySnapshot = await getDocs(tripQuery);
-
-      if (querySnapshot.empty) {
+      if (!tripDocSnap.exists()) {
         toast.error('Trip not found');
         return;
       }
 
-      // Update the trip in Firestore
-      const tripDoc = querySnapshot.docs[0];
-      await updateDoc(doc(db, 'trips', tripDoc.id), validatedData);
+      const currentTripData = tripDocSnap.data();
+      const previousDriverId = currentTripData.driver;
 
-      // Update trip_orders
-      const tripOrdersRef = collection(db, 'trip_orders');
-      const tripOrdersQuery = query(tripOrdersRef, where('tripId', '==', tripId));
-      const tripOrdersSnapshot = await getDocs(tripOrdersQuery);
+      // Update trip data
+      const validatedData = {
+        ...formData,
+        numberOfStops: selectedOrderIds.length,
+        startDate: new Date(formData.startDate),
+        updated_at: new Date(),
+      };
+
+      // Update the trip in Firestore
+      await updateDoc(tripDocRef, validatedData);
+
+      // Handle driver status updates if driver assignment changed
+      if (previousDriverId !== formData.driver) {
+        // Handle previous driver: Set status back to Active
+        if (previousDriverId && previousDriverId !== 'Not Assigned') {
+          // Update previous driver's status
+          const prevDriverRef = doc(db, 'drivers', previousDriverId);
+          await updateDoc(prevDriverRef, {
+            status: 'Active',
+            updated_at: new Date(),
+          });
+        }
+
+        // Handle new driver: Set status to OnTrip
+        if (formData.driver && formData.driver !== 'Not Assigned') {
+
+          // Update new driver's status
+          const newDriverRef = doc(db, 'drivers', formData.driver);
+          await updateDoc(newDriverRef, {
+            status: 'On Trip',
+            updated_at: new Date(),
+          });
+        }
+      }
+
+
+      // Get current trip_orders document using the same ID as the trip document
+      const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
+      const tripOrdersSnap = await getDoc(tripOrdersDocRef);
 
       let previousOrderIds: string[] = [];
 
-      if (!tripOrdersSnapshot.empty) {
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        previousOrderIds = tripOrdersDoc.data().orderIds || [];
+      if (tripOrdersSnap.exists()) {
+        previousOrderIds = tripOrdersSnap.data().orderIds || [];
       }
 
       // Find orders to add and remove
@@ -292,23 +388,25 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       // Wait for all order status updates to complete
       await Promise.all([...addPromises, ...removePromises]);
 
-      // Update or create trip_orders document
-      if (tripOrdersSnapshot.empty) {
-        // Create new trip_orders document if there are selected orders
-        if (selectedOrderIds.length > 0) {
-          await addDoc(collection(db, 'trip_orders'), {
+      // Update or create trip_orders document using the same ID as the trip
+      if (selectedOrderIds.length > 0) {
+        if (tripOrdersSnap.exists()) {
+          // Update existing trip_orders document
+          await updateDoc(tripOrdersDocRef, {
+            orderIds: selectedOrderIds,
+            updatedAt: new Date(),
+          });
+        } else {
+          // Create new trip_orders document with same ID as trip
+          await setDoc(tripOrdersDocRef, {
             tripId,
             orderIds: selectedOrderIds,
             updatedAt: new Date(),
           });
         }
-      } else {
-        // Update existing trip_orders document
-        const tripOrdersDoc = tripOrdersSnapshot.docs[0];
-        await updateDoc(doc(db, 'trip_orders', tripOrdersDoc.id), {
-          orderIds: selectedOrderIds,
-          updatedAt: new Date(),
-        });
+      } else if (tripOrdersSnap.exists()) {
+        // If no orders selected and document exists, delete it
+        await deleteDoc(tripOrdersDocRef);
       }
 
       toast.success('Trip updated successfully!');
@@ -326,6 +424,44 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       setIsSubmitting(false);
     }
   };
+
+  // Load active drivers and current trip's driver
+  useEffect(() => {
+    const loadDrivers = async () => {
+      try {
+        setIsLoadingDrivers(true);
+        const activeDrivers = await fetchActiveDrivers();
+
+        // If this trip has a driver assigned, fetch their info too, even if not active
+        const tripDoc = await getDoc(doc(db, 'trips', tripId));
+        if (tripDoc.exists() && tripDoc.data().driver) {
+          const currentDriverId = tripDoc.data().driver;
+          const currentDriverDoc = await getDoc(doc(db, 'drivers', currentDriverId));
+
+          if (currentDriverDoc.exists()) {
+            const currentDriver = {
+              id: currentDriverDoc.id,
+              ...currentDriverDoc.data(),
+            } as Driver;
+
+            // Add current driver to list if not already included
+            if (!activeDrivers.find((d) => d.id === currentDriver.id)) {
+              activeDrivers.push(currentDriver);
+            }
+          }
+        }
+
+        setDrivers(activeDrivers);
+      } catch (error) {
+        console.error('Error loading drivers:', error);
+        toast.error('Failed to load drivers');
+      } finally {
+        setIsLoadingDrivers(false);
+      }
+    };
+
+    loadDrivers();
+  }, [tripId]);
 
   if (isLoading || isLoadingDrivers) {
     return <div className="py-8 text-center">Loading trip data...</div>;
@@ -358,10 +494,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           <div className="space-y-2">
             <Label htmlFor="numberOfStops">Number of Stops</Label>
             <Input
+              disabled={true}
               id="numberOfStops"
               type="number"
               placeholder="Enter number of stops"
-              value={formData.numberOfStops}
+              value={selectedOrderIds.length}
               onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
               required
               min="0"
@@ -389,17 +526,17 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               <SelectContent>
                 {drivers.map((driver) => (
                   <SelectItem key={driver.id} value={driver.id}>
-                    {driver.driverName} ({driver.driverTruckId || 'No Truck Assigned'})
+                    {driver.driverName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="truck">Truck Number</Label>
-            <Input
+            <Label htmlFor="truck">Vehicle Number</Label>
+            <Input disabled={true}
               id="truck"
-              placeholder="Enter truck number"
+              placeholder="Enter Vehicle number"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
@@ -428,7 +565,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                 <SelectValue placeholder="Select trip type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="past">Past</SelectItem>
               </SelectContent>
@@ -488,22 +625,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                               <span className="font-medium">{order.docket_id}:</span>
                               {order.client_details} <FaArrowRightLong /> {order.receiver_name},
                             </span>
-                            <span className="font-medium">TAT:</span>
+                            <span className="font-medium">Deadline:</span>
                             {(() => {
                               try {
-                                if (order.tat instanceof Date) {
-                                  return order.tat.toLocaleDateString();
+                                if (order.deadline instanceof Date) {
+                                  return order.deadline.toLocaleDateString();
                                 }
                                 if (
-                                  typeof order.tat === 'object' &&
-                                  order.tat &&
-                                  'seconds' in order.tat
+                                  typeof order.deadline === 'object' &&
+                                  order.deadline &&
+                                  'seconds' in order.deadline
                                 ) {
                                   return new Date(
-                                    (order.tat as any).seconds * 1000,
+                                    (order.deadline as any).seconds * 1000,
                                   ).toLocaleDateString();
                                 }
-                                return new Date(order.tat as string).toLocaleDateString();
+                                return new Date(order.deadline as string).toLocaleDateString();
                               } catch (error) {
                                 return 'Invalid Date';
                               }
@@ -540,22 +677,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                               <span className="font-medium">{order.docket_id}:</span>
                               {order.client_details} <FaArrowRightLong /> {order.receiver_name},
                             </span>
-                            <span className="font-medium">TAT:</span>
+                            <span className="font-medium">Dealine:</span>
                             {(() => {
                               try {
-                                if (order.tat instanceof Date) {
-                                  return order.tat.toLocaleDateString();
+                                if (order.deadline instanceof Date) {
+                                  return order.deadline.toLocaleDateString();
                                 }
                                 if (
-                                  typeof order.tat === 'object' &&
-                                  order.tat &&
-                                  'seconds' in order.tat
+                                  typeof order.deadline === 'object' &&
+                                  order.deadline &&
+                                  'seconds' in order.deadline
                                 ) {
                                   return new Date(
-                                    (order.tat as any).seconds * 1000,
+                                    (order.deadline as any).seconds * 1000,
                                   ).toLocaleDateString();
                                 }
-                                return new Date(order.tat as string).toLocaleDateString();
+                                return new Date(order.deadline as string).toLocaleDateString();
                               } catch (error) {
                                 return 'Invalid Date';
                               }

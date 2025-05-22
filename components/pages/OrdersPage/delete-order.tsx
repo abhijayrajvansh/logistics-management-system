@@ -16,14 +16,26 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
+interface Order {
+  to_be_transferred?: boolean;
+  status?: string;
+}
+
 interface DeleteOrderProps {
   orderId: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  order?: Order; // Add order prop to check transfer status
 }
 
-export function DeleteOrderDialog({ orderId, isOpen, onClose, onSuccess }: DeleteOrderProps) {
+export function DeleteOrderDialog({
+  orderId,
+  isOpen,
+  onClose,
+  onSuccess,
+  order,
+}: DeleteOrderProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -31,6 +43,12 @@ export function DeleteOrderDialog({ orderId, isOpen, onClose, onSuccess }: Delet
 
     setIsDeleting(true);
     try {
+      // Check if order is being transferred and in transit
+      if (order?.to_be_transferred && order?.status === 'In Transit') {
+        toast.error('Cannot delete an order that is being transferred');
+        return;
+      }
+
       // Delete the order document from Firestore
       await deleteDoc(doc(db, 'orders', orderId));
 

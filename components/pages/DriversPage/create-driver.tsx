@@ -16,21 +16,28 @@ import { createNewUser, createUserWebhook } from '@/firebase/auth/createUserWebh
 import { db } from '@/firebase/database';
 import { getUniqueVerifiedDriverId } from '@/lib/createUniqueDriverId';
 import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
-import { Driver, DriverDocuments } from '@/types';
+import { Driver, DriverDocuments, EmergencyContact, LeaveBalance, ReferredBy, User } from '@/types';
 import { IconLoader } from '@tabler/icons-react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import useTrucks from '@/hooks/useTrucks';
+import { ReferralBySelector } from './ReferralBySelector';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
+// Add this helper at the top of the file
+function isDriverDocuments(docs: Driver['driverDocuments']): docs is DriverDocuments {
+  return docs !== 'NA';
+}
+
 export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps) {
+  const { trucks } = useTrucks();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
-  // Add validation state for required documents
   const [validDocuments, setValidDocuments] = useState<{ [key: string]: boolean }>({
     aadhar_front: false,
     aadhar_back: false,
@@ -38,12 +45,15 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     medicalCertificate: false,
     dob_certificate: false,
   });
-  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId'>>({
+  const [formData, setFormData] = useState<Omit<Driver, 'id' | 'driverId' | 'leaveBalance'>>({
     driverName: '',
     phoneNumber: '',
     languages: [] as string[],
-    driverTruckId: '',
+    wheelsCapability: 'NA',
+    assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
+    emergencyContact: 'NA',
+    referredBy: 'NA',
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -69,23 +79,43 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     }));
   };
 
-  const handleInputChange = (field: string, value: string | Date) => {
+  const handleInputChange = (field: string, value: string | number | Date) => {
     setFormData((prev) => {
       if (field.startsWith('driverDocuments.')) {
         const [_, documentField] = field.split('.');
+        const currentDocs = isDriverDocuments(prev.driverDocuments)
+          ? prev.driverDocuments
+          : {
+              aadhar_front: '',
+              aadhar_back: '',
+              aadhar_number: '',
+              dob: new Date(),
+              dob_certificate: '',
+              license: '',
+              license_number: '',
+              license_expiry: new Date(),
+              medicalCertificate: '',
+              status: 'Pending' as const,
+            };
+
         return {
           ...prev,
           driverDocuments: {
-            ...prev.driverDocuments,
+            ...currentDocs,
             [documentField]: value,
-          } as DriverDocuments,
+          },
         };
       }
-      return {
-        ...prev,
-        [field]: value,
-      };
+      return { ...prev, [field]: value };
     });
+  };
+
+  // Add these helper functions inside CreateDriverForm component
+  const getDocumentFieldValue = (field: keyof DriverDocuments): string => {
+    if (!isDriverDocuments(formData.driverDocuments)) return '';
+    const value = formData.driverDocuments[field];
+    if (value instanceof Date) return value.toISOString().split('T')[0];
+    return value || '';
   };
 
   const handleFileChange = (field: string, file: File | null) => {
@@ -169,17 +199,38 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         dob_certificate_url,
       ] = documentUploads;
 
+      // driver's default leave balance while onboading
+      const leaveBalance: LeaveBalance = {
+        currentMonthLeaves: 4,
+        transferredLeaves: 0,
+        cycleMonth: 1,
+      };
+
       const driverData = {
         driverId,
         ...formData,
-        driverDocuments: {
-          ...formData.driverDocuments,
-          aadhar_front: aadhar_front_url || '',
-          aadhar_back: aadhar_back_url || '',
-          license: license_url || '',
-          medicalCertificate: medical_certificate_url || '',
-          dob_certificate: dob_certificate_url || '',
-        },
+        leaveBalance,
+        driverDocuments: isDriverDocuments(formData.driverDocuments)
+          ? {
+              ...formData.driverDocuments,
+              aadhar_front: aadhar_front_url || '',
+              aadhar_back: aadhar_back_url || '',
+              license: license_url || '',
+              medicalCertificate: medical_certificate_url || '',
+              dob_certificate: dob_certificate_url || '',
+            }
+          : {
+              aadhar_front: aadhar_front_url || '',
+              aadhar_back: aadhar_back_url || '',
+              aadhar_number: '',
+              dob: new Date(),
+              dob_certificate: dob_certificate_url || '',
+              license: license_url || '',
+              license_number: '',
+              license_expiry: new Date(),
+              medicalCertificate: medical_certificate_url || '',
+              status: 'Pending' as const,
+            },
       };
 
       // Generate random 6-digit password
@@ -211,8 +262,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         driverName: '',
         phoneNumber: '',
         languages: [],
-        driverTruckId: '',
+        wheelsCapability: 'NA',
+        assignedTruckId: 'NA',
         status: 'Inactive',
+        emergencyContact: 'NA',
+        referredBy: 'NA',
         driverDocuments: {
           aadhar_front: '',
           aadhar_back: '',
@@ -238,6 +292,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
   return (
     <form onSubmit={handleSubmit}>
       <div className="grid gap-6 py-4">
+        {/* Basic Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="driverName">Driver Name</Label>
@@ -262,6 +317,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
         </div>
 
+        {/* Additional Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="language">Languages</Label>
@@ -298,19 +354,72 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="driverTruckId">Truck ID (Optional)</Label>
-            <Input
-              id="driverTruckId"
-              placeholder="Enter truck ID"
-              value={formData.driverTruckId}
-              onChange={(e) => handleInputChange('driverTruckId', e.target.value)}
-            />
+            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
+            <Select
+              value={
+                !formData.wheelsCapability || formData.wheelsCapability === 'NA'
+                  ? 'NA'
+                  : formData.wheelsCapability[0]
+              }
+              onValueChange={(value) => {
+                if (value === 'NA') {
+                  setFormData((prev) => ({ ...prev, wheelsCapability: 'NA' }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    wheelsCapability:
+                      !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                        ? [value]
+                        : prev.wheelsCapability.includes(value)
+                          ? prev.wheelsCapability.filter((w) => w !== value)
+                          : [...prev.wheelsCapability, value],
+                  }));
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select wheels capability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NA">Not Specified</SelectItem>
+                {['3', '4', '6', '8', '10', '12', '14', '16', '18', '20'].map((wheels) => (
+                  <SelectItem key={wheels} value={wheels}>
+                    {wheels} Wheeler
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formData.wheelsCapability && formData.wheelsCapability !== 'NA' && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.wheelsCapability.map((wheel, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {wheel} Wheeler
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          wheelsCapability:
+                            !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                              ? ['3']
+                              : prev.wheelsCapability.filter((_, i) => i !== index),
+                        }));
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="space-y-2 w-full">
+
+          <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
-              value={formData.status || 'Inactive'}
-              onValueChange={(value) => handleInputChange('status', value)}
+              value={formData.status}
+              onValueChange={(value: Driver['status']) => handleInputChange('status', value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select driver status" />
@@ -318,14 +427,15 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
               <SelectContent>
                 <SelectItem value="Active">Active</SelectItem>
                 <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="OnLeave">On Leave</SelectItem>
-                <SelectItem value="OnTrip">On Trip</SelectItem>
+                <SelectItem value="On Leave">On Leave</SelectItem>
+                <SelectItem value="On Trip">On Trip</SelectItem>
                 <SelectItem value="Suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
+        {/* Documents Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -379,7 +489,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="aadhar_number"
                 placeholder="Enter Aadhar number"
                 required
-                value={formData.driverDocuments?.aadhar_number}
+                value={getDocumentFieldValue('aadhar_number')}
                 onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
               />
             </div>
@@ -410,7 +520,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 id="license_number"
                 placeholder="Enter license number"
                 required
-                value={formData.driverDocuments?.license_number}
+                value={getDocumentFieldValue('license_number')}
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_number', e.target.value)
                 }
@@ -426,11 +536,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 onChange={(e) =>
                   handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
                 }
-                value={
-                  formData.driverDocuments?.license_expiry instanceof Date
-                    ? formData.driverDocuments.license_expiry.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('license_expiry')}
               />
             </div>
 
@@ -463,11 +569,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 type="date"
                 required
                 onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
-                value={
-                  formData.driverDocuments?.dob instanceof Date
-                    ? formData.driverDocuments.dob.toISOString().split('T')[0]
-                    : ''
-                }
+                value={getDocumentFieldValue('dob')}
               />
             </div>
 
@@ -496,7 +598,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
             <div className="space-y-2">
               <Label htmlFor="documentStatus">Document Status</Label>
               <Select
-                value={formData.driverDocuments?.status}
+                value={
+                  isDriverDocuments(formData.driverDocuments)
+                    ? formData.driverDocuments.status
+                    : 'Pending'
+                }
                 onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
               >
                 <SelectTrigger className="w-full">
@@ -509,6 +615,157 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
               </Select>
             </div>
           </div>
+        </div>
+
+        {/* Truck Assignment Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Truck Assignment</h3>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="assignedTruckId">Assign Truck</Label>
+              <Select
+                value={formData.assignedTruckId}
+                onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select truck" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">Not Assigned</SelectItem>
+                  {trucks.map((truck) => (
+                    <SelectItem key={truck.id} value={truck.id}>
+                      {truck.regNumber} ({truck.axleConfig})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emergency_name">Name</Label>
+              <Input
+                id="emergency_name"
+                placeholder="Emergency contact name"
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact: name
+                      ? {
+                          name,
+                          number:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).number
+                              : '',
+                          residencyAddress:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyAddress
+                              : '',
+                          residencyProof:
+                            prev.emergencyContact !== 'NA'
+                              ? (prev.emergencyContact as EmergencyContact).residencyProof
+                              : '',
+                        }
+                      : 'NA',
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).name
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency_number">Phone Number</Label>
+              <Input
+                id="emergency_number"
+                placeholder="Emergency contact number"
+                onChange={(e) => {
+                  const number = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            number,
+                          }
+                        : {
+                            name: '',
+                            number,
+                            residencyAddress: '',
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).number
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="emergency_address">Residency Address</Label>
+              <Input
+                id="emergency_address"
+                placeholder="Enter complete residency address"
+                onChange={(e) => {
+                  const residencyAddress = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    emergencyContact:
+                      prev.emergencyContact !== 'NA'
+                        ? {
+                            ...(prev.emergencyContact as EmergencyContact),
+                            residencyAddress,
+                          }
+                        : {
+                            name: '',
+                            number: '',
+                            residencyAddress,
+                            residencyProof: '',
+                          },
+                  }));
+                }}
+                value={
+                  formData.emergencyContact !== 'NA'
+                    ? (formData.emergencyContact as EmergencyContact).residencyAddress
+                    : ''
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="residency_proof">Residency Proof</Label>
+              <Input
+                id="residency_proof"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    const file = e.target.files[0];
+                    handleFileChange('residency_proof', file);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
+          <ReferralBySelector
+            value={formData.referredBy || 'NA'}
+            onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
+          />
         </div>
 
         <div className="flex justify-end gap-4 pt-4">

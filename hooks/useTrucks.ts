@@ -1,31 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Truck } from '@/types';
 
 export function useTrucks() {
   const [trucks, setTrucks] = useState<Truck[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    setIsLoading(true);
-
     try {
-      // Set up real-time listener for trucks collection
       const trucksRef = collection(db, 'trucks');
       const unsubscribe = onSnapshot(
         trucksRef,
         (snapshot) => {
           const fetchedTrucks = snapshot.docs.map((doc) => {
             const data = doc.data();
-
-            const truckResponse = {
+            return {
               id: doc.id,
               ...data,
+              insuranceExpiry: data.insuranceExpiry?.toDate(),
+              permitExpiry: data.permitExpiry?.toDate(),
             } as Truck;
-
-            return truckResponse;
           });
 
           setTrucks(fetchedTrucks);
@@ -38,7 +34,6 @@ export function useTrucks() {
         },
       );
 
-      // Clean up listener on unmount
       return () => {
         unsubscribe();
       };

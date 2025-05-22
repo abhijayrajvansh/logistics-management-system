@@ -18,6 +18,7 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
     receiverName: '',
     receiverDetails: '',
     receiverContact: '',
+    pincode: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +44,7 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
         receiverName: formData.receiverName,
         receiverDetails: formData.receiverDetails,
         receiverContact: formData.receiverContact,
+        pincode: formData.pincode,
         created_at: new Date(),
       });
 
@@ -55,6 +57,7 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
         receiverName: '',
         receiverDetails: '',
         receiverContact: '',
+        pincode: '',
       });
 
       // Call onSuccess callback if provided
@@ -108,6 +111,17 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="pincode">Pincode</Label>
+          <Input
+            id="pincode"
+            placeholder="Enter pincode"
+            value={formData.pincode}
+            onChange={(e) => handleInputChange('pincode', e.target.value)}
+            required
+          />
+        </div>
+
         <div className="flex justify-between">
           <Button
             type="button"
@@ -117,6 +131,7 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
                 receiverName: '',
                 receiverDetails: '',
                 receiverContact: '',
+                pincode: '',
               });
             }}
           >

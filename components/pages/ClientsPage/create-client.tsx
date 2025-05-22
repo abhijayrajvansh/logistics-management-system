@@ -24,7 +24,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
   const [formData, setFormData] = useState({
     clientName: '',
     clientDetails: '',
-    current_tat: '',
+    pincode: '',
     rateCard: {
       preferance: '',
       pricePerPref: '',
@@ -61,9 +61,10 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
       const rateCard: ClientRateCard = {
         preferance: formData.rateCard.preferance as 'By Weight' | 'Per Boxes',
         pricePerPref: parseFloat(formData.rateCard.pricePerPref),
-        minPriceWeight: formData.rateCard.preferance === 'By Weight'
-          ? parseFloat(formData.rateCard.minPriceWeight) || 0 // Convert to number or use 0 if empty
-          : 'NA'
+        minPriceWeight:
+          formData.rateCard.preferance === 'By Weight'
+            ? parseFloat(formData.rateCard.minPriceWeight) || 0
+            : 'NA',
       };
 
       // Validate required fields for By Weight option
@@ -81,7 +82,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
         clientId,
         clientName: formData.clientName,
         clientDetails: formData.clientDetails,
-        current_tat: new Date(formData.current_tat),
+        pincode: formData.pincode,
         rateCard,
         created_at: new Date(),
       });
@@ -94,7 +95,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
       setFormData({
         clientName: '',
         clientDetails: '',
-        current_tat: '',
+        pincode: '',
         rateCard: {
           preferance: '',
           pricePerPref: '',
@@ -144,13 +145,12 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="current_tat">Current TAT</Label>
+            <Label htmlFor="pincode">Pincode</Label>
             <Input
-              id="current_tat"
-              type="date"
-              placeholder="Select TAT date"
-              value={formData.current_tat}
-              onChange={(e) => handleInputChange('current_tat', e.target.value)}
+              id="pincode"
+              placeholder="Enter pincode"
+              value={formData.pincode}
+              onChange={(e) => handleInputChange('pincode', e.target.value)}
               required
             />
           </div>
@@ -205,7 +205,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
               setFormData({
                 clientName: '',
                 clientDetails: '',
-                current_tat: '',
+                pincode: '',
                 rateCard: {
                   preferance: '',
                   pricePerPref: '',

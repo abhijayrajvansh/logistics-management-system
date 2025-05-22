@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useState, useEffect, useCallback } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { Badge } from '@/components/ui/badge';
-import { Driver } from '@/types';
+import { Driver, ReferredBy } from '@/types';
 import { UpdateDriverForm } from './update-driver';
 import { DeleteDriverDialog } from './delete-driver';
 import { db } from '@/firebase/database';
@@ -16,6 +16,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import useTrucks from '@/hooks/useTrucks';
+import useUsers from '@/hooks/useUsers';
+import { ViewDriverDetails } from './ViewDriverDetails';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row, table }: { row: any; table: any }) => {
@@ -34,6 +37,7 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
   return (
     <>
       <div className="text-center space-x-2">
+        <ViewDriverDetails driver={driver} />
         <button
           className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
           onClick={() => setIsEditDialogOpen(true)}
@@ -81,9 +85,9 @@ const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
       case 'Active':
         return 'bg-green-100 text-green-800 border-green-500';
-      case 'OnTrip':
+      case 'On Trip':
         return 'bg-blue-100 text-blue-800 border-blue-500';
-      case 'OnLeave':
+      case 'On Leave':
         return 'bg-yellow-100 text-yellow-800 border-yellow-500';
       case 'Suspended':
         return 'bg-red-100 text-red-800 border-red-500';
@@ -105,7 +109,7 @@ const PasswordCell = ({ driverId }: { driverId: string }) => {
     try {
       const userDocRef = doc(db, 'users', driverId);
       const userDocSnap = await getDoc(userDocRef);
-      
+
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         setPassword(userData.password);
@@ -123,6 +127,36 @@ const PasswordCell = ({ driverId }: { driverId: string }) => {
   }, [fetchPassword]);
 
   return <span className="text-sm text-gray-500">{password}</span>;
+};
+
+// Add TruckCell component before the columns definition
+const TruckCell = ({ truckId }: { truckId: string }) => {
+  const { trucks } = useTrucks();
+
+  if (truckId === 'NA') return <span>Not Assigned</span>;
+
+  const truck = trucks.find((t) => t.id === truckId);
+  return <span>{truck ? truck.regNumber : truckId}</span>;
+};
+
+// Add ReferrerCell component before columns definition
+const ReferrerCell = ({ referral }: { referral: ReferredBy | 'NA' }) => {
+  const { users } = useUsers();
+
+  if (referral === 'NA') {
+    return (
+      <Badge variant="outline" className="bg-gray-100 text-gray-800">
+        Self
+      </Badge>
+    );
+  }
+
+  const referrer = users.find((user) => user.userId === referral?.userId);
+  return (
+    <Badge variant="default" className="bg-gray-100 text-gray-800">
+      {referrer?.displayName || 'Self'}
+    </Badge>
+  );
 };
 
 export const columns: ColumnDef<Driver>[] = [
@@ -143,8 +177,12 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Name',
   },
   {
-    accessorKey: 'driverTruckId',
+    accessorKey: 'assignedTruckId',
     header: 'Assigned Truck',
+    cell: ({ row }) => {
+      const truckId = row.getValue('assignedTruckId') as string;
+      return <TruckCell truckId={truckId} />;
+    },
   },
   {
     accessorKey: 'status',
@@ -175,11 +213,59 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Phone',
   },
   {
+    accessorKey: 'wheelsCapability',
+    header: 'Wheels',
+    cell: ({ row }) => {
+      const wheels = row.getValue('wheelsCapability');
+
+      // Return early for NA or undefined cases
+      if (!wheels || wheels === 'NA') {
+        return <span>Not Specified</span>;
+      }
+
+      // Ensure we're working with an array
+      const wheelsArray = Array.isArray(wheels) ? wheels : [];
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {wheelsArray.map((wheel, index) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {wheel} Wheeler
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'emergencyContact',
+    header: 'Emergency Contact',
+    cell: ({ row }) => {
+      const contact = row.getValue('emergencyContact');
+      return (
+        <Badge
+          variant="outline"
+          className={contact === 'NA' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+        >
+          {contact === 'NA' ? 'Not Found' : 'Provided'}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'referredBy',
+    header: 'Referred By',
+    cell: ({ row }) => {
+      const referral = row.getValue('referredBy') as ReferredBy | 'NA';
+      return <ReferrerCell referral={referral} />;
+    },
+  },
+  {
     accessorKey: 'driverDocuments',
     header: 'Documents Status',
     cell: ({ row }) => {
-      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || undefined;
-      const status = docs?.status || 'Pending';
+      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || 'NA';
+      const status = docs === 'NA' ? 'Pending' : docs.status;
       return (
         <Badge
           variant="outline"

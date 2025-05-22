@@ -285,9 +285,9 @@ export function DataTable<TData, TValue>({
         </Dialog>
       </div>
 
-      {/* Unassigned Trips Section */}
+      {/* Ready to Ship Trips Section */}
       <div className="flex flex-col gap-4 px-4 lg:px-6">
-        <h2 className="text-xl font-semibold">Unassigned Trips</h2>
+        <h2 className="text-xl font-semibold">Ready to Ship Trips</h2>
         {renderTable(table)}
         {renderPagination(table)}
       </div>
