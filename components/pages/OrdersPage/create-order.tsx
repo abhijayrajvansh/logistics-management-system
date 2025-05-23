@@ -141,95 +141,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     }
   };
 
-  const calculatePrice = (
-    client: any,
-    boxesCount: string,
-    weight: string,
-    dimensions: string = formData.dimensions,
-  ) => {
-    let calculatedPrice = 0;
-    const docketPrice = parseFloat(formData.docket_price || '0');
-
-    // Client preference pricing
-    if (pricingMethod === 'clientPreference' && client?.rateCard) {
-      const chargeBasis = client.rateCard.preferance;
-
-      if (chargeBasis === 'Per Units' && boxesCount) {
-        // Calculate price based on boxes
-        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        calculatedPrice = parseInt(boxesCount) * pricePerBox;
-      } else if (chargeBasis === 'By Weight' && weight) {
-        // Calculate price based on weight
-        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        const minPriceWeight =
-          client.rateCard.minPriceWeight !== 'NA'
-            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
-            : 0;
-
-        calculatedPrice = parseInt(weight) * pricePerKg;
-
-        // If calculated price is less than minimum price weight, use minimum price weight
-        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
-          calculatedPrice = minPriceWeight;
-        }
-      }
-    }
-    // Volumetric pricing - fix the implementation
-    else if (pricingMethod === 'volumetric') {
-      if (dimensions && boxesCount) {
-        try {
-          // Parse dimensions (format: LxWxH in cm)
-          // Handle different possible formats (L x W x H or LxWxH)
-          const dimensionValues = dimensions
-            .split(/[xX×\s]+/)
-            .filter(Boolean)
-            .map((dim) => parseFloat(dim));
-
-          // Make sure we got 3 dimensions
-          if (dimensionValues.length >= 3) {
-            const [length, width, height] = dimensionValues;
-
-            if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
-              // Calculate volume in cubic cm
-              const volumePerBox = length * width * height;
-              const totalVolume = volumePerBox * parseInt(boxesCount || '0');
-
-              // Calculate price based on volume
-              calculatedPrice = totalVolume * PRICE_PER_VOLUME;
-
-              // Round to 2 decimal places for better display
-              calculatedPrice = Math.round(calculatedPrice * 100) / 100;
-            } else {
-              console.error('Found NaN in dimensions:', length, width, height);
-            }
-          } else {
-            console.error('Invalid dimensions format. Expected LxWxH. Got:', dimensionValues);
-          }
-        } catch (error) {
-          console.error('Error calculating volumetric price:', error);
-        }
-      } else {
-        console.error('Missing required data for volumetric pricing:');
-        console.error('- Dimensions:', dimensions);
-        console.error('- Box count:', boxesCount);
-      }
-    }
-
-    // Calculate total price based on GST status
-    let totalPrice = docketPrice + calculatedPrice;
-
-    // If GST is excluded and there's a GST amount, add it to the total
-    if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
-      totalPrice += formData.GST_amount;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
-      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
-    }));
-  };
-
   const handleReceiverChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
@@ -262,29 +173,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       ...prev,
       [field]: value,
     }));
-
-    // // Recalculate price when boxes count, weight, or dimensions change
-    // if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
-    //   // For client preference pricing
-    //   if (pricingMethod === 'clientPreference' && selectedClient) {
-    //     const client = clients.find((c) => c.id === selectedClient);
-    //     calculatePrice(
-    //       client,
-    //       field === 'total_boxes_count' ? value : formData.total_boxes_count,
-    //       field === 'total_order_weight' ? value : formData.total_order_weight,
-    //       field === 'dimensions' ? value : formData.dimensions,
-    //     );
-    //   }
-    //   // For volumetric pricing - don't need a client
-    //   else if (pricingMethod === 'volumetric') {
-    //     calculatePrice(
-    //       null,
-    //       field === 'total_boxes_count' ? value : formData.total_boxes_count,
-    //       field === 'total_order_weight' ? value : formData.total_order_weight,
-    //       field === 'dimensions' ? value : formData.dimensions,
-    //     );
-    //   }
-    // }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
