@@ -41,7 +41,7 @@ export function ReferralBySelector({ value, onChange }: ReferralBySelectorProps)
   const filteredUsers = users.filter((user) => value !== 'NA' && user.role === value.type);
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
         <Label htmlFor="referral_type">Referred By</Label>
         <Select
