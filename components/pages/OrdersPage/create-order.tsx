@@ -69,7 +69,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
-    GST: 'Excluded' as 'Included' | 'Excluded', // Add GST field with default value
+    GST: 'Included' as 'Included' | 'Excluded', // Add GST field with default value
     status: 'Ready To Transport',
     to_be_transferred: false,
     transfer_center_location: 'NA',
