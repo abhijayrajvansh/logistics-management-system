@@ -298,7 +298,7 @@ export const columns: ColumnDef<Order>[] = [
   },
   {
     accessorKey: 'lr_no',
-    header: 'LR No',
+    header: 'Client Doc No',
   },
   {
     accessorKey: 'tat',

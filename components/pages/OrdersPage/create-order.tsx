@@ -537,10 +537,10 @@ useEffect(() => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lr_no">LR Number</Label>
+            <Label htmlFor="lr_no">Client Doc Number</Label>
             <Input
               id="lr_no"
-              placeholder="Enter LR number"
+              placeholder="Enter Client Doc number"
               value={formData.lr_no}
               onChange={(e) => handleInputChange('lr_no', e.target.value)}
               required
