@@ -68,7 +68,9 @@ export default function ReceiversPage() {
             </div>
 
             {/* Receiver Data Table */}
-            <DataTable columns={columns} data={receivers} />
+            <div className='px-6'>
+              <DataTable columns={columns} data={receivers} />
+            </div>
           </div>
         </div>
       </div>
