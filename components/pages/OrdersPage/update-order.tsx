@@ -58,6 +58,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     total_price: '',
     invoice: '',
     GST: 'Excluded' as 'Included' | 'Excluded',
+    GST_amount: 'NA' as number | 'NA',
     status: '',
     payment_mode: '-',
     to_be_transferred: false,
@@ -115,6 +116,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             total_price: data.total_price?.toString() || '',
             invoice: data.invoice || '',
             GST: data.GST || 'Excluded',
+            GST_amount: data.GST_amount || 'NA',
             status: data.status || '',
             payment_mode: data.payment_mode || '-',
             to_be_transferred: data.to_be_transferred || false,
@@ -175,6 +177,97 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     }
   }, [formData.current_location, selectedClientPincode, selectedReceiverPincode, tats]);
 
+  // Add effect for price calculation
+  useEffect(() => {
+    // Skip calculation if required fields are missing
+    if (!formData.total_boxes_count && !formData.total_order_weight && !formData.dimensions) {
+      return;
+    }
+
+    // Get current client if using client preference
+    const client = selectedClient ? clients.find((c) => c.id === selectedClient) : null;
+
+    // Get current values for calculation
+    const docketPrice = parseFloat(formData.docket_price || '0');
+    let calculatedPrice = 0;
+
+    // Client preference pricing
+    if (pricingMethod === 'clientPreference' && client?.rateCard) {
+      const chargeBasis = client.rateCard.preferance;
+
+      if (chargeBasis === 'Per Units' && formData.total_boxes_count) {
+        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        calculatedPrice = parseInt(formData.total_boxes_count) * pricePerBox;
+      } else if (chargeBasis === 'By Weight' && formData.total_order_weight) {
+        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        const minPriceWeight =
+          client.rateCard.minPriceWeight !== 'NA'
+            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+            : 0;
+
+        calculatedPrice = parseInt(formData.total_order_weight) * pricePerKg;
+
+        // If calculated price is less than minimum price weight, use minimum price weight
+        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+          calculatedPrice = minPriceWeight;
+        }
+      }
+    }
+    // Volumetric pricing
+    else if (pricingMethod === 'volumetric' && formData.dimensions && formData.total_boxes_count) {
+      try {
+        // Parse dimensions (format: LxWxH in cm)
+        // Handle different possible formats (L x W x H or LxWxH)
+        const dimensionValues = formData.dimensions
+          .split(/[xX×\s]+/)
+          .filter(Boolean)
+          .map((dim) => parseFloat(dim));
+
+        // Make sure we got 3 dimensions
+        if (dimensionValues.length >= 3) {
+          const [length, width, height] = dimensionValues;
+
+          if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+            // Calculate volume in cubic cm
+            const volumePerBox = length * width * height;
+            const totalVolume = volumePerBox * parseInt(formData.total_boxes_count || '0');
+
+            // Calculate price based on volume
+            calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+
+            // Round to 2 decimal places for better display
+            calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating volumetric price:', error);
+      }
+    }
+
+    // Calculate total price including GST if applicable
+    let totalPrice = docketPrice + calculatedPrice;
+    if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
+      totalPrice += formData.GST_amount;
+    }
+
+    // Update form data with new prices
+    setFormData((prev) => ({
+      ...prev,
+      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
+    }));
+  }, [
+    formData.total_boxes_count,
+    formData.total_order_weight,
+    formData.dimensions,
+    formData.docket_price,
+    formData.GST,
+    formData.GST_amount,
+    pricingMethod,
+    selectedClient,
+    clients,
+  ]);
+
   const handleClientChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualClientEntry(true);
@@ -226,132 +319,11 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     }
   };
 
-  const calculatePrice = (
-    client: any,
-    boxesCount: string,
-    weight: string,
-    dimensions: string = formData.dimensions,
-  ) => {
-    let calculatedPrice = 0;
-    // Always use the latest docket price
-    const docketPrice = parseFloat(formData.docket_price || '0');
-
-    // Client preference pricing
-    if (pricingMethod === 'clientPreference' && client?.rateCard) {
-      const chargeBasis = client.rateCard.preferance;
-
-      if (chargeBasis === 'Per Units' && boxesCount) {
-        // Calculate price based on boxes
-        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        calculatedPrice = parseInt(boxesCount) * pricePerBox;
-      } else if (chargeBasis === 'By Weight' && weight) {
-        // Calculate price based on weight
-        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        const minPriceWeight =
-          client.rateCard.minPriceWeight !== 'NA'
-            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
-            : 0;
-
-        calculatedPrice = parseInt(weight) * pricePerKg;
-
-        // If calculated price is less than minimum price weight, use minimum price weight
-        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
-          calculatedPrice = minPriceWeight;
-        }
-      }
-    }
-    // Volumetric pricing
-    else if (pricingMethod === 'volumetric') {
-      if (dimensions && boxesCount) {
-        try {
-          // Parse dimensions (format: LxWxH in cm)
-          // Handle different possible formats (L x W x H or LxWxH)
-          const dimensionValues = dimensions
-            .split(/[xX×\s]+/)
-            .filter(Boolean)
-            .map((dim) => parseFloat(dim));
-
-          // Make sure we got 3 dimensions
-          if (dimensionValues.length >= 3) {
-            const [length, width, height] = dimensionValues;
-
-            if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
-              // Calculate volume in cubic cm
-              const volumePerBox = length * width * height;
-              const totalVolume = volumePerBox * parseInt(boxesCount || '0');
-
-              // Calculate price based on volume
-              calculatedPrice = totalVolume * PRICE_PER_VOLUME;
-
-              // Round to 2 decimal places for better display
-              calculatedPrice = Math.round(calculatedPrice * 100) / 100;
-            }
-          }
-        } catch (error) {
-          console.error('Error calculating volumetric price:', error);
-        }
-      }
-    }
-
-    // Calculate total price as sum of docket price and calculated price
-    const totalPrice = docketPrice + calculatedPrice;
-    // console.log('Update order - Updated calculations:');
-    // console.log('- Calculated price:', calculatedPrice);
-    // console.log('- Docket price:', docketPrice);
-    // console.log('- Total price:', totalPrice);
-
-    setFormData((prev) => ({
-      ...prev,
-      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
-      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
-    }));
-  };
-
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-
-    // Recalculate price when boxes count, weight, or dimensions change
-    if (
-      field === 'total_boxes_count' ||
-      field === 'total_order_weight' ||
-      field === 'dimensions' ||
-      field === 'docket_price'
-    ) {
-      // For client preference pricing
-      if (pricingMethod === 'clientPreference' && selectedClient) {
-        const client = clients.find((c: Client) => c.id === selectedClient);
-        calculatePrice(
-          client,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-      // For volumetric pricing - don't need a client
-      else if (pricingMethod === 'volumetric') {
-        calculatePrice(
-          null,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-    }
-
-    // If docket_price changes, recalculate the total price
-    if (field === 'docket_price') {
-      // For client preference pricing
-      if (pricingMethod === 'clientPreference' && selectedClient) {
-        const client = clients.find((c: Client) => c.id === selectedClient);
-        calculatePrice(client, formData.total_boxes_count, formData.total_order_weight);
-      } else if (pricingMethod === 'volumetric') {
-        // For volumetric pricing, we don't need a client
-        calculatePrice(null, formData.total_boxes_count, formData.total_order_weight);
-      }
-    }
   };
 
   const calculateTotalPrice = (docketPrice: string, calculatedPrice: string) => {
@@ -419,6 +391,15 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Add handleGSTAmountChange function to handle GST amount changes when GST is excluded
+  const handleGSTAmountChange = (value: string) => {
+    const amount = value === '' ? 0 : parseFloat(value);
+    setFormData((prev) => ({
+      ...prev,
+      GST_amount: amount,
+    }));
   };
 
   if (isLoading) {
@@ -955,7 +936,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         {/* GST Selection */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="gst">GST</Label>
             <RadioGroup
@@ -973,6 +954,17 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </div>
             </RadioGroup>
           </div>
+          {formData.GST === 'Excluded' && (
+            <div className="">
+              <Label className="mb-1">GST Amount</Label>
+              <Input
+                type="number"
+                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
+                onChange={(e) => handleGSTAmountChange(e.target.value)}
+                placeholder="Enter GST amount"
+              />
+            </div>
+          )}
         </div>
 
         {/* Add status selection */}
