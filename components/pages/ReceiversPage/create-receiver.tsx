@@ -6,6 +6,13 @@ import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { getUniqueVerifiedReceiverId } from '@/lib/createUniqueReceiverId';
 
@@ -18,6 +25,8 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
     receiverName: '',
     receiverDetails: '',
     receiverContact: '',
+    receiverCity: '',
+    receiverZone: '' as 'East' | 'West' | 'North' | 'South' | '',
     pincode: '',
   });
 
@@ -44,6 +53,8 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
         receiverName: formData.receiverName,
         receiverDetails: formData.receiverDetails,
         receiverContact: formData.receiverContact,
+        receiverCity: formData.receiverCity,
+        receiverZone: formData.receiverZone,
         pincode: formData.pincode,
         created_at: new Date(),
       });
@@ -57,6 +68,8 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
         receiverName: '',
         receiverDetails: '',
         receiverContact: '',
+        receiverCity: '',
+        receiverZone: '',
         pincode: '',
       });
 
@@ -100,6 +113,36 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="receiverCity">City</Label>
+            <Input
+              id="receiverCity"
+              placeholder="Enter city"
+              value={formData.receiverCity}
+              onChange={(e) => handleInputChange('receiverCity', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiverZone">Zone</Label>
+            <Select
+              value={formData.receiverZone}
+              onValueChange={(value) => handleInputChange('receiverZone', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a zone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="East">East</SelectItem>
+                <SelectItem value="West">West</SelectItem>
+                <SelectItem value="North">North</SelectItem>
+                <SelectItem value="South">South</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="receiverDetails">Receiver Details</Label>
           <Input
@@ -131,6 +174,8 @@ export function CreateReceiverForm({ onSuccess }: CreateReceiverFormProps) {
                 receiverName: '',
                 receiverDetails: '',
                 receiverContact: '',
+                receiverCity: '',
+                receiverZone: '',
                 pincode: '',
               });
             }}

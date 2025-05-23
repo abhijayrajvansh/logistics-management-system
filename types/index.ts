@@ -146,6 +146,8 @@ export type ReceiverDetails = {
   id: string;
   receiverId: string;
   receiverName: string;
+  receiverCity: string;
+  receiverZone: "East" | "West" | "North" | "South";
   receiverDetails: string;
   receiverContact: string;
   pincode: string;
