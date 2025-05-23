@@ -36,6 +36,7 @@ export type Order = {
   lr_no: string;
   payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
+  GST: "Included" | "Excluded";
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';

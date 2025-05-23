@@ -57,6 +57,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     calculated_price: '',
     total_price: '',
     invoice: '',
+    GST: 'Excluded' as 'Included' | 'Excluded',
     status: '',
     payment_mode: '-',
     to_be_transferred: false,
@@ -113,6 +114,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             calculated_price: data.calculated_price?.toString() || '',
             total_price: data.total_price?.toString() || '',
             invoice: data.invoice || '',
+            GST: data.GST || 'Excluded',
             status: data.status || '',
             payment_mode: data.payment_mode || '-',
             to_be_transferred: data.to_be_transferred || false,
@@ -379,6 +381,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         tat: parseInt(formData.tat), // Parse TAT as integer (hours)
         deadline: new Date(Date.now() + parseInt(formData.tat) * 60 * 60 * 1000), // Calculate deadline from TAT hours
         updated_at: new Date(),
+        GST: formData.GST, // Include GST in validated data
         proof_of_delivery: existingProofOfDelivery, // Use the stored proof_of_delivery value
       };
 
@@ -949,6 +952,27 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </Select>
             </div>
           )}
+        </div>
+
+        {/* GST Selection */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="gst">GST</Label>
+            <RadioGroup
+              value={formData.GST}
+              onValueChange={(value) => handleInputChange('GST', value)}
+              className="flex space-x-4 py-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Included" id="gst-included" />
+                <Label htmlFor="gst-included">Included</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Excluded" id="gst-excluded" />
+                <Label htmlFor="gst-excluded">Excluded</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </div>
 
         {/* Add status selection */}

@@ -69,6 +69,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
+    GST: 'Excluded' as 'Included' | 'Excluded', // Add GST field with default value
     status: 'Ready To Transport',
     to_be_transferred: false,
     transfer_center_location: 'NA',
@@ -370,6 +371,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         calculated_price: '',
         total_price: '',
         invoice: '', // Default value for the invoice enum
+        GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
         status: '',
         to_be_transferred: false,
         transfer_center_location: 'NA',
@@ -880,6 +882,26 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           )}
         </div>
 
+        {/* GST Radio Group */}
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="gst">GST</Label>
+          <RadioGroup
+            defaultValue="Excluded"
+            value={formData.GST}
+            onValueChange={(value) => handleInputChange('GST', value)}
+            className="flex space-x-4 py-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Included" id="gst-included" />
+              <Label htmlFor="gst-included">Included</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Excluded" id="gst-excluded" />
+              <Label htmlFor="gst-excluded">Excluded</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
         <div className="flex justify-between">
           <Button
             type="button"
@@ -907,6 +929,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 calculated_price: '',
                 total_price: '',
                 invoice: '',
+                GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
                 status: '',
                 to_be_transferred: false,
                 transfer_center_location: 'NA',

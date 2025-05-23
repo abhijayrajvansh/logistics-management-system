@@ -400,7 +400,6 @@ export const columns: ColumnDef<Order>[] = [
       );
     },
   },
-
   {
     accessorKey: 'payment_mode',
     header: 'Payment Mode',
@@ -429,15 +428,15 @@ export const columns: ColumnDef<Order>[] = [
   },
 
   {
-    accessorKey: 'proof_of_delivery',
-    header: 'Delivery Proof',
-    cell: ProofCell,
-  },
-
-  {
     accessorKey: 'proof_of_payment',
     header: 'Payment Proof',
     cell: PaymentProofCell,
+  },
+
+  {
+    accessorKey: 'proof_of_delivery',
+    header: 'Delivery Proof',
+    cell: ProofCell,
   },
 
   {
