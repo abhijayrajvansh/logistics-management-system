@@ -62,28 +62,28 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Driver Details</DialogTitle>
+            <DialogTitle className='text-2xl'>Driver Details</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Basic Information</h3>
+              <h3 className="text-lg font-semibold">Basic Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Driver ID</label>
+                  <label className="text-sm font-semibold">Driver ID</label>
                   <p className="text-sm text-muted-foreground">{driver.driverId}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Name</label>
+                  <label className="text-sm font-semibold">Name</label>
                   <p className="text-sm text-muted-foreground">{driver.driverName}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Phone Number</label>
+                  <label className="text-sm font-semibold">Phone Number</label>
                   <p className="text-sm text-muted-foreground">{driver.phoneNumber}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Status</label>
+                  <label className="text-sm font-semibold">Status</label>
                   <div>
                     <Badge
                       className={
@@ -107,10 +107,10 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
             {/* Capabilities */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Capabilities</h3>
+              <h3 className="text-lg font-semibold">Capabilities</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Languages</label>
+                  <label className="text-sm font-semibold">Languages</label>
                   <div className="flex gap-2 mt-1">
                     {driver.languages.map((lang, idx) => (
                       <Badge key={idx} variant="outline">
@@ -120,7 +120,7 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Wheels Capability</label>
+                  <label className="text-sm font-semibold">Wheels Capability</label>
                   <div className="flex gap-2 mt-1">
                     {!driver.wheelsCapability || driver.wheelsCapability === 'NA' ? (
                       <span className="text-sm text-muted-foreground">Not Specified</span>
@@ -138,37 +138,37 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
             {/* Documents */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Documents</h3>
+              <h3 className="text-lg font-semibold">Documents</h3>
               {!driver.driverDocuments || driver.driverDocuments === 'NA' ? (
                 <p className="text-sm text-muted-foreground">No documents provided</p>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Aadhar Number</label>
+                    <label className="text-sm font-semibold">Aadhar Number</label>
                     <p className="text-sm text-muted-foreground">
                       {driver.driverDocuments.aadhar_number}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">License Number</label>
+                    <label className="text-sm font-semibold">License Number</label>
                     <p className="text-sm text-muted-foreground">
                       {driver.driverDocuments.license_number}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Date of Birth</label>
+                    <label className="text-sm font-semibold">Date of Birth</label>
                     <p className="text-sm text-muted-foreground">
                       {getFormattedDate(driver.driverDocuments.dob)}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">License Expiry</label>
+                    <label className="text-sm font-semibold">License Expiry</label>
                     <p className="text-sm text-muted-foreground">
                       {getFormattedDate(driver.driverDocuments.license_expiry)}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Document Status</label>
+                    <label className="text-lg font-semibold">Document Status</label>
                     <Badge
                       className={
                         driver.driverDocuments.status === 'Verified'
@@ -241,30 +241,30 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
             {/* Emergency Contact */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Emergency Contact</h3>
+              <h3 className="text-lg font-semibold">Emergency Contact</h3>
               {!driver.emergencyContact || driver.emergencyContact === 'NA' ? (
                 <p className="text-sm text-muted-foreground">No emergency contact provided</p>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Name</label>
+                    <label className="text-sm font-semibold">Name</label>
                     <p className="text-sm text-muted-foreground">{driver.emergencyContact.name}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Phone Number</label>
+                    <label className="text-sm font-semibold">Phone Number</label>
                     <p className="text-sm text-muted-foreground">
                       {driver.emergencyContact.number}
                     </p>
                   </div>
                   <div className="col-span-2">
-                    <label className="text-sm font-medium">Residency Address</label>
+                    <label className="text-sm font-semibold">Residency Address</label>
                     <p className="text-sm text-muted-foreground">
                       {driver.emergencyContact.residencyAddress}
                     </p>
                   </div>
                   {driver.emergencyContact.residencyProof && (
                     <div>
-                      <label className="text-sm font-medium">Residency Proof</label>
+                      <label className="text-sm font-semibold">Residency Proof</label>
                       <a
                         href={driver.emergencyContact.residencyProof}
                         target="_blank"
@@ -281,14 +281,14 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
             {/* Assignment & Referral */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Assignment & Referral</h3>
+              <h3 className="text-lg font-semibold">Assignment & Referral</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Assigned Truck</label>
+                  <label className="text-sm font-semibold">Assigned Truck</label>
                   <p className="text-sm text-muted-foreground">{getTruckDetails()}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Referred By</label>
+                  <label className="text-sm font-semibold">Referred By</label>
                   <p className="text-sm text-muted-foreground">{getReferrerName()}</p>
                 </div>
               </div>
