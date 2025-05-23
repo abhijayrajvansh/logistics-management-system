@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import useClients from '@/hooks/useClients';
 import { Order } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
@@ -212,6 +213,21 @@ const ActionCell = ({ row }: { row: any }) => {
   );
 };
 
+// Create a component for the minimum weight cell to handle client rate card
+const MinWeightCell = ({ row }: { row: any }) => {
+  const { clients } = useClients();
+  const chargeBasis: string = row.getValue('charge_basis');
+  const clientDetails = row.getValue('client_details') as string;
+  const client = clients?.find((c: { clientName: string }) => c.clientName === clientDetails);
+  const minWeight = client?.rateCard?.minPriceWeight;
+
+  return (
+    <div className="text-left font-medium">
+      {chargeBasis === 'By Weight' && minWeight && minWeight !== 'NA' ? `${minWeight} kg` : 'NA'}
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Order>[] = [
   {
     id: 'select',
@@ -331,7 +347,11 @@ export const columns: ColumnDef<Order>[] = [
     accessorKey: 'charge_basis',
     header: 'Charge Basis',
   },
-
+  {
+    accessorKey: 'minimum_charged_weight',
+    header: 'Charged Weight',
+    cell: MinWeightCell,
+  },
   {
     accessorKey: 'docket_price',
     header: 'Docket Price',

@@ -26,6 +26,7 @@ export type Order = {
   docket_id: string;
   docket_price: number;
   charge_basis: string;
+  minimum_charged_weight: number; // from client rate card, if the charge basis is by weight preferance then this is the minimum weight for which the client will be charged
   client_details: string;
   created_at: Date;
   current_location: string;
