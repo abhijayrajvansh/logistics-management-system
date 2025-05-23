@@ -161,7 +161,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       const chargeBasis = client.rateCard.preferance;
       // console.log('Client Rate Card Preference:', chargeBasis);
 
-      if (chargeBasis === 'Per Boxes' && boxesCount) {
+      if (chargeBasis === 'Per Units' && boxesCount) {
         // Calculate price based on boxes
         const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
         calculatedPrice = parseInt(boxesCount) * pricePerBox;
@@ -535,11 +535,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="total_boxes_count">Total Boxes</Label>
+            <Label htmlFor="total_boxes_count">Total Units</Label>
             <Input
               id="total_boxes_count"
               type="number"
-              placeholder="Enter box count"
+              placeholder="Enter unit count"
               value={formData.total_boxes_count}
               onChange={(e) => handleInputChange('total_boxes_count', e.target.value)}
               required
@@ -582,7 +582,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+                <SelectItem value="Per Units">Per Units</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -675,7 +675,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                   if (client?.rateCard) {
                     const chargeBasis = client.rateCard.preferance;
 
-                    if (chargeBasis === 'Per Boxes' && boxesCount) {
+                    if (chargeBasis === 'Per Units' && boxesCount) {
                       const pricePerBox = parseFloat(
                         client.rateCard.pricePerPref?.toString() || '0',
                       );

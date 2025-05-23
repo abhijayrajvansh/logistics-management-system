@@ -134,7 +134,7 @@ export type Client = {
 };
 
 export type ClientRateCard = {
-  preferance: 'By Weight' | 'Per Boxes';
+  preferance: 'By Weight' | 'Per Units';
   pricePerPref: number;
   minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };

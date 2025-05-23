@@ -238,7 +238,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     if (pricingMethod === 'clientPreference' && client?.rateCard) {
       const chargeBasis = client.rateCard.preferance;
 
-      if (chargeBasis === 'Per Boxes' && boxesCount) {
+      if (chargeBasis === 'Per Units' && boxesCount) {
         // Calculate price based on boxes
         const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
         calculatedPrice = parseInt(boxesCount) * pricePerBox;
@@ -605,7 +605,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+                <SelectItem value="Per Units">Per Units</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -695,7 +695,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
                   if (client?.rateCard) {
                     const chargeBasis = client.rateCard.preferance;
 
-                    if (chargeBasis === 'Per Boxes' && boxesCount) {
+                    if (chargeBasis === 'Per Units' && boxesCount) {
                       const pricePerBox = parseFloat(
                         client.rateCard.pricePerPref?.toString() || '0',
                       );

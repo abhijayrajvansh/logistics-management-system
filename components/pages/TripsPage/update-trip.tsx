@@ -645,7 +645,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                                 return 'Invalid Date';
                               }
                             })()}
-                            , Boxes: {order.total_boxes_count}
+                            , Units: {order.total_boxes_count}
                           </span>
                         </label>
                       </div>
@@ -697,7 +697,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                                 return 'Invalid Date';
                               }
                             })()}
-                            , Boxes: {order.total_boxes_count}
+                            , Units: {order.total_boxes_count}
                           </span>
                         </label>
                       </div>

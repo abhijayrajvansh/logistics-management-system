@@ -262,7 +262,7 @@ export const columns: ColumnDef<Order>[] = [
   },
   {
     accessorKey: 'total_boxes_count',
-    header: 'Total Boxes',
+    header: 'Total Units',
     cell: ({ row }) => {
       const count: number = row.getValue('total_boxes_count');
       return <div className="text-left font-medium">{count}</div>;

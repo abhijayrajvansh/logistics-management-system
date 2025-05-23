@@ -358,7 +358,7 @@ const ViewTripDialog = ({
                         </span>
                       </div>
                       <div className="mt-1 text-muted-foreground">
-                        <span className="font-medium">Boxes:</span> {order.total_boxes_count} |{' '}
+                        <span className="font-medium">Units:</span> {order.total_boxes_count} |{' '}
                         <span className="font-medium">Deadline:</span>{' '}
                         {(() => {
                           try {
