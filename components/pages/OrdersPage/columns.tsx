@@ -381,7 +381,7 @@ export const columns: ColumnDef<Order>[] = [
 
   {
     accessorKey: 'invoice',
-    header: 'Invoice',
+    header: 'Payment Terms',
     cell: ({ row }) => {
       const invoice: string = row.getValue('invoice');
 
