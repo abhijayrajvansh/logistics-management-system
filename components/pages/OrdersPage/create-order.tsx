@@ -69,7 +69,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
-    GST: 'Included' as 'Included' | 'Excluded', // Add GST field with default value
+    GST: 'Included' as 'Included' | 'Excluded',
+    GST_amount: 'NA' as number | 'NA',
     status: 'Ready To Transport',
     to_be_transferred: false,
     transfer_center_location: 'NA',
@@ -146,30 +147,17 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     weight: string,
     dimensions: string = formData.dimensions,
   ) => {
-    // console.log('---- Debugging Price Calculation ----');
-    // console.log('Pricing Method:', pricingMethod);
-    // console.log('Dimensions:', dimensions);
-    // console.log('Box Count:', boxesCount);
-    // console.log('Weight:', weight);
-    // console.log('Docket Price:', formData.docket_price);
-
     let calculatedPrice = 0;
-    // Use the parameter value directly instead of accessing formData to ensure we have the latest value
     const docketPrice = parseFloat(formData.docket_price || '0');
 
     // Client preference pricing
     if (pricingMethod === 'clientPreference' && client?.rateCard) {
       const chargeBasis = client.rateCard.preferance;
-      // console.log('Client Rate Card Preference:', chargeBasis);
 
       if (chargeBasis === 'Per Units' && boxesCount) {
         // Calculate price based on boxes
         const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
         calculatedPrice = parseInt(boxesCount) * pricePerBox;
-        // console.log(
-        //   'Per Box Calculation:',
-        //   `${boxesCount} boxes × ₹${pricePerBox} = ₹${calculatedPrice}`,
-        // );
       } else if (chargeBasis === 'By Weight' && weight) {
         // Calculate price based on weight
         const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
@@ -179,24 +167,15 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             : 0;
 
         calculatedPrice = parseInt(weight) * pricePerKg;
-        // console.log(
-        //   'By Weight Calculation:',
-        //   `${weight} kg × ₹${pricePerKg} = ₹${calculatedPrice}`,
-        // );
 
         // If calculated price is less than minimum price weight, use minimum price weight
         if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
-          // console.log(
-          //   'Using minimum price:',
-          //   `₹${minPriceWeight} (min) instead of ₹${calculatedPrice}`,
-          // );
           calculatedPrice = minPriceWeight;
         }
       }
     }
     // Volumetric pricing - fix the implementation
     else if (pricingMethod === 'volumetric') {
-      // console.log('Using volumetric pricing');
       if (dimensions && boxesCount) {
         try {
           // Parse dimensions (format: LxWxH in cm)
@@ -205,7 +184,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             .split(/[xX×\s]+/)
             .filter(Boolean)
             .map((dim) => parseFloat(dim));
-          // console.log('Parsed dimensions:', dimensionValues);
 
           // Make sure we got 3 dimensions
           if (dimensionValues.length >= 3) {
@@ -218,16 +196,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
               // Calculate price based on volume
               calculatedPrice = totalVolume * PRICE_PER_VOLUME;
-              // console.log('Volumetric Calculation:');
-              // console.log(
-              //   `- Box dimensions: ${length}cm × ${width}cm × ${height}cm = ${volumePerBox}cm³`,
-              // );
-              // console.log(
-              //   `- Total volume: ${volumePerBox}cm³ × ${boxesCount} boxes = ${totalVolume}cm³`,
-              // );
-              // console.log(
-              //   `- Price: ${totalVolume}cm³ × ₹${PRICE_PER_VOLUME}/cm³ = ₹${calculatedPrice}`,
-              // );
 
               // Round to 2 decimal places for better display
               calculatedPrice = Math.round(calculatedPrice * 100) / 100;
@@ -247,11 +215,13 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       }
     }
 
-    // Calculate total price as sum of docket price and calculated price
-    const totalPrice = docketPrice + calculatedPrice;
-    // console.log('Final calculated price:', calculatedPrice);
-    // console.log('Final docket price:', docketPrice);
-    // console.log('Total price (docket + calculated):', totalPrice);
+    // Calculate total price based on GST status
+    let totalPrice = docketPrice + calculatedPrice;
+
+    // If GST is excluded and there's a GST amount, add it to the total
+    if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
+      totalPrice += formData.GST_amount;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -293,28 +263,28 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       [field]: value,
     }));
 
-    // Recalculate price when boxes count, weight, or dimensions change
-    if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
-      // For client preference pricing
-      if (pricingMethod === 'clientPreference' && selectedClient) {
-        const client = clients.find((c) => c.id === selectedClient);
-        calculatePrice(
-          client,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-      // For volumetric pricing - don't need a client
-      else if (pricingMethod === 'volumetric') {
-        calculatePrice(
-          null,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-    }
+    // // Recalculate price when boxes count, weight, or dimensions change
+    // if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
+    //   // For client preference pricing
+    //   if (pricingMethod === 'clientPreference' && selectedClient) {
+    //     const client = clients.find((c) => c.id === selectedClient);
+    //     calculatePrice(
+    //       client,
+    //       field === 'total_boxes_count' ? value : formData.total_boxes_count,
+    //       field === 'total_order_weight' ? value : formData.total_order_weight,
+    //       field === 'dimensions' ? value : formData.dimensions,
+    //     );
+    //   }
+    //   // For volumetric pricing - don't need a client
+    //   else if (pricingMethod === 'volumetric') {
+    //     calculatePrice(
+    //       null,
+    //       field === 'total_boxes_count' ? value : formData.total_boxes_count,
+    //       field === 'total_order_weight' ? value : formData.total_order_weight,
+    //       field === 'dimensions' ? value : formData.dimensions,
+    //     );
+    //   }
+    // }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -372,6 +342,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         total_price: '',
         invoice: '', // Default value for the invoice enum
         GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
+        GST_amount: 'NA' as number | 'NA',
         status: '',
         to_be_transferred: false,
         transfer_center_location: 'NA',
@@ -388,8 +359,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       // setTimeout(() => {
       //   window.location.reload();
       // }, 1000);
-
-      // ps: just add toast, no need to refresh - using real time api
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to create order', {
@@ -399,6 +368,96 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  const handleGSTAmountChange = (value: string) => {
+    const amount = value === '' ? 0 : parseFloat(value);
+    setFormData((prev) => ({
+      ...prev,
+      GST_amount: amount,
+    }));
+  };
+
+  // Add this useEffect after other useEffect hooks
+useEffect(() => {
+  // Skip calculation if required fields are missing
+  if (!formData.total_boxes_count && !formData.total_order_weight && !formData.dimensions) {
+    return;
+  }
+
+  // Get current client if using client preference
+  const client = selectedClient ? clients.find(c => c.id === selectedClient) : null;
+  
+  // Get current values for calculation
+  const docketPrice = parseFloat(formData.docket_price || '0');
+  let calculatedPrice = 0;
+
+  // Client preference pricing
+  if (pricingMethod === 'clientPreference' && client?.rateCard) {
+    const chargeBasis = client.rateCard.preferance;
+
+    if (chargeBasis === 'Per Units' && formData.total_boxes_count) {
+      const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      calculatedPrice = parseInt(formData.total_boxes_count) * pricePerBox;
+    } 
+    else if (chargeBasis === 'By Weight' && formData.total_order_weight) {
+      const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+      const minPriceWeight = client.rateCard.minPriceWeight !== 'NA' 
+        ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+        : 0;
+
+      calculatedPrice = parseInt(formData.total_order_weight) * pricePerKg;
+
+      if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+        calculatedPrice = minPriceWeight;
+      }
+    }
+  }
+  // Volumetric pricing
+  else if (pricingMethod === 'volumetric' && formData.dimensions && formData.total_boxes_count) {
+    try {
+      const dimensionValues = formData.dimensions
+        .split(/[xX×\s]+/)
+        .filter(Boolean)
+        .map(dim => parseFloat(dim));
+
+      if (dimensionValues.length >= 3) {
+        const [length, width, height] = dimensionValues;
+        if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+          const volumePerBox = length * width * height;
+          const totalVolume = volumePerBox * parseInt(formData.total_boxes_count);
+          calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+          calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating volumetric price:', error);
+    }
+  }
+
+  // Calculate total price including GST if applicable
+  let totalPrice = docketPrice + calculatedPrice;
+  if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
+    totalPrice += formData.GST_amount;
+  }
+
+  // Update form data with new prices
+  setFormData(prev => ({
+    ...prev,
+    calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+    total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0'
+  }));
+
+}, [
+  formData.total_boxes_count,
+  formData.total_order_weight,
+  formData.dimensions,
+  formData.docket_price,
+  formData.GST,
+  formData.GST_amount,
+  pricingMethod,
+  selectedClient,
+  clients
+]);
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -883,8 +942,9 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         </div>
 
         {/* GST Radio Group */}
-        <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="gst">GST</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="gst">GST</Label>
           <RadioGroup
             defaultValue="Excluded"
             value={formData.GST}
@@ -900,6 +960,19 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               <Label htmlFor="gst-excluded">Excluded</Label>
             </div>
           </RadioGroup>
+          </div>
+
+          {formData.GST === 'Excluded' && (
+            <div className=''>
+              <Label className='mb-1'>GST Amount</Label>
+              <Input
+                type="number"
+                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
+                onChange={(e) => handleGSTAmountChange(e.target.value)}
+                placeholder="Enter GST amount"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between">
@@ -930,6 +1003,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 total_price: '',
                 invoice: '',
                 GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
+                GST_amount: 'NA' as number | 'NA',
                 status: '',
                 to_be_transferred: false,
                 transfer_center_location: 'NA',

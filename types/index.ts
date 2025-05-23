@@ -37,6 +37,7 @@ export type Order = {
   payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
   GST: "Included" | "Excluded";
+  GST_amount: number | 'NA'; // if GST is included in the price, then this will be 'NA'
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';
