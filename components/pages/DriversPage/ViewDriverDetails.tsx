@@ -52,17 +52,15 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+      <button
+        className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray hover:text-white"
         onClick={() => setIsOpen(true)}
       >
         <IconEye size={15} />
-      </Button>
+      </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Driver Details</DialogTitle>
           </DialogHeader>
