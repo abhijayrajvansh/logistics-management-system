@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { CreateOrderForm } from './create-order';
+import { FaDownload } from 'react-icons/fa';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -67,13 +68,13 @@ export function DataTable<TData, TValue>({
   upcomingTransfersData?: TData[]; // Add type
 }) {
   const [data, setData] = React.useState(() => initialData);
+  const [rowSelection, setRowSelection] = React.useState({});
 
   // Update data when initialData changes
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);
 
-  const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -96,10 +97,10 @@ export function DataTable<TData, TValue>({
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -110,7 +111,7 @@ export function DataTable<TData, TValue>({
 
   const inTransitTable = useReactTable({
     data: inTransitData,
-    columns,
+    columns: columns.filter((col) => col.id !== 'select'), // Remove select column
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -122,7 +123,7 @@ export function DataTable<TData, TValue>({
 
   const transferredTable = useReactTable({
     data: transferredData,
-    columns,
+    columns: columns.filter((col) => col.id !== 'select'), // Remove select column
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -134,7 +135,7 @@ export function DataTable<TData, TValue>({
 
   const deliveredTable = useReactTable({
     data: deliveredData,
-    columns,
+    columns: columns.filter((col) => col.id !== 'select'), // Remove select column
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -147,7 +148,7 @@ export function DataTable<TData, TValue>({
   // Add table instance for upcoming transfers
   const upcomingTransfersTable = useReactTable({
     data: upcomingTransfersData,
-    columns,
+    columns: columns.filter((col) => col.id !== 'select'), // Remove select column
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
@@ -303,10 +304,25 @@ export function DataTable<TData, TValue>({
         </Dialog>
       </div>
 
-
       {/* Ready to Transport & Assigned Orders Section */}
       <div className="flex flex-col gap-4 px-4 lg:px-6">
-        <h2 className="text-xl font-semibold">Ready to Transport & Assigned Orders</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Ready to Transport & Assigned Orders</h2>
+
+          <Button
+            disabled={Object.keys(readyAndAssignedTable.getState().rowSelection).length <= 0}
+            className="bg-green-500 hover:bg-green-500/80 font-semibold"
+            // todo: create as a separate function and pass it to the onClick
+            onClick={() => {
+              const selectedRows = readyAndAssignedTable.getFilteredSelectedRowModel().rows;
+              const selectedOrderIds = selectedRows.map((row) => (row.original as any).docket_id);
+              console.log('Selected Order IDs:', selectedOrderIds);
+            }}
+          >
+            <FaDownload className="mr-2" />
+            Download ({Object.keys(readyAndAssignedTable.getState().rowSelection).length})
+          </Button>
+        </div>
         {renderTable(readyAndAssignedTable)}
         {renderPagination(readyAndAssignedTable)}
       </div>

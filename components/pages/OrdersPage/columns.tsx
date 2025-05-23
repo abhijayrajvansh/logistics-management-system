@@ -7,17 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Order } from '@/types'; // Import the Order type from your hooks
+import { Order } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { FaRegEye } from 'react-icons/fa';
-
-// This type is used to define the shape of our data based on the image schema
 
 // Create a component for the proof cell to manage dialog state
 const ProofCell = ({ row }: { row: any }) => {
@@ -214,6 +213,25 @@ const ActionCell = ({ row }: { row: any }) => {
 };
 
 export const columns: ColumnDef<Order>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'docket_id',
     header: 'Docket ID',
