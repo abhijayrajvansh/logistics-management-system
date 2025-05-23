@@ -659,7 +659,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         {/* Pricing Method Selection */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
-            <Label className="font-medium mb-4">Pricing Method</Label>
+            <Label className="font-bold mb-4">Pricing Method</Label>
             <RadioGroup
               value={pricingMethod}
               onValueChange={(value: 'clientPreference' | 'volumetric') => {
@@ -777,6 +777,38 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </div>
             </RadioGroup>
           </div>
+        </div>
+
+        {/* GST Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="gst" className='font-bold'>GST</Label>
+            <RadioGroup
+              value={formData.GST}
+              onValueChange={(value) => handleInputChange('GST', value)}
+              className="flex space-x-4 py-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Included" id="gst-included" />
+                <Label htmlFor="gst-included">Included</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Excluded" id="gst-excluded" />
+                <Label htmlFor="gst-excluded">Excluded</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          {formData.GST === 'Excluded' && (
+            <div className="">
+              <Label className="mb-1">GST Amount</Label>
+              <Input
+                type="number"
+                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
+                onChange={(e) => handleGSTAmountChange(e.target.value)}
+                placeholder="Enter GST amount"
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -935,37 +967,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           )}
         </div>
 
-        {/* GST Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="gst">GST</Label>
-            <RadioGroup
-              value={formData.GST}
-              onValueChange={(value) => handleInputChange('GST', value)}
-              className="flex space-x-4 py-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Included" id="gst-included" />
-                <Label htmlFor="gst-included">Included</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Excluded" id="gst-excluded" />
-                <Label htmlFor="gst-excluded">Excluded</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          {formData.GST === 'Excluded' && (
-            <div className="">
-              <Label className="mb-1">GST Amount</Label>
-              <Input
-                type="number"
-                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
-                onChange={(e) => handleGSTAmountChange(e.target.value)}
-                placeholder="Enter GST amount"
-              />
-            </div>
-          )}
-        </div>
+        
 
         {/* Add status selection */}
         <div className="space-y-2">

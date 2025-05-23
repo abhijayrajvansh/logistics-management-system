@@ -714,6 +714,40 @@ useEffect(() => {
           </div>
         </div>
 
+        {/* GST Radio Group */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="gst" className='font-bold'>GST</Label>
+          <RadioGroup
+            defaultValue="Excluded"
+            value={formData.GST}
+            onValueChange={(value) => handleInputChange('GST', value)}
+            className="flex space-x-4 py-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Included" id="gst-included" />
+              <Label htmlFor="gst-included">Included</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Excluded" id="gst-excluded" />
+              <Label htmlFor="gst-excluded">Excluded</Label>
+            </div>
+          </RadioGroup>
+          </div>
+
+          {formData.GST === 'Excluded' && (
+            <div className=''>
+              <Label className='mb-1'>GST Amount</Label>
+              <Input
+                type="number"
+                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
+                onChange={(e) => handleGSTAmountChange(e.target.value)}
+                placeholder="Enter GST amount"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="docket_price">Docket Price</Label>
@@ -829,39 +863,7 @@ useEffect(() => {
           )}
         </div>
 
-        {/* GST Radio Group */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="gst">GST</Label>
-          <RadioGroup
-            defaultValue="Excluded"
-            value={formData.GST}
-            onValueChange={(value) => handleInputChange('GST', value)}
-            className="flex space-x-4 py-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Included" id="gst-included" />
-              <Label htmlFor="gst-included">Included</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Excluded" id="gst-excluded" />
-              <Label htmlFor="gst-excluded">Excluded</Label>
-            </div>
-          </RadioGroup>
-          </div>
-
-          {formData.GST === 'Excluded' && (
-            <div className=''>
-              <Label className='mb-1'>GST Amount</Label>
-              <Input
-                type="number"
-                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
-                onChange={(e) => handleGSTAmountChange(e.target.value)}
-                placeholder="Enter GST amount"
-              />
-            </div>
-          )}
-        </div>
+        
 
         <div className="flex justify-between">
           <Button
