@@ -461,7 +461,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
           <h3 className="text-lg font-medium">Documents</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadhar_front">Aadhar Card Front</Label>
+              <Label htmlFor="aadhar_front">Aadhar Card Front (Max 5MB)</Label>
               <Input
                 id="aadhar_front"
                 type="file"
@@ -472,13 +472,10 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {hasDocument('aadhar_front') && (
-                <div className="text-sm text-muted-foreground">Current file uploaded</div>
-              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="aadhar_back">Aadhar Card Back</Label>
+              <Label htmlFor="aadhar_back">Aadhar Card Back (Max 5MB)</Label>
               <Input
                 id="aadhar_back"
                 type="file"
@@ -489,9 +486,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {hasDocument('aadhar_back') && (
-                <div className="text-sm text-muted-foreground">Current file uploaded</div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -506,7 +500,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="license">Driving License</Label>
+              <Label htmlFor="license">Driving License (Max 5MB)</Label>
               <Input
                 id="license"
                 type="file"
@@ -517,9 +511,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {hasDocument('license') && (
-                <div className="text-sm text-muted-foreground">Current file uploaded</div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -549,7 +540,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="medicalCertificate">Medical Certificate</Label>
+              <Label htmlFor="medicalCertificate">Medical Certificate (Max 5MB)</Label>
               <Input
                 id="medicalCertificate"
                 type="file"
@@ -560,9 +551,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {hasDocument('medicalCertificate') && (
-                <div className="text-sm text-muted-foreground">Current file uploaded</div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -577,7 +565,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dob_certificate">DOB Certificate</Label>
+              <Label htmlFor="dob_certificate">DOB Certificate (Max 5MB)</Label>
               <Input
                 id="dob_certificate"
                 type="file"
@@ -588,9 +576,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {hasDocument('dob_certificate') && (
-                <div className="text-sm text-muted-foreground">Current file uploaded</div>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -606,10 +591,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select document status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Verified">Verified</SelectItem>
-                </SelectContent>
+                <SelectContent></SelectContent>
               </Select>
             </div>
           </div>
@@ -643,7 +625,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
 
         {/* Emergency Contact Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <h3 className="text-lg font-medium">Emergency Contact</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_name">Name</Label>
@@ -710,7 +692,9 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 }
               />
             </div>
-            <div className="space-y-2 col-span-2">
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="emergency_address">Residency Address</Label>
               <Input
                 id="emergency_address"
@@ -753,10 +737,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                   }
                 }}
               />
-              {formData.emergencyContact !== 'NA' &&
-                (formData.emergencyContact as EmergencyContact).residencyProof && (
-                  <div className="text-sm text-muted-foreground">Current file uploaded</div>
-                )}
             </div>
           </div>
         </div>
