@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import DocketSlipUI from "./DocketSlipUI";
+import DocketSlipUI from './DocketSlipUI';
 
 const PrintDocketSlips = () => {
+  const docketIds = ['1167447', '1829264'];
+
   return (
     <div className="relative">
       <div className="print-container">
@@ -22,7 +24,7 @@ const PrintDocketSlips = () => {
             .receipt-content {
               width: 100%;
               transform-origin: top left;
-              transform: scale(1); /* Full scale to use entire width */
+              transform: scale(1);
               margin: 0;
               padding: 8px;
             }
@@ -34,11 +36,12 @@ const PrintDocketSlips = () => {
           }
         `}</style>
 
-        <DocketSlipUI />
-        <DocketSlipUI />
-        <DocketSlipUI />
-        <DocketSlipUI />
-        <DocketSlipUI />
+        {docketIds.map((docketId) => (
+          <DocketSlipUI
+            key={docketId}
+            docketId={docketId}
+          />
+        ))}
       </div>
     </div>
   );

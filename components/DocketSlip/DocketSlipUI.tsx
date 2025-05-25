@@ -2,7 +2,13 @@ import React from 'react';
 import { LogisticsReceiptProps } from './docketSlipInterface';
 import docketPayload from './data-json';
 
-const DocketSlipUI: React.FC<LogisticsReceiptProps> = () => {
+interface DocketSlipUIProps extends LogisticsReceiptProps {
+  docketId: string;
+}
+
+const DocketSlipUI: React.FC<DocketSlipUIProps> = ({ docketId }) => {
+  // In a real application, you would use this docketId to fetch the specific docket data
+  // For now, we'll use the sample data from docketPayload
   return (
     <div className="receipt-content bg-white border border-gray-300 p-2 font-sans text-[8px] text-black print:border print:border-black">
       <div className="border border-black h-full w-full">
