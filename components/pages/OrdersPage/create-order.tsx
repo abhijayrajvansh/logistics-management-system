@@ -403,7 +403,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                   onValueChange={handleClientChange}
                   value={selectedClient}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" autoFocus>
                     <SelectValue
                       placeholder={isLoadingClients ? 'Loading clients...' : 'Select a client'}
                     />
@@ -441,8 +441,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             )}
           </div>
         </div>
-
-        
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
@@ -542,8 +540,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             )}
           </div>
 
-          
-
           {/* Zone Selection (auto-populated) */}
           <div className="space-y-2">
             <Label htmlFor="receiver_zone">Zone</Label>
@@ -553,32 +549,33 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               value={formData.receiver_zone}
               onChange={(e) => handleInputChange('receiver_zone', e.target.value)}
               required
+              autoFocus={false}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="receiver_details">Receiver Details</Label>
-              <Input
-                id="receiver_details"
-                placeholder="Enter receiver details"
-                value={formData.receiver_details}
-                onChange={(e) => handleInputChange('receiver_details', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="receiver_contact">Receiver Contact</Label>
-              <Input
-                id="receiver_contact"
-                placeholder="Enter receiver contact"
-                value={formData.receiver_contact}
-                onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiver_details">Receiver Details</Label>
+            <Input
+              id="receiver_details"
+              placeholder="Enter receiver details"
+              value={formData.receiver_details}
+              onChange={(e) => handleInputChange('receiver_details', e.target.value)}
+              required
+            />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiver_contact">Receiver Contact</Label>
+            <Input
+              id="receiver_contact"
+              placeholder="Enter receiver contact"
+              value={formData.receiver_contact}
+              onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
+              required
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">

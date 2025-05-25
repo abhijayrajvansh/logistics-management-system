@@ -292,7 +292,7 @@ export function DataTable<TData, TValue>({
               <span className="hidden font-semibold lg:inline">Create Order</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogContent onOpenAutoFocus={e => e.preventDefault()} className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Order</DialogTitle>
               <DialogDescription>
