@@ -46,6 +46,8 @@ export type Order = {
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
+  order_type: "Direct" | "Sublet";
+  sublet_details: string | 'NA'; // if order_type is Direct, then this will be 'NA', if order_type is Sublet, then this will contain the brand name of the sublet company
   status: 'Ready To Transport' | 'Assigned' | 'In Transit' | 'Transferred' | 'Delivered';
   tat: number; // whole numbers, format: hours
   total_boxes_count: number;

@@ -69,6 +69,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     previous_center_location: 'NA',
     receiver_city: '',
     receiver_zone: '' as ReceiverDetails['receiverZone'],
+    order_type: 'Direct' as 'Direct' | 'Sublet',
+    sublet_details: 'NA' as string | 'NA',
   });
 
   const handleCityChange = (value: string) => {
@@ -151,6 +153,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             previous_center_location: data.previous_center_location || 'NA',
             receiver_city: data.receiver_city || '',
             receiver_zone: data.receiver_zone || ('NA' as ReceiverDetails['receiverZone']),
+            order_type: data.order_type || 'Direct',
+            sublet_details: data.sublet_details || 'NA',
           });
 
           // Set selected client and receiver based on existing data
@@ -614,7 +618,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
             <Input
@@ -876,6 +879,45 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         </div>
 
         {/* GST Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="order-type" className="font-bold">
+              Order Type
+            </Label>
+            <Select
+              value={formData.order_type}
+              onValueChange={(value: 'Direct' | 'Sublet') => {
+                setFormData((prev) => ({
+                  ...prev,
+                  order_type: value,
+                  sublet_details: value === 'Direct' ? 'NA' : prev.sublet_details,
+                }));
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select order type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Direct">Direct</SelectItem>
+                <SelectItem value="Sublet">Sublet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.order_type === 'Sublet' && (
+            <div className="space-y-2">
+              <Label htmlFor="sublet_details">Sublet Company Name</Label>
+              <Input
+                id="sublet_details"
+                placeholder="Enter sublet company name"
+                value={formData.sublet_details === 'NA' ? '' : formData.sublet_details}
+                onChange={(e) => handleInputChange('sublet_details', e.target.value)}
+                required
+              />
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="gst" className="font-bold">
