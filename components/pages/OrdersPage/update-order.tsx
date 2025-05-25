@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/app/context/AuthContext';
 import useUsers from '@/hooks/useUsers';
 import useCenters from '@/hooks/useCenters';
+import useReceiversCities from '@/hooks/useReceiversCities';
 
 interface UpdateOrderFormProps {
   orderId: string;
@@ -36,9 +37,11 @@ const PRICE_PER_VOLUME = 0.01;
 export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFormProps) {
   // Add centers hook
   const { centers, isLoading: isLoadingCenters } = useCenters();
+  const { cities, isLoading: isLoadingCities } = useReceiversCities();
   const { user } = useAuth();
   const { users: currentUser } = useUsers(user?.uid);
   const userLocation = currentUser?.[0]?.location;
+  const [selectedCity, setSelectedCity] = useState<string>('');
 
   const [formData, setFormData] = useState({
     receiver_name: '',
@@ -64,18 +67,42 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
     to_be_transferred: false,
     transfer_center_location: 'NA',
     previous_center_location: 'NA',
+    receiver_city: '',
+    receiver_zone: '' as ReceiverDetails['receiverZone'],
   });
+
+  const handleCityChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualCityEntry(true);
+      setSelectedCity('');
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
+      }));
+    } else {
+      setIsManualCityEntry(false);
+      setSelectedCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: value,
+      }));
+    }
+  };
 
   // Add state to store the existing proof_of_delivery value
   const [existingProofOfDelivery, setExistingProofOfDelivery] = useState<string>('NA');
 
   const { clients, isLoading: isLoadingClients } = useClients();
-  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers({
+    city: selectedCity,
+  });
   const { tats } = useTATs();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
+  const [isManualCityEntry, setIsManualCityEntry] = useState(true);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedReceiver, setSelectedReceiver] = useState<string>('');
@@ -122,6 +149,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             to_be_transferred: data.to_be_transferred || false,
             transfer_center_location: data.transfer_center_location || 'NA',
             previous_center_location: data.previous_center_location || 'NA',
+            receiver_city: data.receiver_city || '',
+            receiver_zone: data.receiver_zone || ('NA' as ReceiverDetails['receiverZone']),
           });
 
           // Set selected client and receiver based on existing data
@@ -302,11 +331,12 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         receiver_name: '',
         receiver_details: '',
         receiver_contact: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
       }));
     } else {
       setIsManualReceiverEntry(false);
       setSelectedReceiver(value);
-      const receiver = receivers.find((r: ReceiverDetails) => r.id === value);
+      const receiver = receivers.find((r) => r.id === value);
       if (receiver) {
         setSelectedReceiverPincode(receiver.pincode || '');
         setFormData((prev) => ({
@@ -314,6 +344,8 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
           receiver_name: receiver.receiverName,
           receiver_details: receiver.receiverDetails,
           receiver_contact: receiver.receiverContact,
+          receiver_zone: receiver.receiverZone,
+          receiver_city: receiver.receiverCity,
         }));
       }
     }
@@ -471,6 +503,54 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            {!isManualCityEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingCities}
+                  onValueChange={handleCityChange}
+                  value={selectedCity}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={isLoadingCities ? 'Loading cities...' : 'Select a city'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New City</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter city name"
+                  value={formData.receiver_city}
+                  onChange={(e) => handleInputChange('receiver_city', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
+                  size="icon"
+                  onClick={() => {
+                    setIsManualCityEntry(false);
+                    setSelectedCity('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Receiver Selection */}
+          <div className="space-y-2">
             <Label htmlFor="receiver">Receiver</Label>
             {!isManualReceiverEntry ? (
               <div className="flex gap-2">
@@ -488,7 +568,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="add_new">+ Add New Receiver</SelectItem>
-                    {receivers.map((receiver: ReceiverDetails) => (
+                    {receivers.map((receiver) => (
                       <SelectItem key={receiver.id} value={receiver.id}>
                         {receiver.receiverName}
                       </SelectItem>
@@ -518,6 +598,22 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
               </div>
             )}
           </div>
+
+          {/* Zone Selection (auto-populated) */}
+          <div className="space-y-2">
+            <Label htmlFor="receiver_zone">Zone</Label>
+            <Input
+              id="receiver_zone"
+              placeholder="Zone"
+              value={formData.receiver_zone}
+              onChange={(e) => handleInputChange('receiver_zone', e.target.value)}
+              required
+              autoFocus={false}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
@@ -782,7 +878,9 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
         {/* GST Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="gst" className='font-bold'>GST</Label>
+            <Label htmlFor="gst" className="font-bold">
+              GST
+            </Label>
             <RadioGroup
               value={formData.GST}
               onValueChange={(value) => handleInputChange('GST', value)}
@@ -966,8 +1064,6 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
             </div>
           )}
         </div>
-
-        
 
         {/* Add status selection */}
         <div className="space-y-2">
