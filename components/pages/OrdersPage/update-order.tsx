@@ -642,7 +642,7 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="total_boxes_count">Total Boxes</Label>
+            <Label htmlFor="total_boxes_count">Total Units</Label>
             <Input
               id="total_boxes_count"
               type="number"
