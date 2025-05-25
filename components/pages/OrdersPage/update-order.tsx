@@ -880,28 +880,35 @@ export function UpdateOrderForm({ orderId, onSuccess, onCancel }: UpdateOrderFor
 
         {/* GST Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="order-type" className="font-bold">
-              Order Type
-            </Label>
-            <Select
-              value={formData.order_type}
-              onValueChange={(value: 'Direct' | 'Sublet') => {
-                setFormData((prev) => ({
-                  ...prev,
-                  order_type: value,
-                  sublet_details: value === 'Direct' ? 'NA' : prev.sublet_details,
-                }));
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select order type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Direct">Direct</SelectItem>
-                <SelectItem value="Sublet">Sublet</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
+              <Label className="font-semibold">Order Type</Label>
+              <RadioGroup
+                value={formData.order_type}
+                onValueChange={(value: 'Direct' | 'Sublet') => {
+                  handleInputChange('order_type', value);
+
+                  // Reset sublet details if switching to direct order
+                  if (value === 'Direct') {
+                    handleInputChange('sublet_details', 'NA');
+                  }
+                }}
+                className="flex flex-row items-center space-x-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Direct" id="orderTypeDirect" />
+                  <Label htmlFor="orderTypeDirect" className="cursor-pointer">
+                    Direct
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Sublet" id="orderTypeSublet" />
+                  <Label htmlFor="orderTypeSublet" className="cursor-pointer">
+                    Sublet
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
 
           {formData.order_type === 'Sublet' && (

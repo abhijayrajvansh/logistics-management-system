@@ -506,23 +506,23 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                   onValueChange={handleReceiverChange}
                   value={selectedReceiver}
                 >
-                    <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={
-                      isLoadingReceivers ? 'Loading receivers...' : 'Select a receiver'
+                        isLoadingReceivers ? 'Loading receivers...' : 'Select a receiver'
                       }
                     />
-                    </SelectTrigger>
-                    <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                     <SelectItem value="add_new">+ Add New Receiver</SelectItem>
                     {receivers.map((receiver) => (
                       <SelectItem key={receiver.id} value={receiver.id}>
-                      {receiver.receiverName}
+                        {receiver.receiverName}
                       </SelectItem>
                     ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </SelectContent>
+                </Select>
+              </div>
             ) : (
               <div className="flex gap-2">
                 <Input
@@ -817,43 +817,55 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
         {/* GST Radio Group */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="order-type" className="font-bold">
-              Order Type
-            </Label>
-            <Select
-              value={formData.order_type}
-              onValueChange={(value: 'Direct' | 'Sublet') => {
-                setFormData((prev) => ({
-                  ...prev,
-                  order_type: value,
-                  sublet_details: value === 'Direct' ? 'NA' : prev.sublet_details,
-                }));
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select order type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Direct">Direct</SelectItem>
-                <SelectItem value="Sublet">Sublet</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
+              <Label className="font-semibold">Order Type</Label>
+              <RadioGroup
+                value={formData.order_type}
+                onValueChange={(value: 'Direct' | 'Sublet') => {
+                  handleInputChange('order_type', value);
+
+                  // Reset sublet details if switching to direct order
+                  if (value === 'Direct') {
+                    handleInputChange('sublet_details', 'NA');
+                  }
+                }}
+                className="flex flex-row items-center space-x-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Direct" id="orderTypeDirect" />
+                  <Label htmlFor="orderTypeDirect" className="cursor-pointer">
+                    Direct
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Sublet" id="orderTypeSublet" />
+                  <Label htmlFor="orderTypeSublet" className="cursor-pointer">
+                    Sublet
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
 
+          {/* Sublet Details (conditionally rendered) */}
           {formData.order_type === 'Sublet' && (
-            <div className="space-y-2">
-              <Label htmlFor="sublet_details">Sublet Company Name</Label>
-              <Input
-                id="sublet_details"
-                placeholder="Enter sublet company name"
-                value={formData.sublet_details === 'NA' ? '' : formData.sublet_details}
-                onChange={(e) => handleInputChange('sublet_details', e.target.value)}
-                required
-              />
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sublet_details">Sublet Details</Label>
+                <Input
+                  id="sublet_details"
+                  placeholder="Enter sublet details"
+                  value={formData.sublet_details === 'NA' ? '' : formData.sublet_details}
+                  onChange={(e) => handleInputChange('sublet_details', e.target.value)}
+                  required
+                />
+              </div>
             </div>
           )}
         </div>
+
+        {/* Order Type Selection */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -1004,54 +1016,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             </div>
           )}
         </div>
-
-        {/* Order Type Selection */}
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-4">
-            <Label className="font-semibold">Order Type</Label>
-            <RadioGroup
-              value={formData.order_type}
-              onValueChange={(value: 'Direct' | 'Sublet') => {
-                handleInputChange('order_type', value);
-
-                // Reset sublet details if switching to direct order
-                if (value === 'Direct') {
-                  handleInputChange('sublet_details', 'NA');
-                }
-              }}
-              className="flex flex-row items-center space-x-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Direct" id="orderTypeDirect" />
-                <Label htmlFor="orderTypeDirect" className="cursor-pointer">
-                  Direct
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Sublet" id="orderTypeSublet" />
-                <Label htmlFor="orderTypeSublet" className="cursor-pointer">
-                  Sublet
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-        </div>
-
-        {/* Sublet Details (conditionally rendered) */}
-        {formData.order_type === 'Sublet' && (
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sublet_details">Sublet Details</Label>
-              <Input
-                id="sublet_details"
-                placeholder="Enter sublet details"
-                value={formData.sublet_details === 'NA' ? '' : formData.sublet_details}
-                onChange={(e) => handleInputChange('sublet_details', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-        )}
 
         <div className="flex justify-between">
           <Button
