@@ -2,7 +2,7 @@
 
 import DocketSlipUI from "./DocketSlipUI";
 
-const LogisticsReceipt = () => {
+const PrintDocketSlips = () => {
   return (
     <div className="relative">
       <div className="print-container">
@@ -36,9 +36,12 @@ const LogisticsReceipt = () => {
 
         <DocketSlipUI />
         <DocketSlipUI />
+        <DocketSlipUI />
+        <DocketSlipUI />
+        <DocketSlipUI />
       </div>
     </div>
   );
 };
 
-export default LogisticsReceipt;
+export default PrintDocketSlips;

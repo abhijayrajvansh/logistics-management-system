@@ -1,9 +1,9 @@
-import DocketSlip from '@/components/DocketSlip'
+import PrintDocketSlips from '@/components/DocketSlip'
 import React from 'react'
 
 const PrintDocketSlip = () => {
   return (
-    <DocketSlip />
+    <PrintDocketSlips />
   )
 }
 
