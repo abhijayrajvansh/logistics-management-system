@@ -15,9 +15,11 @@ import {
 import { db } from '@/firebase/database';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
+import useReceiversCities from '@/hooks/useReceiversCities';
 import useTATs from '@/hooks/useTATs';
 import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import { addDoc, collection } from 'firebase/firestore';
+import { ReceiverDetails } from '@/types';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import useUsers from '@/hooks/useUsers';
@@ -32,7 +34,12 @@ const PRICE_PER_VOLUME = 0.01;
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
-  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { cities, isLoading: isLoadingCities } = useReceiversCities();
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [isManualCityEntry, setIsManualCityEntry] = useState(false);
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers({
+    city: selectedCity,
+  });
   const { tats } = useTATs();
 
   const { user } = useAuth();
@@ -75,6 +82,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     to_be_transferred: false,
     transfer_center_location: 'NA',
     previous_center_location: 'NA',
+    receiver_city: '',
+    receiver_zone: '' as ReceiverDetails['receiverZone'],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,6 +150,25 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     }
   };
 
+  const handleCityChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualCityEntry(true);
+      setSelectedCity('');
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
+      }));
+    } else {
+      setIsManualCityEntry(false);
+      setSelectedCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: value,
+      }));
+    }
+  };
+
   const handleReceiverChange = (value: string) => {
     if (value === 'add_new') {
       setIsManualReceiverEntry(true);
@@ -151,6 +179,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         receiver_name: '',
         receiver_details: '',
         receiver_contact: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
       }));
     } else {
       setIsManualReceiverEntry(false);
@@ -163,6 +192,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           receiver_name: receiver.receiverName,
           receiver_details: receiver.receiverDetails,
           receiver_contact: receiver.receiverContact,
+          receiver_zone: receiver.receiverZone,
+          receiver_city: receiver.receiverCity,
         }));
       }
     }
@@ -213,6 +244,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
       // Reset form after successful submission
       setFormData({
+        receiver_city: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
         receiver_name: '',
         receiver_details: '',
         receiver_contact: '',
@@ -228,7 +261,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         docket_price: '',
         calculated_price: '',
         total_price: '',
-        invoice: '', // Default value for the invoice enum
+        invoice: '',
         GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
         GST_amount: 'NA' as number | 'NA',
         status: '',
@@ -266,86 +299,85 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   };
 
   // Add this useEffect after other useEffect hooks
-useEffect(() => {
-  // Skip calculation if required fields are missing
-  if (!formData.total_boxes_count && !formData.total_order_weight && !formData.dimensions) {
-    return;
-  }
-
-  // Get current client if using client preference
-  const client = selectedClient ? clients.find(c => c.id === selectedClient) : null;
-  
-  // Get current values for calculation
-  const docketPrice = parseFloat(formData.docket_price || '0');
-  let calculatedPrice = 0;
-
-  // Client preference pricing
-  if (pricingMethod === 'clientPreference' && client?.rateCard) {
-    const chargeBasis = client.rateCard.preferance;
-
-    if (chargeBasis === 'Per Units' && formData.total_boxes_count) {
-      const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-      calculatedPrice = parseInt(formData.total_boxes_count) * pricePerBox;
-    } 
-    else if (chargeBasis === 'By Weight' && formData.total_order_weight) {
-      const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-      const minPriceWeight = client.rateCard.minPriceWeight !== 'NA' 
-        ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
-        : 0;
-
-      calculatedPrice = parseInt(formData.total_order_weight) * pricePerKg;
-
-      if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
-        calculatedPrice = minPriceWeight;
-      }
+  useEffect(() => {
+    // Skip calculation if required fields are missing
+    if (!formData.total_boxes_count && !formData.total_order_weight && !formData.dimensions) {
+      return;
     }
-  }
-  // Volumetric pricing
-  else if (pricingMethod === 'volumetric' && formData.dimensions && formData.total_boxes_count) {
-    try {
-      const dimensionValues = formData.dimensions
-        .split(/[xX×\s]+/)
-        .filter(Boolean)
-        .map(dim => parseFloat(dim));
 
-      if (dimensionValues.length >= 3) {
-        const [length, width, height] = dimensionValues;
-        if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
-          const volumePerBox = length * width * height;
-          const totalVolume = volumePerBox * parseInt(formData.total_boxes_count);
-          calculatedPrice = totalVolume * PRICE_PER_VOLUME;
-          calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+    // Get current client if using client preference
+    const client = selectedClient ? clients.find((c) => c.id === selectedClient) : null;
+
+    // Get current values for calculation
+    const docketPrice = parseFloat(formData.docket_price || '0');
+    let calculatedPrice = 0;
+
+    // Client preference pricing
+    if (pricingMethod === 'clientPreference' && client?.rateCard) {
+      const chargeBasis = client.rateCard.preferance;
+
+      if (chargeBasis === 'Per Units' && formData.total_boxes_count) {
+        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        calculatedPrice = parseInt(formData.total_boxes_count) * pricePerBox;
+      } else if (chargeBasis === 'By Weight' && formData.total_order_weight) {
+        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        const minPriceWeight =
+          client.rateCard.minPriceWeight !== 'NA'
+            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+            : 0;
+
+        calculatedPrice = parseInt(formData.total_order_weight) * pricePerKg;
+
+        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+          calculatedPrice = minPriceWeight;
         }
       }
-    } catch (error) {
-      console.error('Error calculating volumetric price:', error);
     }
-  }
+    // Volumetric pricing
+    else if (pricingMethod === 'volumetric' && formData.dimensions && formData.total_boxes_count) {
+      try {
+        const dimensionValues = formData.dimensions
+          .split(/[xX×\s]+/)
+          .filter(Boolean)
+          .map((dim) => parseFloat(dim));
 
-  // Calculate total price including GST if applicable
-  let totalPrice = docketPrice + calculatedPrice;
-  if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
-    totalPrice += formData.GST_amount;
-  }
+        if (dimensionValues.length >= 3) {
+          const [length, width, height] = dimensionValues;
+          if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+            const volumePerBox = length * width * height;
+            const totalVolume = volumePerBox * parseInt(formData.total_boxes_count);
+            calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+            calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating volumetric price:', error);
+      }
+    }
 
-  // Update form data with new prices
-  setFormData(prev => ({
-    ...prev,
-    calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
-    total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0'
-  }));
+    // Calculate total price including GST if applicable
+    let totalPrice = docketPrice + calculatedPrice;
+    if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
+      totalPrice += formData.GST_amount;
+    }
 
-}, [
-  formData.total_boxes_count,
-  formData.total_order_weight,
-  formData.dimensions,
-  formData.docket_price,
-  formData.GST,
-  formData.GST_amount,
-  pricingMethod,
-  selectedClient,
-  clients
-]);
+    // Update form data with new prices
+    setFormData((prev) => ({
+      ...prev,
+      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
+    }));
+  }, [
+    formData.total_boxes_count,
+    formData.total_order_weight,
+    formData.dimensions,
+    formData.docket_price,
+    formData.GST,
+    formData.GST_amount,
+    pricingMethod,
+    selectedClient,
+    clients,
+  ]);
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -412,6 +444,54 @@ useEffect(() => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            {!isManualCityEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingCities}
+                  onValueChange={handleCityChange}
+                  value={selectedCity}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={isLoadingCities ? 'Loading cities...' : 'Select a city'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New City</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter city name"
+                  value={formData.receiver_city}
+                  onChange={(e) => handleInputChange('receiver_city', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
+                  size="icon"
+                  onClick={() => {
+                    setIsManualCityEntry(false);
+                    setSelectedCity('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Receiver Selection */}
+          <div className="space-y-2">
             <Label htmlFor="receiver">Receiver</Label>
             {!isManualReceiverEntry ? (
               <div className="flex gap-2">
@@ -460,23 +540,14 @@ useEffect(() => {
             )}
           </div>
 
+          {/* Zone Selection (auto-populated) */}
           <div className="space-y-2">
-            <Label htmlFor="receiver_details">Receiver Details</Label>
+            <Label htmlFor="receiver_zone">Zone</Label>
             <Input
-              id="receiver_details"
-              placeholder="Enter receiver details"
-              value={formData.receiver_details}
-              onChange={(e) => handleInputChange('receiver_details', e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="receiver_contact">Receiver Contact</Label>
-            <Input
-              id="receiver_contact"
-              placeholder="Enter receiver contact"
-              value={formData.receiver_contact}
-              onChange={(e) => handleInputChange('receiver_contact', e.target.value)}
+              id="receiver_zone"
+              placeholder="Zone (auto-populated)"
+              value={formData.receiver_zone}
+              disabled
               required
             />
           </div>
@@ -717,27 +788,29 @@ useEffect(() => {
         {/* GST Radio Group */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="gst" className='font-bold'>GST</Label>
-          <RadioGroup
-            defaultValue="Excluded"
-            value={formData.GST}
-            onValueChange={(value) => handleInputChange('GST', value)}
-            className="flex space-x-4 py-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Included" id="gst-included" />
-              <Label htmlFor="gst-included">Included</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Excluded" id="gst-excluded" />
-              <Label htmlFor="gst-excluded">Excluded</Label>
-            </div>
-          </RadioGroup>
+            <Label htmlFor="gst" className="font-bold">
+              GST
+            </Label>
+            <RadioGroup
+              defaultValue="Excluded"
+              value={formData.GST}
+              onValueChange={(value) => handleInputChange('GST', value)}
+              className="flex space-x-4 py-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Included" id="gst-included" />
+                <Label htmlFor="gst-included">Included</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Excluded" id="gst-excluded" />
+                <Label htmlFor="gst-excluded">Excluded</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           {formData.GST === 'Excluded' && (
-            <div className=''>
-              <Label className='mb-1'>GST Amount</Label>
+            <div className="">
+              <Label className="mb-1">GST Amount</Label>
               <Input
                 type="number"
                 value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
@@ -863,8 +936,6 @@ useEffect(() => {
           )}
         </div>
 
-        
-
         <div className="flex justify-between">
           <Button
             type="button"
@@ -876,6 +947,8 @@ useEffect(() => {
 
               // Reset form data
               setFormData({
+                receiver_city: '',
+                receiver_zone: '' as ReceiverDetails['receiverZone'],
                 receiver_name: '',
                 receiver_details: '',
                 receiver_contact: '',

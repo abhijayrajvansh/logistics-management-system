@@ -41,6 +41,8 @@ export type Order = {
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';
+  receiver_city: string;
+  receiver_zone: ReceiverDetails['receiverZone']; // East, West, North, South
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
