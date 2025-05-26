@@ -8,7 +8,20 @@ import { fetchDocketSlipData } from '@/lib/fetchDocketSlipData';
 import { DocketPayloadProps } from './docketSlipInterface';
 
 const PrintDocketSlips = () => {
-  const docketIds: string[] = ['22GOnsYWohFlnSbstXNo', '3BDYs3B28dbJbROOzIQj'];
+  const [docketIds, setDocketIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Extract docket IDs from URL query parameters
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderIdsParam = urlParams.get('orderIds');
+      
+      if (orderIdsParam) {
+        const ids = orderIdsParam.split(',');
+        setDocketIds(ids);
+      }
+    }
+  }, []);
   const [docketData, setDocketData] = useState<{ [key: string]: DocketPayloadProps }>({});
   const [isLoading, setIsLoading] = useState(true);
 

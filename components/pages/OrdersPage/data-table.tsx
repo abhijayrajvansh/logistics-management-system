@@ -51,6 +51,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { CreateOrderForm } from './create-order';
 import { FaDownload } from 'react-icons/fa';
+import { redirect } from 'next/navigation';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -317,7 +318,8 @@ export function DataTable<TData, TValue>({
               const selectedRows = readyAndAssignedTable.getFilteredSelectedRowModel().rows;
               // const selectedOrderIds = selectedRows.map((row) => (row.original as any).docket_id);
               const selectedOrderIds = selectedRows.map((row) => (row.original as any).id);
-              console.log({selectedOrderIds})
+              const url = `/dashboard/orders/print?orderIds=${selectedOrderIds.join(',')}`;
+              redirect(url);
             }}
           >
             <FaDownload className="mr-2" />
