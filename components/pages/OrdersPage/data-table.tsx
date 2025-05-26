@@ -315,8 +315,9 @@ export function DataTable<TData, TValue>({
             // todo: create as a separate function and pass it to the onClick
             onClick={() => {
               const selectedRows = readyAndAssignedTable.getFilteredSelectedRowModel().rows;
-              const selectedOrderIds = selectedRows.map((row) => (row.original as any).docket_id);
-              console.log('Selected Order IDs:', selectedOrderIds);
+              // const selectedOrderIds = selectedRows.map((row) => (row.original as any).docket_id);
+              const selectedOrderIds = selectedRows.map((row) => (row.original as any).id);
+              console.log({selectedOrderIds})
             }}
           >
             <FaDownload className="mr-2" />

@@ -5,7 +5,7 @@ import DocketSlipUI from './DocketSlipUI';
 import { IoArrowBack } from 'react-icons/io5';
 
 const PrintDocketSlips = () => {
-  const docketIds: string[] = [''];
+  const docketIds: string[] = ['1167447'];
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
