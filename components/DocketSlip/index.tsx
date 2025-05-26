@@ -3,9 +3,37 @@
 import { Button } from '../ui/button';
 import DocketSlipUI from './DocketSlipUI';
 import { IoArrowBack } from 'react-icons/io5';
+import { useState, useEffect } from 'react';
+import { fetchDocketSlipData } from '@/lib/fetchDocketSlipData';
+import { DocketPayloadProps } from './docketSlipInterface';
 
 const PrintDocketSlips = () => {
-  const docketIds: string[] = ['22GOnsYWohFlnSbstXNo'];
+  const docketIds: string[] = ['22GOnsYWohFlnSbstXNo', '3BDYs3B28dbJbROOzIQj'];
+  const [docketData, setDocketData] = useState<{ [key: string]: DocketPayloadProps }>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAllDockets = async () => {
+      try {
+        const docketPromises = docketIds.map((id) => fetchDocketSlipData(id));
+        const results = await Promise.all(docketPromises);
+        const docketMap = results.reduce<{ [key: string]: DocketPayloadProps }>(
+          (acc, docket, index) => {
+            acc[docketIds[index]] = docket;
+            return acc;
+          },
+          {},
+        );
+        setDocketData(docketMap);
+      } catch (error) {
+        console.error('Error fetching docket data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllDockets();
+  }, [docketIds]);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -61,7 +89,13 @@ const PrintDocketSlips = () => {
         `}</style>
 
         {docketIds.length > 0 ? (
-          docketIds.map((docketId) => <DocketSlipUI key={docketId} />)
+          isLoading ? (
+            <div className="flex items-center justify-center h-screen">Loading docket data...</div>
+          ) : (
+            docketIds.map((docketId) => (
+              <DocketSlipUI key={docketId} docketData={docketData[docketId]} />
+            ))
+          )
         ) : (
           <div className="flex items-center justify-center h-screen">
             <Button onClick={handleGoBack} variant={'outline'}>

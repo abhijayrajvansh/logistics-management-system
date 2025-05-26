@@ -1,9 +1,73 @@
 import React from 'react';
 import { DocketPayloadProps } from './docketSlipInterface';
 
-const DocketSlipUI: React.FC<DocketPayloadProps> = (docketPayload) => {
-  // In a real application, you would use this docketId to fetch the specific docket data
-  // For now, we'll use the sample data from docketPayload
+const DocketSlipUI = ({ docketData }: { docketData: DocketPayloadProps }) => {
+  const [docketPayload, setDocketPayload] = React.useState<DocketPayloadProps>({
+    receiptNumber: '',
+    date: '',
+    origin: {
+      name: '',
+      company: '',
+      address: '',
+      city: '',
+      country: '',
+      tin: '',
+      mobileNo: '',
+      dated: '',
+      truckNo: '',
+    },
+    destination: {
+      name: '',
+      company: '',
+      address: '',
+      city: '',
+      country: '',
+      tin: '',
+      mobileNo: '',
+      dated: '',
+      truckNo: '',
+    },
+    charges: {
+      freightCharge: '-',
+      serTax: '-',
+      labourCharge: '-',
+      grCharge: '-',
+      handlingCharge: '-',
+      subTotal: '-',
+      total: '-',
+      grandTotal: '-',
+    },
+    packages: {
+      count: 0,
+      packing: '',
+      dimensions: '',
+      actualWeight: '',
+      chargedWeight: '',
+    },
+    gstInfo: {
+      pan: '',
+      gstin: '',
+      transporterId: '',
+      gstinTaxPayableInfo: [],
+    },
+    billInfo: {
+      billNo: '',
+      value: '0',
+      paymentMode: 'PAID',
+    },
+  });
+
+  // Merge the default values with the provided data
+  React.useEffect(() => {
+    if (docketData) {
+      const mergedData = {
+        ...docketPayload,
+        ...docketData,
+      };
+      setDocketPayload(mergedData);
+    }
+  }, [docketData]);
+
   return (
     <div className="receipt-content bg-white border border-gray-300 p-2 font-sans text-[8px] text-black print:border print:border-black">
       <div className="border border-black h-full w-full">
@@ -14,7 +78,6 @@ const DocketSlipUI: React.FC<DocketPayloadProps> = (docketPayload) => {
             <div className="flex items-center">
               <div className="p-1 border border-[#065398] ">
                 <img src="/logo/jaiz-logistics-logo.png" alt="jaiz-logo" className="h-10" />
-                {/* <div className='text-[4px] text-center mt-1 w-full'>- Your Choice for Logistics -</div> */}
               </div>
               <div className="ml-1">
                 <div className="text-red-600 font-bold text-[10px]">JAI'Z LOGISTICS INC.</div>
