@@ -1,12 +1,36 @@
 'use client';
 
+import { Button } from '../ui/button';
 import DocketSlipUI from './DocketSlipUI';
+import { IoArrowBack } from 'react-icons/io5';
 
 const PrintDocketSlips = () => {
-  const docketIds = ['1167447', '1829264'];
+  const docketIds: string[] = [''];
+
+  const handlePrint = () => {
+    const printContainer = document.querySelector('.print-container');
+    if (printContainer) {
+      const originalContent = document.body.innerHTML;
+      document.body.innerHTML = printContainer.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContent;
+      window.location.reload(); // Reload to restore the original content
+    }
+  };
+
+  const handleGoBack = () => {
+    window.history.back();
+  };
 
   return (
     <div className="relative">
+      {docketIds.length > 0 ? (
+        <div className="flex justify-end p-4">
+          <Button onClick={handlePrint}>Print</Button>
+        </div>
+      ) : (
+        <></>
+      )}
       <div className="print-container">
         {/* Print styles */}
         <style jsx global>{`
@@ -36,12 +60,16 @@ const PrintDocketSlips = () => {
           }
         `}</style>
 
-        {docketIds.map((docketId) => (
-          <DocketSlipUI
-            key={docketId}
-            docketId={docketId}
-          />
-        ))}
+        {docketIds.length > 0 ? (
+          docketIds.map((docketId) => <DocketSlipUI key={docketId} docketId={docketId} />)
+        ) : (
+          <div className="flex items-center justify-center h-screen">
+            <Button onClick={handleGoBack} variant={'outline'}>
+              <IoArrowBack />
+              Go Back To Orders
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
