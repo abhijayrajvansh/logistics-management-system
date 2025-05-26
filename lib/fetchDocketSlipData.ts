@@ -28,13 +28,3 @@ export const fetchDocketSlipData = async (docketId: string) => {
     throw error;
   }
 };
-
-fetchDocketSlipData('22GOnsYWohFlnSbstXNo')
-  .then((data) => console.log({data}))
-  .finally(() => {
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Error in fetching docket slip data:', error);
-    process.exit(1);
-  });

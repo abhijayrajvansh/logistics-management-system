@@ -5,7 +5,7 @@ import DocketSlipUI from './DocketSlipUI';
 import { IoArrowBack } from 'react-icons/io5';
 
 const PrintDocketSlips = () => {
-  const docketIds: string[] = ['1167447'];
+  const docketIds: string[] = ['22GOnsYWohFlnSbstXNo'];
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -61,7 +61,7 @@ const PrintDocketSlips = () => {
         `}</style>
 
         {docketIds.length > 0 ? (
-          docketIds.map((docketId) => <DocketSlipUI key={docketId} docketId={docketId} />)
+          docketIds.map((docketId) => <DocketSlipUI key={docketId} />)
         ) : (
           <div className="flex items-center justify-center h-screen">
             <Button onClick={handleGoBack} variant={'outline'}>
