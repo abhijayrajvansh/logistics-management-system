@@ -14,6 +14,9 @@ import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
+import { getTruckDocumentsStatus } from '@/lib/uploadTruckDocument';
+import { Badge } from '@/components/ui/badge';
+import useTrucks from '@/hooks/useTrucks';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -262,6 +265,26 @@ export const columns: ColumnDef<Truck>[] = [
   //     );
   //   },
   // },
+  {
+    accessorKey: "truckDocuments",
+    header: "Documents Status",
+    cell: ({ row }) => {
+      const truckDocId = row.original.id;
+      const { trucks } = useTrucks();
+      const truck = trucks.find((t) => t.id === truckDocId);
+      const documentsStatus = truck?.truckDocuments ? 'Submitted' : 'Pending';
+      console.log({documentsStatus})
+      // console.log({truck})
+      return (
+        <Badge 
+          variant={'default'}
+          className={`${documentsStatus === 'Submitted' ? 'bg-green-200 text-green-700 border border-green-500' : 'bg-red-200 text-red-700 border border-red-500'}`}
+        >
+          {documentsStatus}
+        </Badge>
+      )
+    },
+  },
   {
     accessorKey: 'actions',
     header: () => <div className="text-center">Actions</div>,

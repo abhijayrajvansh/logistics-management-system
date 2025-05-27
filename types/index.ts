@@ -180,7 +180,16 @@ export type Truck = {
   permitExpiry: Date; // alias: national permit
   odoCurrent: number;
   odoAtLastService: number;
+  truckDocuments: TruckDocuments | 'NA';
 };
+
+export type TruckDocuments = {
+  reg_certificate: string;
+  five_year_permit: string;
+  multiple_state_permits: string[];
+  pollution_control_certificate: string;
+  fitness_certificate: string;
+}
 
 export type Center = {
   id: string;
