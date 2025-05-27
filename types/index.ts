@@ -206,6 +206,12 @@ export type TruckAuditHistory = {
   date: Timestamp;
 };
 
+export type TruckCenter = {
+  id: string;          // `${truckId}_${centerId}`
+  truckId: string;
+  centerId: string;
+  createdAt: Timestamp;
+};
 
 export type Center = {
   id: string;
