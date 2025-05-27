@@ -24,6 +24,7 @@ interface CreateTruckFormProps {
 export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
   const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File | File[] }>({});
   const [multiplePermitInputs, setMultiplePermitInputs] = useState<number[]>([0]); // Start with one input
+  const [toolkitPhotoInputs, setToolkitPhotoInputs] = useState<number[]>([0]); // Start with one input
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -48,6 +49,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
     if (!file) return;
 
     if (field === 'multiple_state_permits') {
+      // Handle multiple permits file upload
       setDocumentFiles((prev) => {
         const permits = Array.isArray(prev.multiple_state_permits)
           ? [...(prev.multiple_state_permits as File[])]
@@ -58,6 +60,20 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         return {
           ...prev,
           multiple_state_permits: permits,
+        };
+      });
+    } else if (field === 'toolkit_photos') {
+      // Handle toolkit photos file upload
+      setDocumentFiles((prev) => {
+        const photos = Array.isArray(prev.toolkit_photos)
+          ? [...(prev.toolkit_photos as File[])]
+          : new Array(toolkitPhotoInputs.length).fill(null);
+        if (typeof index === 'number') {
+          photos[index] = file;
+        }
+        return {
+          ...prev,
+          toolkit_photos: photos,
         };
       });
     } else {
@@ -72,6 +88,10 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
     setMultiplePermitInputs((prev) => [...prev, prev.length]);
   };
 
+  const addToolkitPhotoInput = () => {
+    setToolkitPhotoInputs((prev) => [...prev, prev.length]);
+  };
+
   const removePermitInput = (indexToRemove: number) => {
     setMultiplePermitInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
     setDocumentFiles((prev) => {
@@ -81,6 +101,21 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         return {
           ...prev,
           multiple_state_permits: updatedPermits,
+        };
+      }
+      return prev;
+    });
+  };
+
+  const removeToolkitPhotoInput = (indexToRemove: number) => {
+    setToolkitPhotoInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.toolkit_photos)) {
+        const updatedPhotos = [...prev.toolkit_photos];
+        updatedPhotos.splice(indexToRemove, 1);
+        return {
+          ...prev,
+          toolkit_photos: updatedPhotos,
         };
       }
       return prev;
@@ -101,6 +136,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         insuranceExpiry: new Date(formData.insuranceExpiry),
         permitExpiry: new Date(formData.permitExpiry),
         created_at: new Date(),
+        toolkitCount: 'NA' as string[] | 'NA', // Initialize as NA, will be updated after photos upload
       };
 
       // Add the truck to Firestore first to get the ID
@@ -118,7 +154,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
 
       // Handle regular documents
       for (const [docType, file] of Object.entries(documentFiles)) {
-        if (docType === 'multiple_state_permits') continue;
+        if (docType === 'multiple_state_permits' || docType === 'toolkit_photos') continue;
         if (file && file instanceof File) {
           documentUploadPromises.push(
             uploadTruckDocument(file, truckRef.id, docType).then((url) => {
@@ -147,15 +183,32 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         }
       }
 
+      // Handle toolkit photos
+      const toolkitPhotos = documentFiles.toolkit_photos;
+      const toolkitUrls: string[] = [];
+      if (Array.isArray(toolkitPhotos)) {
+        for (let i = 0; i < toolkitPhotos.length; i++) {
+          const photoFile = toolkitPhotos[i];
+          if (photoFile instanceof File) {
+            documentUploadPromises.push(
+              uploadTruckDocument(photoFile, truckRef.id, `toolkit_photo_${i}`).then((url) => {
+                if (url) toolkitUrls.push(url);
+              }),
+            );
+          }
+        }
+      }
+
       await Promise.all(documentUploadPromises);
 
-      // Update truck with document URLs
+      // Update truck with document URLs and toolkit photos
       await updateDoc(truckRef, {
         truckDocuments: Object.values(truckDocuments).some(
           (v) => v !== '' && (!Array.isArray(v) || v.length > 0),
         )
           ? truckDocuments
           : 'NA',
+        toolkitCount: toolkitUrls.length > 0 ? toolkitUrls : 'NA',
       });
 
       toast.success('Truck added successfully!', {
@@ -175,6 +228,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
       });
       setDocumentFiles({});
       setMultiplePermitInputs([0]); // Reset to one input
+      setToolkitPhotoInputs([0]); // Reset to one input
 
       if (onSuccess) {
         onSuccess();
@@ -296,6 +350,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         <div className="space-y-4">
           <h3 className="font-medium">Truck Documents</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Regular document fields */}
             <div className="space-y-2">
               <Label htmlFor="reg_certificate">Registration Certificate</Label>
               <Input
@@ -379,6 +434,47 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 required
               />
             </div>
+
+            {/* Toolkit Photos Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Toolkit Photos</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addToolkitPhotoInput}>
+                  Add Photo
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground mb-4">
+                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG file under 5MB.
+              </div>
+              <div className="space-y-2">
+                {toolkitPhotoInputs.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        handleFileChange(
+                          'toolkit_photos',
+                          e.target.files?.[0] || null,
+                          index,
+                        )
+                      }
+                      required
+                    />
+                    {toolkitPhotoInputs.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeToolkitPhotoInput(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -399,6 +495,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
               });
               setDocumentFiles({});
               setMultiplePermitInputs([0]);
+              setToolkitPhotoInputs([0]);
             }}
           >
             Reset

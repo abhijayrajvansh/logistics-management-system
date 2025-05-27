@@ -29,6 +29,8 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
   const [currentDocuments, setCurrentDocuments] = useState<TruckDocuments | 'NA'>('NA');
   // Track existing permits that should be kept
   const [existingPermits, setExistingPermits] = useState<string[]>([]);
+  // Track existing toolkit photos that should be kept
+  const [existingToolkitPhotos, setExistingToolkitPhotos] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -98,6 +100,11 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
           ) {
             setExistingPermits(data.truckDocuments.multiple_state_permits);
           }
+
+          // Set existing toolkit photos
+          if (Array.isArray(data.toolkitCount)) {
+            setExistingToolkitPhotos(data.toolkitCount);
+          }
         } else {
           toast.error('Truck not found');
           if (onCancel) onCancel();
@@ -122,16 +129,28 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
 
   const handleFileChange = (field: string, file: File | null, index?: number) => {
     if (!file) {
-      // For adding a new empty permit input
+      // For adding a new empty permit/photo input
       setDocumentFiles((prev) => {
-        const permits = Array.isArray(prev.multiple_state_permits)
-          ? [...(prev.multiple_state_permits as File[])]
-          : [];
-        permits.push(null as any); // Add empty slot for new permit
-        return {
-          ...prev,
-          multiple_state_permits: permits,
-        };
+        if (field === 'multiple_state_permits') {
+          const permits = Array.isArray(prev.multiple_state_permits)
+            ? [...(prev.multiple_state_permits as File[])]
+            : [];
+          permits.push(null as any); // Add empty slot for new permit
+          return {
+            ...prev,
+            multiple_state_permits: permits,
+          };
+        } else if (field === 'toolkit_photos') {
+          const photos = Array.isArray(prev.toolkit_photos)
+            ? [...(prev.toolkit_photos as File[])]
+            : [];
+          photos.push(null as any); // Add empty slot for new photo
+          return {
+            ...prev,
+            toolkit_photos: photos,
+          };
+        }
+        return prev;
       });
       return;
     }
@@ -157,6 +176,21 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
           multiple_state_permits: permits,
         };
       });
+    } else if (field === 'toolkit_photos') {
+      setDocumentFiles((prev) => {
+        const photos = Array.isArray(prev.toolkit_photos)
+          ? [...(prev.toolkit_photos as File[])]
+          : [];
+        if (typeof index === 'number') {
+          photos[index] = file;
+        } else {
+          photos.push(file);
+        }
+        return {
+          ...prev,
+          toolkit_photos: photos,
+        };
+      });
     } else {
       // For other document types
       setDocumentFiles((prev) => ({
@@ -170,8 +204,16 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
     handleFileChange('multiple_state_permits', null);
   };
 
+  const addNewToolkitPhotoInput = () => {
+    handleFileChange('toolkit_photos', null);
+  };
+
   const removeExistingPermit = (index: number) => {
     setExistingPermits((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingToolkitPhoto = (index: number) => {
+    setExistingToolkitPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeNewPermit = (index: number) => {
@@ -182,6 +224,20 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
         return {
           ...prev,
           multiple_state_permits: updatedPermits,
+        };
+      }
+      return prev;
+    });
+  };
+
+  const removeNewToolkitPhoto = (index: number) => {
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.toolkit_photos)) {
+        const updatedPhotos = [...prev.toolkit_photos];
+        updatedPhotos.splice(index, 1);
+        return {
+          ...prev,
+          toolkit_photos: updatedPhotos,
         };
       }
       return prev;
@@ -218,7 +274,7 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
 
       // Handle regular documents
       for (const [docType, file] of Object.entries(documentFiles)) {
-        if (docType === 'multiple_state_permits') continue;
+        if (docType === 'multiple_state_permits' || docType === 'toolkit_photos') continue;
         if (file && file instanceof File) {
           documentUploadPromises.push(
             uploadTruckDocument(file, truckId, docType).then((url) => {
@@ -254,6 +310,30 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
         }
       }
 
+      // Set existing toolkit photos
+      const updatedToolkitPhotos = [...existingToolkitPhotos];
+
+      // Handle new toolkit photo uploads
+      const newPhotos = documentFiles.toolkit_photos;
+      if (Array.isArray(newPhotos)) {
+        for (const photoFile of newPhotos) {
+          if (photoFile instanceof File) {
+            // Use timestamp to ensure unique filenames
+            documentUploadPromises.push(
+              uploadTruckDocument(
+                photoFile,
+                truckId,
+                `toolkit_photo_${Date.now()}_${photoFile.name}`,
+              ).then((url) => {
+                if (url) {
+                  updatedToolkitPhotos.push(url);
+                }
+              }),
+            );
+          }
+        }
+      }
+
       await Promise.all(documentUploadPromises);
 
       // Update truck document in Firestore
@@ -267,6 +347,7 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
         )
           ? updatedDocuments
           : 'NA',
+        toolkitCount: updatedToolkitPhotos.length > 0 ? updatedToolkitPhotos : 'NA',
       });
 
       toast.success('Truck updated successfully!');
@@ -526,6 +607,80 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
                   handleFileChange('fitness_certificate', e.target.files?.[0] || null)
                 }
               />
+            </div>
+
+            {/* Toolkit Photos Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Toolkit Photos</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addNewToolkitPhotoInput}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add New Photo
+                </Button>
+              </div>
+
+              {/* Helper text */}
+              <div className="text-sm text-muted-foreground mb-4">
+                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG
+                file under 5MB.
+              </div>
+
+              {/* Existing Photos */}
+              {existingToolkitPhotos.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Existing Photos
+                  </div>
+                  {existingToolkitPhotos.map((photoUrl, index) => (
+                    <div key={`existing-photo-${index}`} className="flex items-center gap-2">
+                      <div className="flex-1 truncate text-sm border rounded-md p-2">
+                        Photo {index + 1}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeExistingToolkitPhoto(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New Photo Inputs */}
+              {Array.isArray(documentFiles.toolkit_photos) &&
+                documentFiles.toolkit_photos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      New Photos
+                    </div>
+                    {documentFiles.toolkit_photos.map((_, index) => (
+                      <div key={`new-photo-${index}`} className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept=".jpg,.jpeg,.png"
+                          onChange={(e) =>
+                            handleFileChange(
+                              'toolkit_photos',
+                              e.target.files?.[0] || null,
+                              index,
+                            )
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeNewToolkitPhoto(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         </div>
