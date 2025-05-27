@@ -491,19 +491,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input
-              disabled={true}
-              id="numberOfStops"
-              type="number"
-              placeholder="Enter number of stops"
-              value={selectedOrderIds.length}
-              onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
-              required
-              min="0"
-            />
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -594,6 +581,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         {/* Orders section */}
         <div className="space-y-4">
           <Label>Select Orders for this Trip</Label>
+          <div className="text-sm text-muted-foreground mb-2">
+            Number of stops in this trip: {selectedOrderIds.length}
+          </div>
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {isLoadingOrders ? (
               <div className="text-center py-4">Loading orders...</div>
