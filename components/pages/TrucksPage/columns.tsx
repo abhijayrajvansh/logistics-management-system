@@ -93,7 +93,7 @@ const ActionCell = ({ row }: { row: any }) => {
   return (
     <div className="text-center space-x-2">
       <button
-        className="hover:bg-green-500 p-1 rounded-lg cursor-pointer border border-green-500 text-green-500 hover:text-white"
+        className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray-500 hover:text-white"
         onClick={() => setIsViewDetailsOpen(true)}
         title="View Details"
       >
