@@ -444,7 +444,8 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 </Button>
               </div>
               <div className="text-sm text-muted-foreground mb-4">
-                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG file under 5MB.
+                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG file
+                under 5MB.
               </div>
               <div className="space-y-2">
                 {toolkitPhotoInputs.map((_, index) => (
@@ -453,11 +454,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                       type="file"
                       accept=".jpg,.jpeg,.png"
                       onChange={(e) =>
-                        handleFileChange(
-                          'toolkit_photos',
-                          e.target.files?.[0] || null,
-                          index,
-                        )
+                        handleFileChange('toolkit_photos', e.target.files?.[0] || null, index)
                       }
                       required
                     />

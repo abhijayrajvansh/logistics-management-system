@@ -621,8 +621,8 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
 
               {/* Helper text */}
               <div className="text-sm text-muted-foreground mb-4">
-                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG
-                file under 5MB.
+                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG file
+                under 5MB.
               </div>
 
               {/* Existing Photos */}
@@ -653,20 +653,14 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
               {Array.isArray(documentFiles.toolkit_photos) &&
                 documentFiles.toolkit_photos.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">
-                      New Photos
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground mb-2">New Photos</div>
                     {documentFiles.toolkit_photos.map((_, index) => (
                       <div key={`new-photo-${index}`} className="flex items-center gap-2">
                         <Input
                           type="file"
                           accept=".jpg,.jpeg,.png"
                           onChange={(e) =>
-                            handleFileChange(
-                              'toolkit_photos',
-                              e.target.files?.[0] || null,
-                              index,
-                            )
+                            handleFileChange('toolkit_photos', e.target.files?.[0] || null, index)
                           }
                         />
                         <Button
