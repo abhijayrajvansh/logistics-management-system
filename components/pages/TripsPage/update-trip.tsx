@@ -62,7 +62,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const {trucks} = useTrucks();
+  const { trucks } = useTrucks();
 
   const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
@@ -217,7 +217,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
   useEffect(() => {
     if (selectedDriver) {
-      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === selectedDriver.assignedTruckId)?.regNumber ||
+        'Not Assigned';
       setFormData((prevData) => ({
         ...prevData,
         driver: selectedDriver.id,
@@ -344,7 +346,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
         // Handle new driver: Set status to OnTrip
         if (formData.driver && formData.driver !== 'Not Assigned') {
-
           // Update new driver's status
           const newDriverRef = doc(db, 'drivers', formData.driver);
           await updateDoc(newDriverRef, {
@@ -353,7 +354,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           });
         }
       }
-
 
       // Get current trip_orders document using the same ID as the trip document
       const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
@@ -491,6 +491,22 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
               required
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Trip Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => handleInputChange('type', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select trip type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="past">Past</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -521,7 +537,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           </div>
           <div className="space-y-2">
             <Label htmlFor="truck">Vehicle Number</Label>
-            <Input disabled={true}
+            <Input
+              disabled={true}
               id="truck"
               placeholder="Enter Vehicle number"
               value={formData.truck}
@@ -542,22 +559,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="type">Trip Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select trip type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="past">Past</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          
 
           {formData.type === 'active' && (
             <div className="space-y-2">
@@ -580,7 +582,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
         {/* Orders section */}
         <div className="space-y-4">
-          <Label>Select Orders for this Trip</Label>
+          <Label className='font-bold'>Select Orders for this Trip</Label>
           <div className="text-sm text-muted-foreground mb-2">
             Number of stops in this trip: {selectedOrderIds.length}
           </div>
