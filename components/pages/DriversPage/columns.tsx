@@ -282,7 +282,6 @@ export const columns: ColumnDef<Driver>[] = [
     header: 'Documents Status',
     cell: ({ row }) => {
       const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || 'NA';
-      console.log({docs})
       const status = docs === 'NA' ? 'Pending' : docs.status;
       return (
         <Badge

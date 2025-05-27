@@ -92,7 +92,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             status: data.status || 'Inactive',
             emergencyContact: data.emergencyContact || 'NA',
             referredBy: data.referredBy || 'NA',
-            date_of_joining: data.date_of_joining || new Date(),
+            date_of_joining: data.date_of_joining?.toDate?.() || new Date(),
             driverDocuments: {
               ...data.driverDocuments,
               dob: data.driverDocuments?.dob?.toDate() || new Date(),
@@ -466,7 +466,11 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             value={
               formData.date_of_joining instanceof Date
                 ? formData.date_of_joining.toISOString().split('T')[0]
-                : ''
+                : formData.date_of_joining &&
+                    typeof formData.date_of_joining === 'object' &&
+                    'toDate' in formData.date_of_joining
+                  ? formData.date_of_joining.toDate().toISOString().split('T')[0]
+                  : ''
             }
             onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
             required
