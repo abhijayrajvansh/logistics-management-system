@@ -472,10 +472,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       <div className="grid gap-6 py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="startingPoint">Starting Point</Label>
+            <Label htmlFor="startingPoint">Origin</Label>
             <Input
               id="startingPoint"
-              placeholder="Enter starting location"
+              placeholder="Enter Origin location"
               value={formData.startingPoint}
               onChange={(e) => handleInputChange('startingPoint', e.target.value)}
               required

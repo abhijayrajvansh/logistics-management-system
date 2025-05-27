@@ -308,10 +308,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="startingPoint">Starting Point</Label>
+            <Label htmlFor="startingPoint">Origin</Label>
             <Input
               id="startingPoint"
-              placeholder="Enter starting location"
+              placeholder="Enter origin location"
               value={formData.startingPoint}
               onChange={(e) => handleInputChange('startingPoint', e.target.value)}
               required

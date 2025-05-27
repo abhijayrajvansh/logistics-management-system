@@ -69,7 +69,7 @@ export type ProofOfPayment = {
 export type Trip = {
   id: string;
   tripId: string;
-  startingPoint: string;
+  startingPoint: string; // alias: Origin
   destination: string;
   driver: string;
   numberOfStops: number;
