@@ -16,7 +16,7 @@ import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
-import { format } from 'date-fns';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -28,8 +28,6 @@ const MaintenanceHistoryDialog = ({
   onClose: () => void;
   maintenanceHistory: TruckMaintenanceHistory[] | 'NA' | undefined;
 }) => {
-  console.log({maintenanceHistory})
-
   if (!maintenanceHistory) return null;
 
   return (
@@ -50,7 +48,7 @@ const MaintenanceHistoryDialog = ({
           <div className="space-y-4">
             {maintenanceHistory.map((record, index) => (
               <div key={index} className="border rounded-lg p-4 space-y-2">
-                {/* <div className="font-medium">{format(new Date(record.date), 'PPP')}</div> */}
+                <div className="font-medium">{formatFirestoreDate(record.date)}</div>
                 <div className="text-sm text-muted-foreground">{record.maintainance_detail}</div>
                 {record.photos.length > 0 && (
                   <div className="grid grid-cols-2 gap-2 mt-2">

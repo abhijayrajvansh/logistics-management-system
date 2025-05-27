@@ -195,7 +195,7 @@ export type TruckDocuments = {
 export type TruckMaintenanceHistory = {
   maintainance_detail: string;
   photos: string[]; // array of photo URLs
-  date: Date;
+  date: Timestamp;
 }
 
 export type Center = {
