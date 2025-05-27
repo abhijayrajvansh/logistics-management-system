@@ -19,6 +19,8 @@ import useTrucks from '@/hooks/useTrucks';
 import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import ViewTruckDetails from './ViewTruckDetails';
 import { TbTools } from "react-icons/tb";
+import { VscHistory } from "react-icons/vsc";
+import AuditHistoryDialog from './AuditHistoryDialog';
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -79,6 +81,7 @@ const ActionCell = ({ row }: { row: any }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
+  const [isAuditHistoryDialogOpen, setIsAuditHistoryDialogOpen] = useState(false);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
@@ -90,6 +93,12 @@ const ActionCell = ({ row }: { row: any }) => {
     truck.maintainanceHistory !== 'NA' &&
     Array.isArray(truck.maintainanceHistory) &&
     truck.maintainanceHistory.length > 0;
+
+  const hasAuditHistory =
+    truck.auditHistory &&
+    truck.auditHistory !== 'NA' &&
+    Array.isArray(truck.auditHistory) &&
+    truck.auditHistory.length > 0;
 
   return (
     <div className="text-center space-x-2">
@@ -120,6 +129,20 @@ const ActionCell = ({ row }: { row: any }) => {
         disabled={!hasMaintenanceHistory}
       >
         <MdBuildCircle size={15} />
+      </button>
+      <button
+        className={`p-1 rounded-lg cursor-pointer border ${
+          hasAuditHistory
+            ? 'hover:bg-violet-500 border-violet-500 text-violet-500 hover:text-white'
+            : 'border-gray-300 text-gray-300 cursor-not-allowed'
+        }`}
+        onClick={() => hasAuditHistory && setIsAuditHistoryDialogOpen(true)}
+        title={
+          hasAuditHistory ? 'View Audit History' : 'No audit history available'
+        }
+        disabled={!hasAuditHistory}
+      >
+        <VscHistory size={15} />
       </button>
       <button
         className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
@@ -166,6 +189,15 @@ const ActionCell = ({ row }: { row: any }) => {
           isOpen={isMaintenanceDialogOpen}
           onClose={() => setIsMaintenanceDialogOpen(false)}
           maintenanceHistory={truck.maintainanceHistory}
+        />
+      )}
+
+      {/* Audit History Dialog */}
+      {hasAuditHistory && (
+        <AuditHistoryDialog
+          isOpen={isAuditHistoryDialogOpen}
+          onClose={() => setIsAuditHistoryDialogOpen(false)}
+          auditHistory={truck.auditHistory}
         />
       )}
     </div>

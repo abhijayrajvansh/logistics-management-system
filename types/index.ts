@@ -183,6 +183,7 @@ export type Truck = {
   toolkitCount: string[] | 'NA'; // number count of toolkits (length of string) in the truck, each string is url of a toolkit photo stored in firebase storage
   truckDocuments: TruckDocuments | 'NA';
   maintainanceHistory: TruckMaintenanceHistory[] | 'NA';
+  auditHistory: TruckAuditHistory[] | 'NA';
 };
 
 export type TruckDocuments = {
@@ -198,6 +199,12 @@ export type TruckMaintenanceHistory = {
   photos: string[]; // array of photo URLs
   date: Timestamp;
 }
+
+export type TruckAuditHistory = {
+  audit_detail: string;
+  photos: string[]; // array of photo URLs
+  date: Timestamp;
+};
 
 
 export type Center = {
