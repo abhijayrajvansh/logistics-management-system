@@ -177,7 +177,7 @@ export type Truck = {
   ownership: 'Owned' | 'OnLoan';
   emiAmount: number;
   insuranceExpiry: Date;
-  permitExpiry: Date;
+  permitExpiry: Date; // alias: national permit
   odoCurrent: number;
   odoAtLastService: number;
 };

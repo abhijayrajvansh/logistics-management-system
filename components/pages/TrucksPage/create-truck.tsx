@@ -156,7 +156,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="permitExpiry">Permit Expiry Date</Label>
+            <Label htmlFor="permitExpiry">National Permit</Label>
             <Input
               id="permitExpiry"
               type="date"

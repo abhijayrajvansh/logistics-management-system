@@ -165,7 +165,7 @@ export const columns: ColumnDef<Truck>[] = [
   },
   {
     accessorKey: 'permitExpiry',
-    header: 'Permit Expiry',
+    header: 'National Permit',
     cell: ({ row }) => {
       const permitValue = row.getValue('permitExpiry');
 
