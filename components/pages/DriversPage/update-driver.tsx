@@ -309,8 +309,6 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
       <div className="grid gap-6 py-4">
         {/* Basic Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-
           <div className="space-y-2">
             <Label htmlFor="driverName">Driver Name</Label>
             <Input
@@ -348,7 +346,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectItem value="Punjabi">Punjabi</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <div className="flex gap-2 mt-2">
               {formData.languages.map((lang, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
@@ -461,15 +459,19 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="date_of_joining">Date of Joining</Label>
-            <Input 
-              id="date_of_joining"
-              type="date"
-              value={formData.date_of_joining instanceof Date ? formData.date_of_joining.toISOString().split('T')[0] : ''}
-              onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
-              required
-            />
-          </div>
+          <Label htmlFor="date_of_joining">Date of Joining</Label>
+          <Input
+            id="date_of_joining"
+            type="date"
+            value={
+              formData.date_of_joining instanceof Date
+                ? formData.date_of_joining.toISOString().split('T')[0]
+                : ''
+            }
+            onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
+            required
+          />
+        </div>
 
         {/* Documents Section */}
         <div className="space-y-4">
@@ -606,7 +608,10 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select document status" />
                 </SelectTrigger>
-                <SelectContent></SelectContent>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Verified">Verified</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>

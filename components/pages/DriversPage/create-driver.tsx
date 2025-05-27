@@ -300,12 +300,16 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <Input
             id="date_of_joining"
             type="date"
-            value={formData.date_of_joining instanceof Date ? formData.date_of_joining.toISOString().split('T')[0] : ''}
+            value={
+              formData.date_of_joining instanceof Date
+                ? formData.date_of_joining.toISOString().split('T')[0]
+                : ''
+            }
             onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
             required
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="driverName">Driver Name</Label>
           <Input
@@ -452,7 +456,11 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         <Label>Date of Joining</Label>
         <Input
           type="date"
-          value={formData.date_of_joining instanceof Date ? formData.date_of_joining.toISOString().split('T')[0] : ''}
+          value={
+            formData.date_of_joining instanceof Date
+              ? formData.date_of_joining.toISOString().split('T')[0]
+              : ''
+          }
           onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
           required
         />
@@ -465,9 +473,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <div className="space-y-2">
             <Label htmlFor="aadhar_front">
               Aadhar Card Front (Max 5MB)
-              {!validDocuments.aadhar_front && (
-                <span className="text-red-500 ml-1 text-xl">*</span>
-              )}
+              {!validDocuments.aadhar_front && <span className="text-red-500 ml-1 text-xl">*</span>}
             </Label>
             <Input
               id="aadhar_front"
@@ -487,9 +493,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           <div className="space-y-2">
             <Label htmlFor="aadhar_back">
               Aadhar Card Back (Max 5MB)
-              {!validDocuments.aadhar_back && (
-                <span className="text-red-500 ml-1 text-xl">*</span>
-              )}
+              {!validDocuments.aadhar_back && <span className="text-red-500 ml-1 text-xl">*</span>}
             </Label>
             <Input
               id="aadhar_back"
@@ -544,9 +548,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
               placeholder="Enter license number"
               required
               value={getDocumentFieldValue('license_number')}
-              onChange={(e) =>
-                handleInputChange('driverDocuments.license_number', e.target.value)
-              }
+              onChange={(e) => handleInputChange('driverDocuments.license_number', e.target.value)}
             />
           </div>
 
