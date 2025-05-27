@@ -27,12 +27,8 @@ const AuditHistoryDialog = ({ isOpen, onClose, auditHistory }: AuditHistoryDialo
           <DialogDescription>View all audit records for this truck.</DialogDescription>
         </DialogHeader>
 
-        {auditHistory === 'NA' ||
-        !Array.isArray(auditHistory) ||
-        auditHistory.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            No audit history available.
-          </div>
+        {auditHistory === 'NA' || !Array.isArray(auditHistory) || auditHistory.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">No audit history available.</div>
         ) : (
           <div className="space-y-4">
             {auditHistory.map((record, index) => (

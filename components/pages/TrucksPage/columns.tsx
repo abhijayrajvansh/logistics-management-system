@@ -18,8 +18,8 @@ import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
 import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import ViewTruckDetails from './ViewTruckDetails';
-import { TbTools } from "react-icons/tb";
-import { VscHistory } from "react-icons/vsc";
+import { TbTools } from 'react-icons/tb';
+import { FaClock } from 'react-icons/fa6';
 import AuditHistoryDialog from './AuditHistoryDialog';
 
 // MaintenanceHistoryDialog component
@@ -137,12 +137,10 @@ const ActionCell = ({ row }: { row: any }) => {
             : 'border-gray-300 text-gray-300 cursor-not-allowed'
         }`}
         onClick={() => hasAuditHistory && setIsAuditHistoryDialogOpen(true)}
-        title={
-          hasAuditHistory ? 'View Audit History' : 'No audit history available'
-        }
+        title={hasAuditHistory ? 'View Audit History' : 'No audit history available'}
         disabled={!hasAuditHistory}
       >
-        <VscHistory size={15} />
+        <FaClock size={15} />
       </button>
       <button
         className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
