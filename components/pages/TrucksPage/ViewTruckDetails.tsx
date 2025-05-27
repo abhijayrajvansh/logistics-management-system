@@ -95,9 +95,9 @@ const ViewTruckDetails = ({ isOpen, onClose, truck }: ViewTruckDetailsProps) => 
                 <div className="space-y-2">
                   {Object.entries(truck.truckDocuments).map(([key, url]) => (
                     <div key={key} className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground capitalize">
-                        {key.replace(/([A-Z])/g, ' $1').trim()}:
-                      </span>
+                        <span className="text-sm text-muted-foreground capitalize">
+                        {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:
+                        </span>
                       <a
                         href={url as string}
                         target="_blank"
