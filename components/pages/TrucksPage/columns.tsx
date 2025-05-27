@@ -10,13 +10,14 @@ import {
 import { Truck, TruckMaintenanceHistory } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { MdDeleteOutline, MdEdit, MdBuildCircle } from 'react-icons/md';
+import { MdDeleteOutline, MdEdit, MdBuildCircle, MdRemoveRedEye } from 'react-icons/md';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
 import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
+import ViewTruckDetails from './ViewTruckDetails';
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -77,6 +78,7 @@ const ActionCell = ({ row }: { row: any }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
@@ -90,6 +92,13 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
+      <button
+        className="hover:bg-green-500 p-1 rounded-lg cursor-pointer border border-green-500 text-green-500 hover:text-white"
+        onClick={() => setIsViewDetailsOpen(true)}
+        title="View Details"
+      >
+        <MdRemoveRedEye size={15} />
+      </button>
       <button
         className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
         onClick={() => setIsEditDialogOpen(true)}
@@ -118,6 +127,13 @@ const ActionCell = ({ row }: { row: any }) => {
       >
         <MdDeleteOutline size={15} />
       </button>
+
+      {/* View Details Dialog */}
+      <ViewTruckDetails
+        isOpen={isViewDetailsOpen}
+        onClose={() => setIsViewDetailsOpen(false)}
+        truck={truck}
+      />
 
       {/* Edit Truck Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

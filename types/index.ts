@@ -176,8 +176,8 @@ export type Truck = {
   axleConfig: string;
   ownership: 'Owned' | 'OnLoan';
   emiAmount: number;
-  insuranceExpiry: Date;
-  permitExpiry: Date; // alias: national permit
+  insuranceExpiry: Timestamp;
+  permitExpiry: Timestamp; // alias: national permit
   odoCurrent: number;
   odoAtLastService: number;
   truckDocuments: TruckDocuments | 'NA';
