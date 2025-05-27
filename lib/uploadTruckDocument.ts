@@ -1,6 +1,5 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebase/storage';
-import { TruckDocuments } from '@/types';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
@@ -30,19 +29,4 @@ export async function uploadTruckDocument(
     console.error('Error uploading document:', error);
     throw new Error(`Failed to upload ${documentType}`);
   }
-}
-
-export function getTruckDocumentsStatus(documents: TruckDocuments | 'NA'): 'Submitted' | 'Pending' {
-  if (documents === 'NA') {
-    return 'Pending';
-  }
-
-  const allFieldsPresent = Object.values(documents).every((value) => {
-    if (Array.isArray(value)) {
-      return value.length > 0 && value.every((v) => v !== '');
-    }
-    return value !== '';
-  });
-
-  return allFieldsPresent ? 'Submitted' : 'Pending';
 }

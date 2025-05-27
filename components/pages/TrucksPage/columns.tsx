@@ -14,7 +14,6 @@ import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
-import { getTruckDocumentsStatus } from '@/lib/uploadTruckDocument';
 import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
 

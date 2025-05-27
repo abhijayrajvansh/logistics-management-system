@@ -186,7 +186,7 @@ export type Truck = {
 export type TruckDocuments = {
   reg_certificate: string;
   five_year_permit: string;
-  multiple_state_permits: string[];
+  multiple_state_permits: string[];  // mutiple documents can be uploaded
   pollution_control_certificate: string;
   fitness_certificate: string;
 }

@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { uploadTruckDocument } from '@/lib/uploadTruckDocument';
+import { Truck, TruckDocuments } from '@/types';
 
 interface UpdateTruckFormProps {
   truckId: string;
@@ -22,6 +24,8 @@ interface UpdateTruckFormProps {
 }
 
 export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFormProps) {
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
+  const [currentDocuments, setCurrentDocuments] = useState<TruckDocuments | 'NA'>('NA');
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -42,12 +46,15 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
       try {
         const truckDoc = await getDoc(doc(db, 'trucks', truckId));
         if (truckDoc.exists()) {
-          const data = truckDoc.data();
+          const data = truckDoc.data() as Truck;
 
           // Format dates for input fields
           let formattedInsuranceExpiry = '';
           if (data.insuranceExpiry) {
-            if (data.insuranceExpiry.toDate) {
+            if (
+              'toDate' in data.insuranceExpiry &&
+              typeof data.insuranceExpiry.toDate === 'function'
+            ) {
               formattedInsuranceExpiry = data.insuranceExpiry.toDate().toISOString().split('T')[0];
             } else if (data.insuranceExpiry instanceof Date) {
               formattedInsuranceExpiry = data.insuranceExpiry.toISOString().split('T')[0];
@@ -58,7 +65,7 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
 
           let formattedPermitExpiry = '';
           if (data.permitExpiry) {
-            if (data.permitExpiry.toDate) {
+            if ('toDate' in data.permitExpiry && typeof data.permitExpiry.toDate === 'function') {
               formattedPermitExpiry = data.permitExpiry.toDate().toISOString().split('T')[0];
             } else if (data.permitExpiry instanceof Date) {
               formattedPermitExpiry = data.permitExpiry.toISOString().split('T')[0];
@@ -77,6 +84,9 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
             odoCurrent: data.odoCurrent?.toString() || '',
             odoAtLastService: data.odoAtLastService?.toString() || '',
           });
+
+          // Set current documents
+          setCurrentDocuments(data.truckDocuments || 'NA');
         } else {
           toast.error('Truck not found');
           if (onCancel) onCancel();
@@ -99,6 +109,23 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
     }));
   };
 
+  const handleDocumentChange = (key: string, file: File) => {
+    setDocumentFiles((prev) => ({
+      ...prev,
+      [key]: file,
+    }));
+  };
+
+  // Add file change handler
+  const handleFileChange = (field: string, file: File | null) => {
+    if (file) {
+      setDocumentFiles((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -115,11 +142,63 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
         updated_at: new Date(),
       };
 
-      // Update the truck in Firestore
+      // Upload new documents if any
+      const documentUploadPromises = [];
+      let updatedDocuments: TruckDocuments =
+        typeof currentDocuments === 'object'
+          ? { ...currentDocuments }
+          : {
+              reg_certificate: '',
+              five_year_permit: '',
+              multiple_state_permits: [],
+              pollution_control_certificate: '',
+              fitness_certificate: '',
+            };
+
+      // Handle regular documents
+      for (const [docType, file] of Object.entries(documentFiles)) {
+        if (docType === 'multiple_state_permits') continue;
+        if (file && docType in updatedDocuments) {
+          documentUploadPromises.push(
+            uploadTruckDocument(file, truckId, docType).then((url: string) => {
+              if (docType !== 'multiple_state_permits') {
+                (updatedDocuments as any)[docType] = url;
+              }
+            }),
+          );
+        }
+      }
+
+      // Handle multiple state permits
+      if (documentFiles.multiple_state_permits) {
+        documentUploadPromises.push(
+          uploadTruckDocument(
+            documentFiles.multiple_state_permits,
+            truckId,
+            'multiple_state_permits',
+          ).then((url: string) => {
+            updatedDocuments.multiple_state_permits = [
+              ...(updatedDocuments.multiple_state_permits || []),
+              url,
+            ];
+          }),
+        );
+      }
+
+      // Wait for all document uploads
+      await Promise.all(documentUploadPromises);
+
+      // Update truck data with new document URLs
       const truckRef = doc(db, 'trucks', truckId);
-      await updateDoc(truckRef, validatedData);
+      await updateDoc(truckRef, {
+        ...validatedData,
+        truckDocuments: Object.values(updatedDocuments).some((v) => v !== '')
+          ? updatedDocuments
+          : 'NA',
+      });
 
       toast.success('Truck updated successfully!');
+      setDocumentFiles({});
 
       if (onSuccess) {
         onSuccess();
@@ -238,6 +317,87 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
               onChange={(e) => handleInputChange('odoAtLastService', e.target.value)}
               required
             />
+          </div>
+        </div>
+
+        {/* Document Upload Section */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Update Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Regular Document Fields */}
+            <div className="space-y-2">
+              <Label htmlFor="reg_certificate">Registration Certificate</Label>
+              {typeof currentDocuments === 'object' && currentDocuments.reg_certificate && (
+                <div className="text-sm text-muted-foreground mb-2">Current document uploaded</div>
+              )}
+              <Input
+                id="reg_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('reg_certificate', e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="five_year_permit">Five Year Permit</Label>
+              {typeof currentDocuments === 'object' && currentDocuments.five_year_permit && (
+                <div className="text-sm text-muted-foreground mb-2">Current document uploaded</div>
+              )}
+              <Input
+                id="five_year_permit"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('five_year_permit', e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="multiple_state_permits">Multiple State Permits</Label>
+              {typeof currentDocuments === 'object' &&
+                currentDocuments.multiple_state_permits &&
+                currentDocuments.multiple_state_permits.length > 0 && (
+                  <div className="text-sm text-muted-foreground mb-2">
+                    {currentDocuments.multiple_state_permits.length} permit(s) uploaded
+                  </div>
+                )}
+              <Input
+                id="multiple_state_permits"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('multiple_state_permits', e.target.files?.[0] || null)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pollution_control_certificate">Pollution Control Certificate</Label>
+              {typeof currentDocuments === 'object' &&
+                currentDocuments.pollution_control_certificate && (
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Current document uploaded
+                  </div>
+                )}
+              <Input
+                id="pollution_control_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('pollution_control_certificate', e.target.files?.[0] || null)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fitness_certificate">Fitness Certificate</Label>
+              {typeof currentDocuments === 'object' && currentDocuments.fitness_certificate && (
+                <div className="text-sm text-muted-foreground mb-2">Current document uploaded</div>
+              )}
+              <Input
+                id="fitness_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('fitness_certificate', e.target.files?.[0] || null)
+                }
+              />
+            </div>
           </div>
         </div>
 

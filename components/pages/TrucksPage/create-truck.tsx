@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { uploadTruckDocument } from '@/lib/uploadTruckDocument';
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ interface CreateTruckFormProps {
 }
 
 export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -40,6 +42,15 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
     }));
   };
 
+  const handleFileChange = (field: string, file: File | null) => {
+    if (file) {
+      setDocumentFiles((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -56,8 +67,44 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         created_at: new Date(),
       };
 
-      // Add the truck to Firestore
+      // Add the truck to Firestore first to get the ID
       const truckRef = await addDoc(collection(db, 'trucks'), validatedData);
+
+      // Upload documents and get their URLs
+      const documentUploadPromises = [];
+      const truckDocuments: Record<string, string | string[]> = {};
+
+      // Handle regular documents
+      for (const [docType, file] of Object.entries(documentFiles)) {
+        if (docType === 'multiple_state_permits') continue;
+        if (file) {
+          documentUploadPromises.push(
+            uploadTruckDocument(file, truckRef.id, docType).then((url) => {
+              if (url) truckDocuments[docType] = url;
+            }),
+          );
+        }
+      }
+
+      // Handle multiple state permits separately
+      if (documentFiles.multiple_state_permits) {
+        documentUploadPromises.push(
+          uploadTruckDocument(
+            documentFiles.multiple_state_permits,
+            truckRef.id,
+            'multiple_state_permits',
+          ).then((url) => {
+            if (url) truckDocuments.multiple_state_permits = [url];
+          }),
+        );
+      }
+
+      await Promise.all(documentUploadPromises);
+
+      // Update truck with document URLs
+      await updateDoc(truckRef, {
+        truckDocuments: Object.keys(truckDocuments).length > 0 ? truckDocuments : 'NA',
+      });
 
       toast.success('Truck added successfully!', {
         description: `Registration: ${formData.regNumber}`,
@@ -74,6 +121,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         odoCurrent: '',
         odoAtLastService: '',
       });
+      setDocumentFiles({});
 
       // Call onSuccess callback if provided
       if (onSuccess) {
@@ -192,12 +240,74 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
           </div>
         </div>
 
+        {/* Document Upload Section */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Truck Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="reg_certificate">Registration Certificate</Label>
+              <Input
+                id="reg_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('reg_certificate', e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="five_year_permit">Five Year Permit</Label>
+              <Input
+                id="five_year_permit"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('five_year_permit', e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="multiple_state_permits">Multiple State Permits</Label>
+              <Input
+                id="multiple_state_permits"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('multiple_state_permits', e.target.files?.[0] || null)
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pollution_control_certificate">Pollution Control Certificate</Label>
+              <Input
+                id="pollution_control_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('pollution_control_certificate', e.target.files?.[0] || null)
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fitness_certificate">Fitness Certificate</Label>
+              <Input
+                id="fitness_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('fitness_certificate', e.target.files?.[0] || null)
+                }
+                required
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-between">
           <Button
             type="button"
             variant="outline"
             onClick={() => {
-              // Reset form data
               setFormData({
                 regNumber: '',
                 axleConfig: '',
@@ -208,6 +318,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 odoCurrent: '',
                 odoAtLastService: '',
               });
+              setDocumentFiles({});
             }}
           >
             Reset
