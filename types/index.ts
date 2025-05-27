@@ -181,6 +181,7 @@ export type Truck = {
   odoCurrent: number;
   odoAtLastService: number;
   truckDocuments: TruckDocuments | 'NA';
+  maintainanceHistory: TruckMaintenanceHistory[] | 'NA';
 };
 
 export type TruckDocuments = {
@@ -189,6 +190,12 @@ export type TruckDocuments = {
   multiple_state_permits: string[];  // mutiple documents can be uploaded
   pollution_control_certificate: string;
   fitness_certificate: string;
+}
+
+export type TruckMaintenanceHistory = {
+  maintainance_detail: string;
+  photos: string[]; // array of photo URLs
+  date: Date;
 }
 
 export type Center = {

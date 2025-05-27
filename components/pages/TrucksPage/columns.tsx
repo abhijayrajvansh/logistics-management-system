@@ -7,21 +7,78 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Truck } from '@/types';
+import { Truck, TruckMaintenanceHistory } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import { MdDeleteOutline, MdEdit, MdBuildCircle } from 'react-icons/md';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
+import { format } from 'date-fns';
 
-// Create a component for the actions cell to manage edit dialog state
+// MaintenanceHistoryDialog component
+const MaintenanceHistoryDialog = ({ 
+  isOpen, 
+  onClose, 
+  maintenanceHistory 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  maintenanceHistory: TruckMaintenanceHistory[] | 'NA';
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Maintenance History</DialogTitle>
+          <DialogDescription>
+            View all maintenance records for this truck.
+          </DialogDescription>
+        </DialogHeader>
+        
+        {maintenanceHistory === 'NA' || !maintenanceHistory.length ? (
+          <div className="text-center py-4 text-muted-foreground">
+            No maintenance history available.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {maintenanceHistory.map((record, index) => (
+              <div key={index} className="border rounded-lg p-4 space-y-2">
+                <div className="font-medium">
+                  {format(new Date(record.date), 'PPP')}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {record.maintainance_detail}
+                </div>
+                {record.photos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {record.photos.map((photo, photoIndex) => (
+                      <img
+                        key={photoIndex}
+                        src={photo}
+                        alt={`Maintenance photo ${photoIndex + 1}`}
+                        className="rounded-md w-full h-32 object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Create a component for the actions cell to manage dialog states
 const ActionCell = ({ row }: { row: any }) => {
   const truck = row.original;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
@@ -32,12 +89,21 @@ const ActionCell = ({ row }: { row: any }) => {
       <button
         className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
         onClick={() => setIsEditDialogOpen(true)}
+        title="Edit Truck"
       >
         <MdEdit size={15} />
       </button>
       <button
+        className="hover:bg-blue-500 p-1 rounded-lg cursor-pointer border border-blue-500 text-blue-500 hover:text-white"
+        onClick={() => setIsMaintenanceDialogOpen(true)}
+        title="View Maintenance History"
+      >
+        <MdBuildCircle size={15} />
+      </button>
+      <button
         className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
         onClick={() => setIsDeleteDialogOpen(true)}
+        title="Delete Truck"
       >
         <MdDeleteOutline size={15} />
       </button>
@@ -64,6 +130,13 @@ const ActionCell = ({ row }: { row: any }) => {
         truckId={truck.id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
+      />
+
+      {/* Maintenance History Dialog */}
+      <MaintenanceHistoryDialog
+        isOpen={isMaintenanceDialogOpen}
+        onClose={() => setIsMaintenanceDialogOpen(false)}
+        maintenanceHistory={truck.maintainanceHistory}
       />
     </div>
   );
