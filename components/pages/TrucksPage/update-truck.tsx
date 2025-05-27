@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { uploadTruckDocument } from '@/lib/uploadTruckDocument';
 import { Truck, TruckDocuments } from '@/types';
+import { X } from 'lucide-react';
 
 interface UpdateTruckFormProps {
   truckId: string;
@@ -24,7 +25,8 @@ interface UpdateTruckFormProps {
 }
 
 export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFormProps) {
-  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File | File[] }>({});
+  const [multiplePermitInputs, setMultiplePermitInputs] = useState<number[]>([0]);
   const [currentDocuments, setCurrentDocuments] = useState<TruckDocuments | 'NA'>('NA');
   const [formData, setFormData] = useState({
     regNumber: '',
@@ -109,21 +111,47 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
     }));
   };
 
-  const handleDocumentChange = (key: string, file: File) => {
-    setDocumentFiles((prev) => ({
-      ...prev,
-      [key]: file,
-    }));
-  };
+  const handleFileChange = (field: string, file: File | null, index?: number) => {
+    if (!file) return;
 
-  // Add file change handler
-  const handleFileChange = (field: string, file: File | null) => {
-    if (file) {
+    if (field === 'multiple_state_permits') {
+      setDocumentFiles((prev) => {
+        const permits = Array.isArray(prev.multiple_state_permits)
+          ? [...(prev.multiple_state_permits as File[])]
+          : new Array(multiplePermitInputs.length).fill(null);
+        if (typeof index === 'number') {
+          permits[index] = file;
+        }
+        return {
+          ...prev,
+          multiple_state_permits: permits,
+        };
+      });
+    } else {
       setDocumentFiles((prev) => ({
         ...prev,
         [field]: file,
       }));
     }
+  };
+
+  const addPermitInput = () => {
+    setMultiplePermitInputs((prev) => [...prev, prev.length]);
+  };
+
+  const removePermitInput = (indexToRemove: number) => {
+    setMultiplePermitInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.multiple_state_permits)) {
+        const updatedPermits = [...prev.multiple_state_permits];
+        updatedPermits.splice(indexToRemove, 1);
+        return {
+          ...prev,
+          multiple_state_permits: updatedPermits,
+        };
+      }
+      return prev;
+    });
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -158,10 +186,10 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
       // Handle regular documents
       for (const [docType, file] of Object.entries(documentFiles)) {
         if (docType === 'multiple_state_permits') continue;
-        if (file && docType in updatedDocuments) {
+        if (file && file instanceof File) {
           documentUploadPromises.push(
-            uploadTruckDocument(file, truckId, docType).then((url: string) => {
-              if (docType !== 'multiple_state_permits') {
+            uploadTruckDocument(file, truckId, docType).then((url) => {
+              if (docType !== 'multiple_state_permits' && url) {
                 (updatedDocuments as any)[docType] = url;
               }
             }),
@@ -170,29 +198,41 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
       }
 
       // Handle multiple state permits
-      if (documentFiles.multiple_state_permits) {
-        documentUploadPromises.push(
-          uploadTruckDocument(
-            documentFiles.multiple_state_permits,
-            truckId,
-            'multiple_state_permits',
-          ).then((url: string) => {
-            updatedDocuments.multiple_state_permits = [
-              ...(updatedDocuments.multiple_state_permits || []),
-              url,
-            ];
-          }),
-        );
+      const permits = documentFiles.multiple_state_permits;
+      if (Array.isArray(permits)) {
+        // Keep existing permits if any
+        updatedDocuments.multiple_state_permits =
+          typeof currentDocuments === 'object' &&
+          Array.isArray(currentDocuments.multiple_state_permits)
+            ? [...currentDocuments.multiple_state_permits]
+            : [];
+
+        // Add new permits
+        for (const permitFile of permits) {
+          if (permitFile instanceof File) {
+            documentUploadPromises.push(
+              uploadTruckDocument(permitFile, truckId, `multiple_state_permits_${Date.now()}`).then(
+                (url) => {
+                  if (url && Array.isArray(updatedDocuments.multiple_state_permits)) {
+                    updatedDocuments.multiple_state_permits.push(url);
+                  }
+                },
+              ),
+            );
+          }
+        }
       }
 
       // Wait for all document uploads
       await Promise.all(documentUploadPromises);
 
-      // Update truck data with new document URLs
+      // Update truck with document URLs
       const truckRef = doc(db, 'trucks', truckId);
       await updateDoc(truckRef, {
         ...validatedData,
-        truckDocuments: Object.values(updatedDocuments).some((v) => v !== '')
+        truckDocuments: Object.values(updatedDocuments).some(
+          (v) => v !== '' && (!Array.isArray(v) || v.length > 0),
+        )
           ? updatedDocuments
           : 'NA',
       });
@@ -324,7 +364,6 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
         <div className="space-y-4">
           <h3 className="font-medium">Update Documents</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Regular Document Fields */}
             <div className="space-y-2">
               <Label htmlFor="reg_certificate">Registration Certificate</Label>
               {typeof currentDocuments === 'object' && currentDocuments.reg_certificate && (
@@ -349,24 +388,49 @@ export function UpdateTruckForm({ truckId, onSuccess, onCancel }: UpdateTruckFor
                 onChange={(e) => handleFileChange('five_year_permit', e.target.files?.[0] || null)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="multiple_state_permits">Multiple State Permits</Label>
+
+            {/* Multiple State Permits Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Multiple State Permits</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addPermitInput}>
+                  Add Permit
+                </Button>
+              </div>
               {typeof currentDocuments === 'object' &&
-                currentDocuments.multiple_state_permits &&
+                Array.isArray(currentDocuments.multiple_state_permits) &&
                 currentDocuments.multiple_state_permits.length > 0 && (
                   <div className="text-sm text-muted-foreground mb-2">
-                    {currentDocuments.multiple_state_permits.length} permit(s) uploaded
+                    {currentDocuments.multiple_state_permits.length} existing permit(s) uploaded
                   </div>
                 )}
-              <Input
-                id="multiple_state_permits"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) =>
-                  handleFileChange('multiple_state_permits', e.target.files?.[0] || null)
-                }
-              />
+              <div className="space-y-2">
+                {multiplePermitInputs.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        handleFileChange(
+                          'multiple_state_permits',
+                          e.target.files?.[0] || null,
+                          index,
+                        )
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removePermitInput(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="pollution_control_certificate">Pollution Control Certificate</Label>
               {typeof currentDocuments === 'object' &&

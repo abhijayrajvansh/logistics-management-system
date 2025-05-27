@@ -15,13 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { X } from 'lucide-react';
 
 interface CreateTruckFormProps {
   onSuccess?: () => void;
 }
 
 export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
-  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File }>({});
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File | File[] }>({});
+  const [multiplePermitInputs, setMultiplePermitInputs] = useState<number[]>([0]); // Start with one input
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -42,13 +44,47 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
     }));
   };
 
-  const handleFileChange = (field: string, file: File | null) => {
-    if (file) {
+  const handleFileChange = (field: string, file: File | null, index?: number) => {
+    if (!file) return;
+
+    if (field === 'multiple_state_permits') {
+      setDocumentFiles((prev) => {
+        const permits = Array.isArray(prev.multiple_state_permits)
+          ? [...(prev.multiple_state_permits as File[])]
+          : new Array(multiplePermitInputs.length).fill(null);
+        if (typeof index === 'number') {
+          permits[index] = file;
+        }
+        return {
+          ...prev,
+          multiple_state_permits: permits,
+        };
+      });
+    } else {
       setDocumentFiles((prev) => ({
         ...prev,
         [field]: file,
       }));
     }
+  };
+
+  const addPermitInput = () => {
+    setMultiplePermitInputs((prev) => [...prev, prev.length]);
+  };
+
+  const removePermitInput = (indexToRemove: number) => {
+    setMultiplePermitInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.multiple_state_permits)) {
+        const updatedPermits = [...prev.multiple_state_permits];
+        updatedPermits.splice(indexToRemove, 1);
+        return {
+          ...prev,
+          multiple_state_permits: updatedPermits,
+        };
+      }
+      return prev;
+    });
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -72,12 +108,18 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
 
       // Upload documents and get their URLs
       const documentUploadPromises = [];
-      const truckDocuments: Record<string, string | string[]> = {};
+      const truckDocuments: Record<string, string | string[]> = {
+        reg_certificate: '',
+        five_year_permit: '',
+        multiple_state_permits: [],
+        pollution_control_certificate: '',
+        fitness_certificate: '',
+      };
 
       // Handle regular documents
       for (const [docType, file] of Object.entries(documentFiles)) {
         if (docType === 'multiple_state_permits') continue;
-        if (file) {
+        if (file && file instanceof File) {
           documentUploadPromises.push(
             uploadTruckDocument(file, truckRef.id, docType).then((url) => {
               if (url) truckDocuments[docType] = url;
@@ -86,31 +128,41 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         }
       }
 
-      // Handle multiple state permits separately
-      if (documentFiles.multiple_state_permits) {
-        documentUploadPromises.push(
-          uploadTruckDocument(
-            documentFiles.multiple_state_permits,
-            truckRef.id,
-            'multiple_state_permits',
-          ).then((url) => {
-            if (url) truckDocuments.multiple_state_permits = [url];
-          }),
-        );
+      // Handle multiple state permits
+      const permits = documentFiles.multiple_state_permits;
+      if (Array.isArray(permits)) {
+        for (let i = 0; i < permits.length; i++) {
+          const permitFile = permits[i];
+          if (permitFile instanceof File) {
+            documentUploadPromises.push(
+              uploadTruckDocument(permitFile, truckRef.id, `multiple_state_permits_${i}`).then(
+                (url) => {
+                  if (url && Array.isArray(truckDocuments.multiple_state_permits)) {
+                    truckDocuments.multiple_state_permits.push(url);
+                  }
+                },
+              ),
+            );
+          }
+        }
       }
 
       await Promise.all(documentUploadPromises);
 
       // Update truck with document URLs
       await updateDoc(truckRef, {
-        truckDocuments: Object.keys(truckDocuments).length > 0 ? truckDocuments : 'NA',
+        truckDocuments: Object.values(truckDocuments).some(
+          (v) => v !== '' && (!Array.isArray(v) || v.length > 0),
+        )
+          ? truckDocuments
+          : 'NA',
       });
 
       toast.success('Truck added successfully!', {
         description: `Registration: ${formData.regNumber}`,
       });
 
-      // Reset form after successful submission
+      // Reset form
       setFormData({
         regNumber: '',
         axleConfig: '',
@@ -122,8 +174,8 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         odoAtLastService: '',
       });
       setDocumentFiles({});
+      setMultiplePermitInputs([0]); // Reset to one input
 
-      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
@@ -264,18 +316,45 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="multiple_state_permits">Multiple State Permits</Label>
-              <Input
-                id="multiple_state_permits"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) =>
-                  handleFileChange('multiple_state_permits', e.target.files?.[0] || null)
-                }
-                required
-              />
+
+            {/* Multiple State Permits Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Multiple State Permits</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addPermitInput}>
+                  Add Permit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {multiplePermitInputs.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        handleFileChange(
+                          'multiple_state_permits',
+                          e.target.files?.[0] || null,
+                          index,
+                        )
+                      }
+                      required
+                    />
+                    {multiplePermitInputs.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePermitInput(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="pollution_control_certificate">Pollution Control Certificate</Label>
               <Input
@@ -319,6 +398,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 odoAtLastService: '',
               });
               setDocumentFiles({});
+              setMultiplePermitInputs([0]);
             }}
           >
             Reset
