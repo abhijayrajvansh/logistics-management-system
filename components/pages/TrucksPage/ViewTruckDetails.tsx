@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Truck, TruckMaintenanceHistory } from '@/types';
+import { Truck } from '@/types';
 import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 
 interface ViewTruckDetailsProps {
@@ -113,42 +113,6 @@ const ViewTruckDetails = ({ isOpen, onClose, truck }: ViewTruckDetailsProps) => 
                 <p className="text-sm text-muted-foreground">No documents uploaded</p>
               )}
             </div>
-          </div>
-
-          {/* Maintenance History Section - Full Width */}
-          <div className="col-span-1 md:col-span-2 border rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Maintenance History</h3>
-            {truck.maintainanceHistory && truck.maintainanceHistory !== 'NA' && Array.isArray(truck.maintainanceHistory) ? (
-              <div className="space-y-4">
-                {truck.maintainanceHistory.map((record: TruckMaintenanceHistory, index: number) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-2">
-                    <div className="font-medium">{formatFirestoreDate(record.date)}</div>
-                    <div className="text-sm text-muted-foreground">{record.maintainance_detail}</div>
-                    {record.photos && record.photos.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
-                        {record.photos.map((photo, photoIndex) => (
-                          <a
-                            key={photoIndex}
-                            href={photo}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <img
-                              src={photo}
-                              alt={`Maintenance photo ${photoIndex + 1}`}
-                              className="rounded-md w-full h-32 object-cover hover:opacity-80 transition-opacity"
-                            />
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No maintenance history available</p>
-            )}
           </div>
         </div>
       </DialogContent>
