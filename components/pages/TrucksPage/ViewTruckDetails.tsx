@@ -20,9 +20,7 @@ const ViewTruckDetails = ({ isOpen, onClose, truck }: ViewTruckDetailsProps) => 
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Truck Details</DialogTitle>
-          <DialogDescription>
-            Complete information about truck {truck.regNumber}
-          </DialogDescription>
+          <DialogDescription>Complete information about truck {truck.regNumber}</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,7 +81,9 @@ const ViewTruckDetails = ({ isOpen, onClose, truck }: ViewTruckDetailsProps) => 
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">KM Since Last Service:</span>
-                  <p className="font-medium">{(truck.odoCurrent - truck.odoAtLastService).toLocaleString()} km</p>
+                  <p className="font-medium">
+                    {(truck.odoCurrent - truck.odoAtLastService).toLocaleString()} km
+                  </p>
                 </div>
               </div>
             </div>
@@ -93,21 +93,58 @@ const ViewTruckDetails = ({ isOpen, onClose, truck }: ViewTruckDetailsProps) => 
               <h3 className="font-semibold mb-3">Documents</h3>
               {truck.truckDocuments ? (
                 <div className="space-y-2">
-                  {Object.entries(truck.truckDocuments).map(([key, url]) => (
-                    <div key={key} className="flex items-center justify-between">
+                  {Object.entries(truck.truckDocuments).map(([key, value]) => {
+                    if (key === 'multiple_state_permits' && Array.isArray(value)) {
+                      return (
+                        <div key={key} className="space-y-1">
+                          <span className="text-sm text-muted-foreground capitalize block">
+                            {key
+                              .replace(/([A-Z])/g, ' $1')
+                              .replace(/_/g, ' ')
+                              .trim()}
+                            :
+                          </span>
+                          {value.map((url, index) => (
+                            <div
+                              key={`${key}-${index}`}
+                              className="flex items-center justify-between pl-4"
+                            >
+                              <span className="text-sm text-muted-foreground">
+                                Permit {index + 1}
+                              </span>
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary hover:underline"
+                              >
+                                View Document
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={key} className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground capitalize">
-                        {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:
+                          {key
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/_/g, ' ')
+                            .trim()}
+                          :
                         </span>
-                      <a
-                        href={url as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        View Document
-                      </a>
-                    </div>
-                  ))}
+                        <a
+                          href={value as string}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          View Document
+                        </a>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No documents uploaded</p>
