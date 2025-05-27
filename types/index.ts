@@ -36,7 +36,7 @@ export type Order = {
   lr_no: string;
   payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
-  GST: "Included" | "Excluded";
+  GST: 'Included' | 'Excluded';
   GST_amount: number | 'NA'; // if GST is included in the price, then this will be 'NA'
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
@@ -46,7 +46,7 @@ export type Order = {
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
-  order_type: "Direct" | "Sublet";
+  order_type: 'Direct' | 'Sublet';
   sublet_details: string | 'NA'; // if order_type is Direct, then this will be 'NA', if order_type is Sublet, then this will contain the brand name of the sublet company
   status: 'Ready To Transport' | 'Assigned' | 'In Transit' | 'Transferred' | 'Delivered';
   tat: number; // whole numbers, format: hours
@@ -151,7 +151,7 @@ export type ReceiverDetails = {
   receiverId: string;
   receiverName: string;
   receiverCity: string;
-  receiverZone: "East" | "West" | "North" | "South";
+  receiverZone: 'East' | 'West' | 'North' | 'South';
   receiverDetails: string;
   receiverContact: string;
   pincode: string;
@@ -189,16 +189,16 @@ export type Truck = {
 export type TruckDocuments = {
   reg_certificate: string;
   five_year_permit: string;
-  multiple_state_permits: string[];  // mutiple documents can be uploaded
+  multiple_state_permits: string[]; // mutiple documents can be uploaded
   pollution_control_certificate: string;
   fitness_certificate: string;
-}
+};
 
 export type TruckMaintenanceHistory = {
   maintainance_detail: string;
   photos: string[]; // array of photo URLs
   date: Timestamp;
-}
+};
 
 export type TruckAuditHistory = {
   audit_detail: string;
@@ -207,7 +207,7 @@ export type TruckAuditHistory = {
 };
 
 export type TruckCenter = {
-  id: string;          // `${truckId}_${centerId}`
+  id: string; // `${truckId}_${centerId}`
   truckId: string;
   centerId: string;
   createdAt: Timestamp;
@@ -230,28 +230,27 @@ export type TAT_Mapping = {
   updated_at: Timestamp;
 };
 
-
 export type DriversRequest = {
   id: string;
   driverId: string; // reference to the driver who created the request
   type: 'leave' | 'money' | 'food' | 'others';
   proofImageUrl?: string; // URL of the proof image
-  
+
   reason: string;
   startDate: Date;
   endDate: Date;
-  
+
   status: 'pending' | 'approved' | 'rejected';
   createdAt: Date;
 };
 
 export type PrintDocketSchema = {
-  docketNumber: string;             // 1047256
-  date: string;                     // 31/03/25
+  docketNumber: string; // 1047256
+  date: string; // 31/03/25
 
   consignor: {
-    name: string;                   // G M Mobile Devices
-    city?: string;                  // PUN
+    name: string; // G M Mobile Devices
+    city?: string; // PUN
     address?: string;
     mobile?: string;
     tin?: string;
@@ -259,18 +258,18 @@ export type PrintDocketSchema = {
   };
 
   consignee: {
-    name: string;                   // Shree Shyam Mobiles
-    city?: string;                  // Baddi
+    name: string; // Shree Shyam Mobiles
+    city?: string; // Baddi
     address?: string;
     mobile?: string;
     tin?: string;
     truckNumber?: string;
   };
 
-  noOfPackages: number;             // 6
-  packingType: string;             // Box
-  saidToContain: string;           // GHP2580159
-  actualWeight: number;            // 25
+  noOfPackages: number; // 6
+  packingType: string; // Box
+  saidToContain: string; // GHP2580159
+  actualWeight: number; // 25
   chargedWeight?: number;
 
   modeOfTransport: {
@@ -299,23 +298,23 @@ export type PrintDocketSchema = {
   };
 
   deliveryAt: {
-    billNumber: string;            // 364895
-    value: number;                 // 364895
+    billNumber: string; // 364895
+    value: number; // 364895
     paymentMode: 'Paid' | 'To Pay' | 'Credit';
   };
 
   driverName?: string;
   driverSignature?: string;
 
-  receivedBy: string;              // Jaiz Logistics Inc.
+  receivedBy: string; // Jaiz Logistics Inc.
   receivedSignature?: string;
   receivedDate?: string;
   receivedTime?: string;
 
   transporterDetails: {
-    pan: string;                   // APJPB6449Q
-    gstin: string;                 // 02APJPB6449Q1ZK
-    transporterId: string;        // 88APJPB6449Q1ZI
+    pan: string; // APJPB6449Q
+    gstin: string; // 02APJPB6449Q1ZK
+    transporterId: string; // 88APJPB6449Q1ZI
     gstinTaxPayableBy: {
       consignor: boolean;
       consignee: boolean;

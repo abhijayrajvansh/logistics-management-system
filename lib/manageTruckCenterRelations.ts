@@ -1,4 +1,12 @@
-import { collection, doc, getDocs, query, runTransaction, serverTimestamp, where } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  runTransaction,
+  serverTimestamp,
+  where,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 
 /**
@@ -53,22 +61,16 @@ export async function unlinkTruckFromCenter(truckId: string, centerId: string) {
  * Gets all trucks associated with a specific center
  */
 export async function getTrucksForCenter(centerId: string) {
-  const q = query(
-    collection(db, 'truck_centers'),
-    where('centerId', '==', centerId)
-  );
+  const q = query(collection(db, 'truck_centers'), where('centerId', '==', centerId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data().truckId);
+  return snapshot.docs.map((doc) => doc.data().truckId);
 }
 
 /**
  * Gets all centers associated with a specific truck
  */
 export async function getCentersForTruck(truckId: string) {
-  const q = query(
-    collection(db, 'truck_centers'),
-    where('truckId', '==', truckId)
-  );
+  const q = query(collection(db, 'truck_centers'), where('truckId', '==', truckId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data().centerId);
+  return snapshot.docs.map((doc) => doc.data().centerId);
 }
