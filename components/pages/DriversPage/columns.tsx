@@ -231,7 +231,7 @@ export const columns: ColumnDef<Driver>[] = [
   },
   {
     accessorKey: 'wheelsCapability',
-    header: 'Wheels',
+    header: 'Segment',
     cell: ({ row }) => {
       const wheels = row.getValue('wheelsCapability');
 

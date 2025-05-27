@@ -93,7 +93,7 @@ export type Driver = {
   phoneNumber: string;
   languages: string[];
   leaveBalance: LeaveBalance;
-  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20
+  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14 another alias: Segment in column name
   assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
   driverDocuments?: DriverDocuments | 'NA';
   emergencyContact?: EmergencyContact | 'NA';

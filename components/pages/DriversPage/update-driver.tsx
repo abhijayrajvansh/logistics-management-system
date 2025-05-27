@@ -371,7 +371,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
 
           {/* Wheels Capability */}
           <div className="space-y-2">
-            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
+            <Label htmlFor="wheelsCapability">Select Segment</Label>
             <Select
               value={
                 !formData.wheelsCapability || formData.wheelsCapability === 'NA'
