@@ -98,6 +98,7 @@ export type Driver = {
   driverDocuments?: DriverDocuments | 'NA';
   emergencyContact?: EmergencyContact | 'NA';
   referredBy?: ReferredBy | 'NA';
+  date_of_joining?: Timestamp | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
 };
 
 export type LeaveBalance = {

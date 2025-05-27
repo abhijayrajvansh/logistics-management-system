@@ -49,7 +49,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
-    referredBy: 'NA',
+    date_of_joining: new Date() as any,
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -92,6 +92,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             status: data.status || 'Inactive',
             emergencyContact: data.emergencyContact || 'NA',
             referredBy: data.referredBy || 'NA',
+            date_of_joining: data.date_of_joining || new Date(),
             driverDocuments: {
               ...data.driverDocuments,
               dob: data.driverDocuments?.dob?.toDate() || new Date(),
@@ -308,6 +309,8 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
       <div className="grid gap-6 py-4">
         {/* Basic Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+
           <div className="space-y-2">
             <Label htmlFor="driverName">Driver Name</Label>
             <Input
@@ -345,6 +348,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectItem value="Punjabi">Punjabi</SelectItem>
               </SelectContent>
             </Select>
+            
             <div className="flex gap-2 mt-2">
               {formData.languages.map((lang, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
@@ -455,6 +459,17 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             </Select>
           </div>
         </div>
+
+        <div className="space-y-2">
+            <Label htmlFor="date_of_joining">Date of Joining</Label>
+            <Input 
+              id="date_of_joining"
+              type="date"
+              value={formData.date_of_joining instanceof Date ? formData.date_of_joining.toISOString().split('T')[0] : ''}
+              onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
+              required
+            />
+          </div>
 
         {/* Documents Section */}
         <div className="space-y-4">
