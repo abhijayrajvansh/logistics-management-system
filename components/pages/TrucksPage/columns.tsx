@@ -19,26 +19,30 @@ import useTrucks from '@/hooks/useTrucks';
 import { format } from 'date-fns';
 
 // MaintenanceHistoryDialog component
-const MaintenanceHistoryDialog = ({ 
-  isOpen, 
-  onClose, 
-  maintenanceHistory 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  maintenanceHistory: TruckMaintenanceHistory[] | 'NA';
+const MaintenanceHistoryDialog = ({
+  isOpen,
+  onClose,
+  maintenanceHistory,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  maintenanceHistory: TruckMaintenanceHistory[] | 'NA' | undefined;
 }) => {
+  console.log({maintenanceHistory})
+
+  if (!maintenanceHistory) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Maintenance History</DialogTitle>
-          <DialogDescription>
-            View all maintenance records for this truck.
-          </DialogDescription>
+          <DialogDescription>View all maintenance records for this truck.</DialogDescription>
         </DialogHeader>
-        
-        {maintenanceHistory === 'NA' || !maintenanceHistory.length ? (
+
+        {maintenanceHistory === 'NA' ||
+        !Array.isArray(maintenanceHistory) ||
+        maintenanceHistory.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
             No maintenance history available.
           </div>
@@ -46,12 +50,8 @@ const MaintenanceHistoryDialog = ({
           <div className="space-y-4">
             {maintenanceHistory.map((record, index) => (
               <div key={index} className="border rounded-lg p-4 space-y-2">
-                <div className="font-medium">
-                  {format(new Date(record.date), 'PPP')}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {record.maintainance_detail}
-                </div>
+                {/* <div className="font-medium">{format(new Date(record.date), 'PPP')}</div> */}
+                <div className="text-sm text-muted-foreground">{record.maintainance_detail}</div>
                 {record.photos.length > 0 && (
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {record.photos.map((photo, photoIndex) => (
@@ -84,6 +84,12 @@ const ActionCell = ({ row }: { row: any }) => {
     setIsEditDialogOpen(false);
   };
 
+  const hasMaintenanceHistory =
+    truck.maintainanceHistory &&
+    truck.maintainanceHistory !== 'NA' &&
+    Array.isArray(truck.maintainanceHistory) &&
+    truck.maintainanceHistory.length > 0;
+
   return (
     <div className="text-center space-x-2">
       <button
@@ -94,9 +100,16 @@ const ActionCell = ({ row }: { row: any }) => {
         <MdEdit size={15} />
       </button>
       <button
-        className="hover:bg-blue-500 p-1 rounded-lg cursor-pointer border border-blue-500 text-blue-500 hover:text-white"
-        onClick={() => setIsMaintenanceDialogOpen(true)}
-        title="View Maintenance History"
+        className={`p-1 rounded-lg cursor-pointer border ${
+          hasMaintenanceHistory
+            ? 'hover:bg-blue-500 border-blue-500 text-blue-500 hover:text-white'
+            : 'border-gray-300 text-gray-300 cursor-not-allowed'
+        }`}
+        onClick={() => hasMaintenanceHistory && setIsMaintenanceDialogOpen(true)}
+        title={
+          hasMaintenanceHistory ? 'View Maintenance History' : 'No maintenance history available'
+        }
+        disabled={!hasMaintenanceHistory}
       >
         <MdBuildCircle size={15} />
       </button>
@@ -133,11 +146,13 @@ const ActionCell = ({ row }: { row: any }) => {
       />
 
       {/* Maintenance History Dialog */}
-      <MaintenanceHistoryDialog
-        isOpen={isMaintenanceDialogOpen}
-        onClose={() => setIsMaintenanceDialogOpen(false)}
-        maintenanceHistory={truck.maintainanceHistory}
-      />
+      {hasMaintenanceHistory && (
+        <MaintenanceHistoryDialog
+          isOpen={isMaintenanceDialogOpen}
+          onClose={() => setIsMaintenanceDialogOpen(false)}
+          maintenanceHistory={truck.maintainanceHistory}
+        />
+      )}
     </div>
   );
 };
@@ -157,16 +172,16 @@ export const columns: ColumnDef<Truck>[] = [
     cell: ({ row }) => {
       const ownership: string = row.getValue('ownership');
       return (
-        <div className='flex justify-start items-center w-full'>
+        <div className="flex justify-start items-center w-full">
           <div
-          className={`font-medium px-3 ${
-            ownership === 'Owned'
-              ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1'
-              : 'text-blue-700 bg-blue-200 border text-center rounded-lg border-blue-500 px-1 text-xs'
-          }`}
-        >
-          {ownership}
-        </div>
+            className={`font-medium px-3 ${
+              ownership === 'Owned'
+                ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1'
+                : 'text-blue-700 bg-blue-200 border text-center rounded-lg border-blue-500 px-1 text-xs'
+            }`}
+          >
+            {ownership}
+          </div>
         </div>
       );
     },
@@ -338,23 +353,21 @@ export const columns: ColumnDef<Truck>[] = [
   //   },
   // },
   {
-    accessorKey: "truckDocuments",
-    header: "Documents Status",
+    accessorKey: 'truckDocuments',
+    header: 'Documents Status',
     cell: ({ row }) => {
       const truckDocId = row.original.id;
       const { trucks } = useTrucks();
       const truck = trucks.find((t) => t.id === truckDocId);
       const documentsStatus = truck?.truckDocuments ? 'Submitted' : 'Pending';
-      console.log({documentsStatus})
-      // console.log({truck})
       return (
-        <Badge 
+        <Badge
           variant={'default'}
           className={`${documentsStatus === 'Submitted' ? 'bg-green-200 text-green-700 border border-green-500' : 'bg-red-200 text-red-700 border border-red-500'}`}
         >
           {documentsStatus}
         </Badge>
-      )
+      );
     },
   },
   {
