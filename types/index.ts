@@ -180,6 +180,7 @@ export type Truck = {
   permitExpiry: Timestamp; // alias: national permit
   odoCurrent: number;
   odoAtLastService: number;
+  toolkitCount: string[] | 'NA'; // number count of toolkits (length of string) in the truck, each string is url of a toolkit photo stored in firebase storage
   truckDocuments: TruckDocuments | 'NA';
   maintainanceHistory: TruckMaintenanceHistory[] | 'NA';
 };
@@ -197,6 +198,7 @@ export type TruckMaintenanceHistory = {
   photos: string[]; // array of photo URLs
   date: Timestamp;
 }
+
 
 export type Center = {
   id: string;

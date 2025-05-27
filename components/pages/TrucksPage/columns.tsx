@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import useTrucks from '@/hooks/useTrucks';
 import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import ViewTruckDetails from './ViewTruckDetails';
+import { TbTools } from "react-icons/tb";
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -381,6 +382,76 @@ export const columns: ColumnDef<Truck>[] = [
         >
           {documentsStatus}
         </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'toolkitCount',
+    header: 'Toolkits',
+    cell: ({ row }) => {
+      const [isDialogOpen, setIsDialogOpen] = useState(false);
+      const toolkits = row.original.toolkitCount;
+
+      // Handle undefined, null, or 'NA' cases
+      if (!toolkits || toolkits === 'NA') {
+        return (
+          <button
+            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
+            disabled
+            title="No toolkits added"
+          >
+            <span className="text-sm">0</span>
+            <TbTools size={15} />
+          </button>
+        );
+      }
+
+      const count = toolkits.length;
+
+      return (
+        <>
+          <button
+            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
+            onClick={() => setIsDialogOpen(true)}
+            disabled={count === 0}
+            title={count === 0 ? 'No toolkits added' : 'View toolkits'}
+          >
+            <span className="text-sm">{count}</span>
+            <TbTools size={15} />
+          </button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Truck Toolkits</DialogTitle>
+                <DialogDescription>Photos of all toolkits present in the truck</DialogDescription>
+              </DialogHeader>
+
+              {Array.isArray(toolkits) ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {toolkits.map((url, index) => (
+                    <div key={index} className="border rounded-md p-2">
+                      <div className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt={`Toolkit ${index + 1}`}
+                          className="object-cover rounded-md w-full h-full"
+                        />
+                      </div>
+                      <p className="text-center mt-2 text-sm text-muted-foreground">
+                        Toolkit {index + 1}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No toolkit photos available
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
       );
     },
   },
