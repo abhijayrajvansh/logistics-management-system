@@ -300,7 +300,7 @@ const ViewTripDialog = ({
               </div>
             </div>
             <div>
-              <Label className="font-bold">Starting Point</Label>
+              <Label className="font-bold">Origin</Label>
               <div className="mt-1 text-sm">{trip.startingPoint}</div>
             </div>
             <div>
@@ -479,7 +479,7 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'startingPoint',
-    header: 'Starting Point',
+    header: 'Origin',
   },
   {
     accessorKey: 'destination',

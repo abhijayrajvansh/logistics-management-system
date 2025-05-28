@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { uploadTruckDocument } from '@/lib/uploadTruckDocument';
 import {
   Select,
   SelectContent,
@@ -14,12 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { X } from 'lucide-react';
 
 interface CreateTruckFormProps {
   onSuccess?: () => void;
 }
 
 export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
+  const [documentFiles, setDocumentFiles] = useState<{ [key: string]: File | File[] }>({});
+  const [multiplePermitInputs, setMultiplePermitInputs] = useState<number[]>([0]); // Start with one input
+  const [toolkitPhotoInputs, setToolkitPhotoInputs] = useState<number[]>([0]); // Start with one input
   const [formData, setFormData] = useState({
     regNumber: '',
     axleConfig: '',
@@ -40,6 +45,83 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
     }));
   };
 
+  const handleFileChange = (field: string, file: File | null, index?: number) => {
+    if (!file) return;
+
+    if (field === 'multiple_state_permits') {
+      // Handle multiple permits file upload
+      setDocumentFiles((prev) => {
+        const permits = Array.isArray(prev.multiple_state_permits)
+          ? [...(prev.multiple_state_permits as File[])]
+          : new Array(multiplePermitInputs.length).fill(null);
+        if (typeof index === 'number') {
+          permits[index] = file;
+        }
+        return {
+          ...prev,
+          multiple_state_permits: permits,
+        };
+      });
+    } else if (field === 'toolkit_photos') {
+      // Handle toolkit photos file upload
+      setDocumentFiles((prev) => {
+        const photos = Array.isArray(prev.toolkit_photos)
+          ? [...(prev.toolkit_photos as File[])]
+          : new Array(toolkitPhotoInputs.length).fill(null);
+        if (typeof index === 'number') {
+          photos[index] = file;
+        }
+        return {
+          ...prev,
+          toolkit_photos: photos,
+        };
+      });
+    } else {
+      setDocumentFiles((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+    }
+  };
+
+  const addPermitInput = () => {
+    setMultiplePermitInputs((prev) => [...prev, prev.length]);
+  };
+
+  const addToolkitPhotoInput = () => {
+    setToolkitPhotoInputs((prev) => [...prev, prev.length]);
+  };
+
+  const removePermitInput = (indexToRemove: number) => {
+    setMultiplePermitInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.multiple_state_permits)) {
+        const updatedPermits = [...prev.multiple_state_permits];
+        updatedPermits.splice(indexToRemove, 1);
+        return {
+          ...prev,
+          multiple_state_permits: updatedPermits,
+        };
+      }
+      return prev;
+    });
+  };
+
+  const removeToolkitPhotoInput = (indexToRemove: number) => {
+    setToolkitPhotoInputs((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setDocumentFiles((prev) => {
+      if (Array.isArray(prev.toolkit_photos)) {
+        const updatedPhotos = [...prev.toolkit_photos];
+        updatedPhotos.splice(indexToRemove, 1);
+        return {
+          ...prev,
+          toolkit_photos: updatedPhotos,
+        };
+      }
+      return prev;
+    });
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -54,16 +136,86 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         insuranceExpiry: new Date(formData.insuranceExpiry),
         permitExpiry: new Date(formData.permitExpiry),
         created_at: new Date(),
+        toolkitCount: 'NA' as string[] | 'NA', // Initialize as NA, will be updated after photos upload
       };
 
-      // Add the truck to Firestore
+      // Add the truck to Firestore first to get the ID
       const truckRef = await addDoc(collection(db, 'trucks'), validatedData);
+
+      // Upload documents and get their URLs
+      const documentUploadPromises = [];
+      const truckDocuments: Record<string, string | string[]> = {
+        reg_certificate: '',
+        five_year_permit: '',
+        multiple_state_permits: [],
+        pollution_control_certificate: '',
+        fitness_certificate: '',
+      };
+
+      // Handle regular documents
+      for (const [docType, file] of Object.entries(documentFiles)) {
+        if (docType === 'multiple_state_permits' || docType === 'toolkit_photos') continue;
+        if (file && file instanceof File) {
+          documentUploadPromises.push(
+            uploadTruckDocument(file, truckRef.id, docType).then((url) => {
+              if (url) truckDocuments[docType] = url;
+            }),
+          );
+        }
+      }
+
+      // Handle multiple state permits
+      const permits = documentFiles.multiple_state_permits;
+      if (Array.isArray(permits)) {
+        for (let i = 0; i < permits.length; i++) {
+          const permitFile = permits[i];
+          if (permitFile instanceof File) {
+            documentUploadPromises.push(
+              uploadTruckDocument(permitFile, truckRef.id, `multiple_state_permits_${i}`).then(
+                (url) => {
+                  if (url && Array.isArray(truckDocuments.multiple_state_permits)) {
+                    truckDocuments.multiple_state_permits.push(url);
+                  }
+                },
+              ),
+            );
+          }
+        }
+      }
+
+      // Handle toolkit photos
+      const toolkitPhotos = documentFiles.toolkit_photos;
+      const toolkitUrls: string[] = [];
+      if (Array.isArray(toolkitPhotos)) {
+        for (let i = 0; i < toolkitPhotos.length; i++) {
+          const photoFile = toolkitPhotos[i];
+          if (photoFile instanceof File) {
+            documentUploadPromises.push(
+              uploadTruckDocument(photoFile, truckRef.id, `toolkit_photo_${i}`).then((url) => {
+                if (url) toolkitUrls.push(url);
+              }),
+            );
+          }
+        }
+      }
+
+      await Promise.all(documentUploadPromises);
+
+      // Update truck with document URLs and toolkit photos
+      await updateDoc(truckRef, {
+        truckDocuments: Object.values(truckDocuments).some(
+          (v) => v !== '' && (!Array.isArray(v) || v.length > 0),
+        )
+          ? truckDocuments
+          : 'NA',
+        toolkitCount: toolkitUrls.length > 0 ? toolkitUrls : 'NA',
+      });
 
       toast.success('Truck added successfully!', {
         description: `Registration: ${formData.regNumber}`,
       });
 
-      // Reset form after successful submission
+      // Reset form
       setFormData({
         regNumber: '',
         axleConfig: '',
@@ -74,8 +226,10 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
         odoCurrent: '',
         odoAtLastService: '',
       });
+      setDocumentFiles({});
+      setMultiplePermitInputs([0]); // Reset to one input
+      setToolkitPhotoInputs([0]); // Reset to one input
 
-      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
@@ -156,7 +310,7 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="permitExpiry">Permit Expiry Date</Label>
+            <Label htmlFor="permitExpiry">National Permit</Label>
             <Input
               id="permitExpiry"
               type="date"
@@ -192,12 +346,140 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
           </div>
         </div>
 
+        {/* Document Upload Section */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Truck Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Regular document fields */}
+            <div className="space-y-2">
+              <Label htmlFor="reg_certificate">Registration Certificate</Label>
+              <Input
+                id="reg_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('reg_certificate', e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="five_year_permit">Five Year Permit</Label>
+              <Input
+                id="five_year_permit"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFileChange('five_year_permit', e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+
+            {/* Multiple State Permits Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Multiple State Permits</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addPermitInput}>
+                  Add Permit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {multiplePermitInputs.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        handleFileChange(
+                          'multiple_state_permits',
+                          e.target.files?.[0] || null,
+                          index,
+                        )
+                      }
+                      required
+                    />
+                    {multiplePermitInputs.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePermitInput(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pollution_control_certificate">Pollution Control Certificate</Label>
+              <Input
+                id="pollution_control_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('pollution_control_certificate', e.target.files?.[0] || null)
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fitness_certificate">Fitness Certificate</Label>
+              <Input
+                id="fitness_certificate"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) =>
+                  handleFileChange('fitness_certificate', e.target.files?.[0] || null)
+                }
+                required
+              />
+            </div>
+
+            {/* Toolkit Photos Section */}
+            <div className="space-y-2 col-span-2">
+              <div className="flex justify-between items-center">
+                <Label>Toolkit Photos</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addToolkitPhotoInput}>
+                  Add Photo
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground mb-4">
+                You can upload multiple toolkit photos. Each photo must be a JPG, JPEG, or PNG file
+                under 5MB.
+              </div>
+              <div className="space-y-2">
+                {toolkitPhotoInputs.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        handleFileChange('toolkit_photos', e.target.files?.[0] || null, index)
+                      }
+                      required
+                    />
+                    {toolkitPhotoInputs.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeToolkitPhotoInput(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-between">
           <Button
             type="button"
             variant="outline"
             onClick={() => {
-              // Reset form data
               setFormData({
                 regNumber: '',
                 axleConfig: '',
@@ -208,6 +490,9 @@ export function CreateTruckForm({ onSuccess }: CreateTruckFormProps) {
                 odoCurrent: '',
                 odoAtLastService: '',
               });
+              setDocumentFiles({});
+              setMultiplePermitInputs([0]);
+              setToolkitPhotoInputs([0]);
             }}
           >
             Reset

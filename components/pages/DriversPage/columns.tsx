@@ -159,6 +159,23 @@ const ReferrerCell = ({ referral }: { referral: ReferredBy | 'NA' }) => {
   );
 };
 
+// Add DateCell component for formatting the date
+const DateCell = ({ date }: { date: any }) => {
+  if (date === 'NA') return <span className="text-gray-500">Not Available</span>;
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Not Available';
+    const date = timestamp.toDate();
+    return new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  return <span>{formatDate(date)}</span>;
+};
+
 export const columns: ColumnDef<Driver>[] = [
   {
     accessorKey: 'driverId',
@@ -214,7 +231,7 @@ export const columns: ColumnDef<Driver>[] = [
   },
   {
     accessorKey: 'wheelsCapability',
-    header: 'Wheels',
+    header: 'Segment',
     cell: ({ row }) => {
       const wheels = row.getValue('wheelsCapability');
 
@@ -276,6 +293,14 @@ export const columns: ColumnDef<Driver>[] = [
           {status}
         </Badge>
       );
+    },
+  },
+  {
+    accessorKey: 'date_of_joining',
+    header: 'Joining Date',
+    cell: ({ row }) => {
+      const date = row.getValue('date_of_joining');
+      return <DateCell date={date} />;
     },
   },
   {

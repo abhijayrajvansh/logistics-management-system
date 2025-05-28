@@ -7,38 +7,155 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Truck } from '@/types';
+import { Truck, TruckMaintenanceHistory } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import { MdDeleteOutline, MdEdit, MdBuildCircle, MdRemoveRedEye } from 'react-icons/md';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import useTrucks from '@/hooks/useTrucks';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
+import ViewTruckDetails from './ViewTruckDetails';
+import { TbTools } from 'react-icons/tb';
+import { FaClock } from 'react-icons/fa6';
+import AuditHistoryDialog from './AuditHistoryDialog';
 
-// Create a component for the actions cell to manage edit dialog state
+// MaintenanceHistoryDialog component
+const MaintenanceHistoryDialog = ({
+  isOpen,
+  onClose,
+  maintenanceHistory,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  maintenanceHistory: TruckMaintenanceHistory[] | 'NA' | undefined;
+}) => {
+  if (!maintenanceHistory) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Maintenance History</DialogTitle>
+          <DialogDescription>View all maintenance records for this truck.</DialogDescription>
+        </DialogHeader>
+
+        {maintenanceHistory === 'NA' ||
+        !Array.isArray(maintenanceHistory) ||
+        maintenanceHistory.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">
+            No maintenance history available.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {maintenanceHistory.map((record, index) => (
+              <div key={index} className="border rounded-lg p-4 space-y-2">
+                <div className="font-medium">{formatFirestoreDate(record.date)}</div>
+                <div className="text-sm text-muted-foreground">{record.maintainance_detail}</div>
+                {record.photos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {record.photos.map((photo, photoIndex) => (
+                      <img
+                        key={photoIndex}
+                        src={photo}
+                        alt={`Maintenance photo ${photoIndex + 1}`}
+                        className="rounded-md w-full h-32 object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Create a component for the actions cell to manage dialog states
 const ActionCell = ({ row }: { row: any }) => {
   const truck = row.original;
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
+  const [isAuditHistoryDialogOpen, setIsAuditHistoryDialogOpen] = useState(false);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
     setIsEditDialogOpen(false);
   };
 
+  const hasMaintenanceHistory =
+    truck.maintainanceHistory &&
+    truck.maintainanceHistory !== 'NA' &&
+    Array.isArray(truck.maintainanceHistory) &&
+    truck.maintainanceHistory.length > 0;
+
+  const hasAuditHistory =
+    truck.auditHistory &&
+    truck.auditHistory !== 'NA' &&
+    Array.isArray(truck.auditHistory) &&
+    truck.auditHistory.length > 0;
+
   return (
     <div className="text-center space-x-2">
       <button
+        className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray-500 hover:text-white"
+        onClick={() => setIsViewDetailsOpen(true)}
+        title="View Details"
+      >
+        <MdRemoveRedEye size={15} />
+      </button>
+      <button
         className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
         onClick={() => setIsEditDialogOpen(true)}
+        title="Edit Truck"
       >
         <MdEdit size={15} />
       </button>
       <button
+        className={`p-1 rounded-lg cursor-pointer border ${
+          hasMaintenanceHistory
+            ? 'hover:bg-blue-500 border-blue-500 text-blue-500 hover:text-white'
+            : 'border-gray-300 text-gray-300 cursor-not-allowed'
+        }`}
+        onClick={() => hasMaintenanceHistory && setIsMaintenanceDialogOpen(true)}
+        title={
+          hasMaintenanceHistory ? 'View Maintenance History' : 'No maintenance history available'
+        }
+        disabled={!hasMaintenanceHistory}
+      >
+        <MdBuildCircle size={15} />
+      </button>
+      <button
+        className={`p-1 rounded-lg cursor-pointer border ${
+          hasAuditHistory
+            ? 'hover:bg-violet-500 border-violet-500 text-violet-500 hover:text-white'
+            : 'border-gray-300 text-gray-300 cursor-not-allowed'
+        }`}
+        onClick={() => hasAuditHistory && setIsAuditHistoryDialogOpen(true)}
+        title={hasAuditHistory ? 'View Audit History' : 'No audit history available'}
+        disabled={!hasAuditHistory}
+      >
+        <FaClock size={15} />
+      </button>
+      <button
         className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
         onClick={() => setIsDeleteDialogOpen(true)}
+        title="Delete Truck"
       >
         <MdDeleteOutline size={15} />
       </button>
+
+      {/* View Details Dialog */}
+      <ViewTruckDetails
+        isOpen={isViewDetailsOpen}
+        onClose={() => setIsViewDetailsOpen(false)}
+        truck={truck}
+      />
 
       {/* Edit Truck Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -63,6 +180,24 @@ const ActionCell = ({ row }: { row: any }) => {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
       />
+
+      {/* Maintenance History Dialog */}
+      {hasMaintenanceHistory && (
+        <MaintenanceHistoryDialog
+          isOpen={isMaintenanceDialogOpen}
+          onClose={() => setIsMaintenanceDialogOpen(false)}
+          maintenanceHistory={truck.maintainanceHistory}
+        />
+      )}
+
+      {/* Audit History Dialog */}
+      {hasAuditHistory && (
+        <AuditHistoryDialog
+          isOpen={isAuditHistoryDialogOpen}
+          onClose={() => setIsAuditHistoryDialogOpen(false)}
+          auditHistory={truck.auditHistory}
+        />
+      )}
     </div>
   );
 };
@@ -82,16 +217,16 @@ export const columns: ColumnDef<Truck>[] = [
     cell: ({ row }) => {
       const ownership: string = row.getValue('ownership');
       return (
-        <div className='flex justify-start items-center w-full'>
+        <div className="flex justify-start items-center w-full">
           <div
-          className={`font-medium px-3 ${
-            ownership === 'Owned'
-              ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1'
-              : 'text-blue-700 bg-blue-200 border text-center rounded-lg border-blue-500 px-1 text-xs'
-          }`}
-        >
-          {ownership}
-        </div>
+            className={`font-medium px-3 ${
+              ownership === 'Owned'
+                ? 'text-green-700 bg-green-200 border text-center rounded-lg text-xs border-green-500 px-1'
+                : 'text-blue-700 bg-blue-200 border text-center rounded-lg border-blue-500 px-1 text-xs'
+            }`}
+          >
+            {ownership}
+          </div>
         </div>
       );
     },
@@ -165,7 +300,7 @@ export const columns: ColumnDef<Truck>[] = [
   },
   {
     accessorKey: 'permitExpiry',
-    header: 'Permit Expiry',
+    header: 'National Permit',
     cell: ({ row }) => {
       const permitValue = row.getValue('permitExpiry');
 
@@ -262,6 +397,94 @@ export const columns: ColumnDef<Truck>[] = [
   //     );
   //   },
   // },
+  {
+    accessorKey: 'truckDocuments',
+    header: 'Documents Status',
+    cell: ({ row }) => {
+      const truckDocId = row.original.id;
+      const { trucks } = useTrucks();
+      const truck = trucks.find((t) => t.id === truckDocId);
+      const documentsStatus = truck?.truckDocuments ? 'Submitted' : 'Pending';
+      return (
+        <Badge
+          variant={'default'}
+          className={`${documentsStatus === 'Submitted' ? 'bg-green-200 text-green-700 border border-green-500' : 'bg-red-200 text-red-700 border border-red-500'}`}
+        >
+          {documentsStatus}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'toolkitCount',
+    header: 'Toolkits',
+    cell: ({ row }) => {
+      const [isDialogOpen, setIsDialogOpen] = useState(false);
+      const toolkits = row.original.toolkitCount;
+
+      // Handle undefined, null, or 'NA' cases
+      if (!toolkits || toolkits === 'NA') {
+        return (
+          <button
+            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
+            disabled
+            title="No toolkits added"
+          >
+            <span className="text-sm">0</span>
+            <TbTools size={15} />
+          </button>
+        );
+      }
+
+      const count = toolkits.length;
+
+      return (
+        <>
+          <button
+            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
+            onClick={() => setIsDialogOpen(true)}
+            disabled={count === 0}
+            title={count === 0 ? 'No toolkits added' : 'View toolkits'}
+          >
+            <span className="text-sm">{count}</span>
+            <TbTools size={15} />
+          </button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Truck Toolkits</DialogTitle>
+                <DialogDescription>Photos of all toolkits present in the truck</DialogDescription>
+              </DialogHeader>
+
+              {Array.isArray(toolkits) ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {toolkits.map((url, index) => (
+                    <div key={index} className="border rounded-md p-2">
+                      <div className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt={`Toolkit ${index + 1}`}
+                          className="object-cover rounded-md w-full h-full"
+                        />
+                      </div>
+                      <p className="text-center mt-2 text-sm text-muted-foreground">
+                        Toolkit {index + 1}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No toolkit photos available
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    },
+  },
   {
     accessorKey: 'actions',
     header: () => <div className="text-center">Actions</div>,

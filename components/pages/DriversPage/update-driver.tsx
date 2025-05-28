@@ -49,7 +49,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     assignedTruckId: 'NA',
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
-    referredBy: 'NA',
+    date_of_joining: new Date() as any,
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -92,6 +92,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             status: data.status || 'Inactive',
             emergencyContact: data.emergencyContact || 'NA',
             referredBy: data.referredBy || 'NA',
+            date_of_joining: data.date_of_joining?.toDate?.() || new Date(),
             driverDocuments: {
               ...data.driverDocuments,
               dob: data.driverDocuments?.dob?.toDate() || new Date(),
@@ -345,6 +346,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectItem value="Punjabi">Punjabi</SelectItem>
               </SelectContent>
             </Select>
+
             <div className="flex gap-2 mt-2">
               {formData.languages.map((lang, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
@@ -369,7 +371,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
 
           {/* Wheels Capability */}
           <div className="space-y-2">
-            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
+            <Label htmlFor="wheelsCapability">Select Segment</Label>
             <Select
               value={
                 !formData.wheelsCapability || formData.wheelsCapability === 'NA'
@@ -454,6 +456,25 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="date_of_joining">Date of Joining</Label>
+          <Input
+            id="date_of_joining"
+            type="date"
+            value={
+              formData.date_of_joining instanceof Date
+                ? formData.date_of_joining.toISOString().split('T')[0]
+                : formData.date_of_joining &&
+                    typeof formData.date_of_joining === 'object' &&
+                    'toDate' in formData.date_of_joining
+                  ? formData.date_of_joining.toDate().toISOString().split('T')[0]
+                  : ''
+            }
+            onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
+            required
+          />
         </div>
 
         {/* Documents Section */}
@@ -591,7 +612,10 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select document status" />
                 </SelectTrigger>
-                <SelectContent></SelectContent>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Verified">Verified</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
