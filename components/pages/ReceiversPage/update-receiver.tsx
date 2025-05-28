@@ -6,6 +6,14 @@ import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import { toast } from 'sonner';
 
 interface UpdateReceiverFormProps {
@@ -19,6 +27,8 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
     receiverName: '',
     receiverDetails: '',
     receiverContact: '',
+    receiverCity: '',
+    receiverZone: '' as 'East' | 'West' | 'North' | 'South' | '',
     pincode: '',
   });
 
@@ -36,6 +46,8 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
             receiverName: data.receiverName || '',
             receiverDetails: data.receiverDetails || '',
             receiverContact: data.receiverContact || '',
+            receiverCity: data.receiverCity || '',
+            receiverZone: data.receiverZone || '',
             pincode: data.pincode || '',
           });
         } else {
@@ -71,6 +83,8 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
         receiverName: formData.receiverName,
         receiverDetails: formData.receiverDetails,
         receiverContact: formData.receiverContact,
+        receiverCity: formData.receiverCity,
+        receiverZone: formData.receiverZone,
         pincode: formData.pincode,
         updated_at: new Date(),
       });
@@ -118,6 +132,36 @@ export function UpdateReceiverForm({ receiverId, onSuccess, onCancel }: UpdateRe
               onChange={(e) => handleInputChange('receiverContact', e.target.value)}
               required
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="receiverCity">City</Label>
+            <Input
+              id="receiverCity"
+              placeholder="Enter city"
+              value={formData.receiverCity}
+              onChange={(e) => handleInputChange('receiverCity', e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiverZone">Zone</Label>
+            <Select
+              value={formData.receiverZone}
+              onValueChange={(value) => handleInputChange('receiverZone', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a zone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="East">East</SelectItem>
+                <SelectItem value="West">West</SelectItem>
+                <SelectItem value="North">North</SelectItem>
+                <SelectItem value="South">South</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

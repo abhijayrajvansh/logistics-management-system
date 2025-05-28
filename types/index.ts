@@ -26,6 +26,7 @@ export type Order = {
   docket_id: string;
   docket_price: number;
   charge_basis: string;
+  minimum_charged_weight: number; // from client rate card, if the charge basis is by weight preferance then this is the minimum weight for which the client will be charged
   client_details: string;
   created_at: Date;
   current_location: string;
@@ -35,12 +36,18 @@ export type Order = {
   lr_no: string;
   payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
+  GST: "Included" | "Excluded";
+  GST_amount: number | 'NA'; // if GST is included in the price, then this will be 'NA'
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';
+  receiver_city: string;
+  receiver_zone: ReceiverDetails['receiverZone']; // East, West, North, South
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
+  order_type: "Direct" | "Sublet";
+  sublet_details: string | 'NA'; // if order_type is Direct, then this will be 'NA', if order_type is Sublet, then this will contain the brand name of the sublet company
   status: 'Ready To Transport' | 'Assigned' | 'In Transit' | 'Transferred' | 'Delivered';
   tat: number; // whole numbers, format: hours
   total_boxes_count: number;
@@ -134,7 +141,7 @@ export type Client = {
 };
 
 export type ClientRateCard = {
-  preferance: 'By Weight' | 'Per Boxes';
+  preferance: 'By Weight' | 'Per Units';
   pricePerPref: number;
   minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };
@@ -143,6 +150,8 @@ export type ReceiverDetails = {
   id: string;
   receiverId: string;
   receiverName: string;
+  receiverCity: string;
+  receiverZone: "East" | "West" | "North" | "South";
   receiverDetails: string;
   receiverContact: string;
   pincode: string;

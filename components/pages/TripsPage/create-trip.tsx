@@ -456,7 +456,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                           <span className="font-medium">{order.docket_id}:</span>
                           {order.client_details} <FaArrowRightLong /> {order.receiver_name},{' '}
                         </span>
-                        <span className="font-medium">Deadline</span>:
+                        <span className="font-medium">Deadline:</span>
                         {(() => {
                           try {
                             if (order.deadline instanceof Date) {
@@ -476,7 +476,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                             return 'Invalid Date';
                           }
                         })()}
-                        , Boxes: {order.total_boxes_count}
+                        , Units: {order.total_boxes_count}
                       </span>
                     </label>
                   </div>

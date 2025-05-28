@@ -81,8 +81,16 @@ export const columns: ColumnDef<ReceiverDetails>[] = [
     header: 'Receiver Name',
   },
   {
+    accessorKey: 'receiverCity',
+    header: 'City',
+  },
+  {
+    accessorKey: 'receiverZone',
+    header: 'Zone',
+  },
+  {
     accessorKey: 'receiverDetails',
-    header: 'Receiver Details',
+    header: 'Details',
     cell: ({ row }) => {
       const details: string = row.getValue('receiverDetails');
       return (

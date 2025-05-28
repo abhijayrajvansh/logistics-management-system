@@ -67,7 +67,9 @@ export default function ClientsPage() {
             </div>
 
             {/* Client Data Table */}
-            <DataTable columns={columns} data={clients} />
+            <div className='px-6'>
+              <DataTable columns={columns} data={clients} />
+            </div>
           </div>
         </div>
       </div>

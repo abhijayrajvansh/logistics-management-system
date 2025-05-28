@@ -7,17 +7,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Order } from '@/types'; // Import the Order type from your hooks
+import useClients from '@/hooks/useClients';
+import { Order } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteOrderDialog from './delete-order';
 import UpdateOrderForm from './update-order';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { FaRegEye } from 'react-icons/fa';
-
-// This type is used to define the shape of our data based on the image schema
 
 // Create a component for the proof cell to manage dialog state
 const ProofCell = ({ row }: { row: any }) => {
@@ -213,7 +213,41 @@ const ActionCell = ({ row }: { row: any }) => {
   );
 };
 
+// Create a component for the minimum weight cell to handle client rate card
+const MinWeightCell = ({ row }: { row: any }) => {
+  const { clients } = useClients();
+  const chargeBasis: string = row.getValue('charge_basis');
+  const clientDetails = row.getValue('client_details') as string;
+  const client = clients?.find((c: { clientName: string }) => c.clientName === clientDetails);
+  const minWeight = client?.rateCard?.minPriceWeight;
+
+  return (
+    <div className="text-left font-medium">
+      {chargeBasis === 'By Weight' && minWeight && minWeight !== 'NA' ? `${minWeight} kg` : 'NA'}
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Order>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'docket_id',
     header: 'Docket ID',
@@ -244,7 +278,7 @@ export const columns: ColumnDef<Order>[] = [
   },
   {
     accessorKey: 'total_boxes_count',
-    header: 'Total Boxes',
+    header: 'Total Units',
     cell: ({ row }) => {
       const count: number = row.getValue('total_boxes_count');
       return <div className="text-left font-medium">{count}</div>;
@@ -264,7 +298,7 @@ export const columns: ColumnDef<Order>[] = [
   },
   {
     accessorKey: 'lr_no',
-    header: 'LR No',
+    header: 'Client Doc No',
   },
   {
     accessorKey: 'tat',
@@ -313,7 +347,11 @@ export const columns: ColumnDef<Order>[] = [
     accessorKey: 'charge_basis',
     header: 'Charge Basis',
   },
-
+  {
+    accessorKey: 'minimum_charged_weight',
+    header: 'Charged Weight',
+    cell: MinWeightCell,
+  },
   {
     accessorKey: 'docket_price',
     header: 'Docket Price',
@@ -343,7 +381,7 @@ export const columns: ColumnDef<Order>[] = [
 
   {
     accessorKey: 'invoice',
-    header: 'Invoice',
+    header: 'Payment Terms',
     cell: ({ row }) => {
       const invoice: string = row.getValue('invoice');
 
@@ -362,7 +400,6 @@ export const columns: ColumnDef<Order>[] = [
       );
     },
   },
-
   {
     accessorKey: 'payment_mode',
     header: 'Payment Mode',
@@ -391,15 +428,15 @@ export const columns: ColumnDef<Order>[] = [
   },
 
   {
-    accessorKey: 'proof_of_delivery',
-    header: 'Delivery Proof',
-    cell: ProofCell,
-  },
-
-  {
     accessorKey: 'proof_of_payment',
     header: 'Payment Proof',
     cell: PaymentProofCell,
+  },
+
+  {
+    accessorKey: 'proof_of_delivery',
+    header: 'Delivery Proof',
+    cell: ProofCell,
   },
 
   {

@@ -645,7 +645,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
 
         {/* Emergency Contact Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
+          <h3 className="text-lg font-medium">Emergency Contact</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_name">Name</Label>
@@ -712,7 +712,9 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 }
               />
             </div>
-            <div className="space-y-2 col-span-2">
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="emergency_address">Residency Address</Label>
               <Input
                 id="emergency_address"
@@ -761,7 +763,8 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
 
         {/* Referral Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
+          <h3 className="text-lg font-medium">Referral Information</h3>
+
           <ReferralBySelector
             value={formData.referredBy || 'NA'}
             onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
