@@ -238,11 +238,11 @@ export type DriversRequest = {
   proofImageUrl?: string; // URL of the proof image
 
   reason: string;
-  startDate: Date; // timestamp or some other format
-  endDate: Date;
+  startDate: Timestamp; // timestamp or some other format
+  endDate: Timestamp;
 
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  createdAt: Timestamp;
 };
 
 export type PrintDocketSchema = {

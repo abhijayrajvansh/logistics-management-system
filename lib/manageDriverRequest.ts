@@ -1,5 +1,7 @@
 import { DriversRequest } from '../types';
 import { updateDriverLeaveBalance } from './manageDriverLeaveBalance';
+import { Timestamp } from 'firebase/firestore';
+import { formatFirestoreDate } from './fomatTimestampToDate';
 
 /**
  * Processes different types of driver requests
@@ -30,16 +32,17 @@ export async function processDriverRequest(request: DriversRequest): Promise<voi
 }
 
 async function processLeaveRequest(request: DriversRequest): Promise<void> {
-  // Convert dates and validate
-  const start = request.startDate instanceof Date ? request.startDate : new Date(request.startDate);
-  const end = request.endDate instanceof Date ? request.endDate : new Date(request.endDate);
+  const start = request.startDate.toDate();
+  const end = request.endDate.toDate();
 
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     throw new Error('Invalid date format in request');
   }
 
   if (end < start) {
-    throw new Error('End date cannot be before start date');
+    throw new Error(
+      `End date (${formatFirestoreDate(request.endDate)}) cannot be before start date (${formatFirestoreDate(request.startDate)})`,
+    );
   }
 
   // Calculate number of days (inclusive)
@@ -54,7 +57,8 @@ async function processMoneyRequest(request: DriversRequest): Promise<void> {
   console.log('Processing money request:', {
     driverId: request.driverId,
     reason: request.reason,
-    proof: request.proofImageUrl || 'No proof provided'
+    date: formatFirestoreDate(request.startDate),
+    proof: request.proofImageUrl || 'No proof provided',
   });
   // TODO: Implement actual money request processing
 }
@@ -64,9 +68,9 @@ async function processFoodRequest(request: DriversRequest): Promise<void> {
     driverId: request.driverId,
     reason: request.reason,
     dates: {
-      start: request.startDate,
-      end: request.endDate
-    }
+      start: formatFirestoreDate(request.startDate),
+      end: formatFirestoreDate(request.endDate),
+    },
   });
   // TODO: Implement actual food request processing
 }
@@ -75,7 +79,8 @@ async function processOtherRequest(request: DriversRequest): Promise<void> {
   console.log('Processing other request:', {
     driverId: request.driverId,
     reason: request.reason,
-    type: request.type
+    date: formatFirestoreDate(request.startDate),
+    type: request.type,
   });
   // TODO: Implement actual processing for other request types
 }
