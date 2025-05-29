@@ -238,7 +238,7 @@ export type DriversRequest = {
   proofImageUrl?: string; // URL of the proof image
 
   reason: string;
-  startDate: Date;
+  startDate: Date; // timestamp or some other format
   endDate: Date;
 
   status: 'pending' | 'approved' | 'rejected';
