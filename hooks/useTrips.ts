@@ -39,8 +39,9 @@ export function useTrips() {
               numberOfStops: serializedData.numberOfStops,
               startDate: serializedData.startDate,
               truck: serializedData.truck,
-              type: serializedData.type || 'ready to ship',
-              currentStatus: serializedData.currentStatus || undefined,
+              type: serializedData.type,
+              currentStatus: serializedData.currentStatus,
+              odometerReading: serializedData.odometerReading || 'NA',
             };
 
             // Categorize trips based on type
