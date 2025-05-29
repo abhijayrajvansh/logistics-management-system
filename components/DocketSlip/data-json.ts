@@ -1,6 +1,6 @@
-import { LogisticsReceiptProps } from "./docketSlipInterface";
+import { DocketPayloadProps } from "./docketSlipInterface";
 
-const dataJson: LogisticsReceiptProps = {
+const dataJson: DocketPayloadProps = {
   receiptNumber: "1047256",
   date: "31/03/25",
   origin: {
