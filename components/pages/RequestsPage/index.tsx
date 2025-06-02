@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRequests } from '@/hooks/useRequests';
 import { useDrivers } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
+import { processDriverRequest } from '@/lib/manageDriverRequest';
 
 const RequestsPage = () => {
   const { requests, approveRequest, rejectRequest } = useRequests();
@@ -18,10 +19,20 @@ const RequestsPage = () => {
 
   const handleApprove = async (id: string) => {
     try {
+      // Find the request to be approved
+      const request = requests.find((req) => req.id === id);
+      if (!request) {
+        throw new Error('Request not found');
+      }
+
+      // First process the request (handle leave balances, etc.)
+      await processDriverRequest(request);
+
+      // Then update the status to approved
       await approveRequest(id);
       toast.success('Request approved successfully');
     } catch (error) {
-      toast.error('Failed to approve request');
+      toast.error(`Failed to approve request: ${(error as Error).message}`);
       console.error('Error approving request:', error);
     }
   };
