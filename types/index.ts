@@ -16,8 +16,8 @@ export type User = {
   email: string;
   password: string;
   displayName: string;
-  location: string;
-  role: 'admin' | 'manager' | 'driver';
+  location: string | 'NA';
+  role: 'admin' | 'manager' | 'driver' | 'accountant';
   createdAt: Date;
 };
 

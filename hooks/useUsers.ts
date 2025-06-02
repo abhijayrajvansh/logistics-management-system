@@ -26,13 +26,8 @@ export function useUsers(userIdFilter?: string) {
           const fetchedUsers = snapshot.docs.map((doc) => {
             const data = doc.data();
             return {
-              userId: doc.id,
-              email: data.email || '',
-              password: data.password || '',
-              displayName: data.displayName || '',
-              location: data.location || '',
-              role: data.role || 'driver',
-              createdAt: data.createdAt?.toDate() || new Date(),
+              location: data.location || 'NA',
+              ...data
             } as User;
           });
 
