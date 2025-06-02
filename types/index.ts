@@ -77,7 +77,15 @@ export type Trip = {
   truck: string;
   type: 'ready to ship' | 'active' | 'past';
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
+  odometerReading: TripOdometerReading | 'NA'; // if the trip is not active, then this will be 'NA';
 };
+
+export type TripOdometerReading = {
+  startReading: number | 'Not Provided'; // odometer reading at the start of the trip
+  startPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the start of the trip
+  endReading: number | 'Not Provided'; // odometer reading at the end of the trip
+  endPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the end of the trip
+}
 
 export type TripOrders = {
   tripId: string;

@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FaArrowRightLong } from 'react-icons/fa6';
+import { OdometerReadingsDialog } from './odometer-readings-dialog';
+import { IoSpeedometer } from "react-icons/io5";
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -470,6 +472,37 @@ const ActionCell = ({ row }: { row: any }) => {
   );
 };
 
+// Add OdometerReadingsCell component
+const OdometerReadingsCell = ({ row }: { row: any }) => {
+  const trip = row.original;
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Check if readings are available
+  const hasNoReadings = !trip.odometerReading || trip.odometerReading === 'NA';
+  const buttonStyles = hasNoReadings
+    ? "p-1 rounded-lg border border-gray-300 text-gray-400 cursor-not-allowed"
+    : "hover:bg-gray-600 p-1 rounded-lg cursor-pointer border border-gray-300 text-gray-800 hover:text-white";
+
+  return (
+    <>
+      <div className="w-1/2 text-center">
+        <button
+          className={`${buttonStyles} p-1`}
+          onClick={() => !hasNoReadings && setIsOpen(true)}
+          disabled={hasNoReadings}
+        >
+        <IoSpeedometer size={18}/>
+        </button>
+      </div>
+      <OdometerReadingsDialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        readings={trip.odometerReading}
+      />
+    </>
+  );
+};
+
 // columns definition for the trips table
 // exporting headless cols
 export const columns: ColumnDef<Trip>[] = [
@@ -561,6 +594,11 @@ export const columns: ColumnDef<Trip>[] = [
         <div className="text-left">-</div>
       );
     },
+  },
+  {
+    accessorKey: 'odometerReading',
+    header: 'Odometer',
+    cell: OdometerReadingsCell,
   },
   {
     accessorKey: 'actions',

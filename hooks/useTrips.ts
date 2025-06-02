@@ -30,18 +30,10 @@ export function useTrips() {
             const data = doc.data();
             const serializedData = serializeData(data);
 
-            const trip: Trip = {
+            const trip = {
               id: doc.id,
-              tripId: serializedData.tripId,
-              startingPoint: serializedData.startingPoint,
-              destination: serializedData.destination,
-              driver: serializedData.driver,
-              numberOfStops: serializedData.numberOfStops,
-              startDate: serializedData.startDate,
-              truck: serializedData.truck,
-              type: serializedData.type || 'ready to ship',
-              currentStatus: serializedData.currentStatus || undefined,
-            };
+              ...data,
+            } as Trip;
 
             // Categorize trips based on type
             switch (trip.type) {
