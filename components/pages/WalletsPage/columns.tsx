@@ -71,10 +71,10 @@ export const columns: ColumnDef<Wallet>[] = [
     header: 'User ID',
     cell: ({ row }) => {
       const userId: string = row.getValue('userId');
-      const {users: userData} = useUsers(userId);
-      const username = userData[0]?.displayName
+      const { users: userData } = useUsers(userId);
+      const username = userData[0]?.displayName;
       return <div className="font-mono">{username}</div>;
-    }
+    },
   },
   {
     accessorKey: 'available_balance',
@@ -94,7 +94,7 @@ export const columns: ColumnDef<Wallet>[] = [
   },
   {
     id: 'view-transactions',
-    header: () => <div className="text-center">View History</div>,
+    header: () => <div className="text-center">Transaction History</div>,
     cell: ({ row }) => {
       const [isOpen, setIsOpen] = useState(false);
       const wallet = row.original;
@@ -115,28 +115,31 @@ export const columns: ColumnDef<Wallet>[] = [
             <DialogContent className="sm:max-w-[800px] max-h-[80vh]">
               <DialogHeader>
                 <DialogTitle>Transaction History</DialogTitle>
-                <DialogDescription>
-                  All transactions for {row.original.userId}
-                </DialogDescription>
+                <DialogDescription>All transactions for {row.original.userId}</DialogDescription>
               </DialogHeader>
               <div className="mt-4 space-y-4 overflow-auto max-h-[60vh]">
                 {transactions.length === 0 ? (
                   <div className="text-center text-gray-500">No transactions found</div>
                 ) : (
                   <div className="space-y-3">
-                    {transactions.sort((a: any, b: any) => b.date?.seconds - a.date?.seconds).map((transaction: any, index: number) => (
-                      <div key={index} className="p-3 border rounded-lg space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className={`font-semibold ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.type === 'credit' ? '+' : ''}{transaction.amount.toFixed(2)} ₹
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(transaction.date.seconds * 1000).toLocaleString()}
-                          </span>
+                    {transactions
+                      .sort((a: any, b: any) => b.date?.seconds - a.date?.seconds)
+                      .map((transaction: any, index: number) => (
+                        <div key={index} className="p-3 border rounded-lg space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span
+                              className={`font-semibold ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}
+                            >
+                              {transaction.type === 'credit' ? '+' : ''}
+                              {transaction.amount.toFixed(2)} ₹
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {new Date(transaction.date.seconds * 1000).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700">{transaction.reason}</div>
                         </div>
-                        <div className="text-sm text-gray-700">{transaction.reason}</div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </div>
