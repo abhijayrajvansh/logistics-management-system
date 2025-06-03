@@ -590,34 +590,40 @@ const VoucherCell = ({ row }: { row: any }) => {
 
       // Only update wallet if there's a new amount to deduct
       if (totalNewAmount > 0) {
+        // Prepare transaction records
+        const transactions = [];
+
+        // Add advance balance transaction if there's a new advance amount
+        if (newAdvanceAmount > 0) {
+          transactions.push({
+            amount: -newAdvanceAmount,
+            type: 'debit',
+            reason: `Advance balance update for ${trip.tripId}`,
+            date: now,
+          });
+        }
+
+        // Add transactions for new additional balances
+        const additionalTransactions = additionalBalances
+          .filter((_, index) => {
+            const oldBalance = trip.voucher?.additional_balance?.[index]?.amount || 0;
+            const newBalance = additionalBalances[index].amount || 0;
+            return newBalance > oldBalance;
+          })
+          .map((balance) => ({
+            amount: -(balance.amount || 0),
+            type: 'debit',
+            reason: `Additional balance to (${trip.tripId}) for ${balance.reason}`,
+            date: now,
+          }));
+
+        transactions.push(...additionalTransactions);
+
+        // Update wallet with all transactions
         await updateDoc(doc(db, 'wallets', walletDoc.id), {
           available_balance: wallet.available_balance - totalNewAmount,
           updatedAt: now,
-          transactions: [
-            ...wallet.transactions,
-            ...(newAdvanceAmount > 0
-              ? [
-                  {
-                    amount: -newAdvanceAmount,
-                    type: 'debit',
-                    reason: `Advance balance update for ${trip.tripId}`,
-                    date: now,
-                  },
-                ]
-              : []),
-            ...additionalBalances
-              .filter((_, index) => {
-                const oldBalance = trip.voucher?.additional_balance?.[index]?.amount || 0;
-                const newBalance = additionalBalances[index].amount || 0;
-                return newBalance > oldBalance;
-              })
-              .map((balance) => ({
-                amount: -(balance.amount || 0),
-                type: 'debit',
-                reason: `Additional balance to (${trip.tripId}) for ${balance.reason}`,
-                date: now,
-              })),
-          ],
+          transactions: [...wallet.transactions, ...transactions],
         });
       }
 
