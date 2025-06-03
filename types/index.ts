@@ -78,7 +78,34 @@ export type Trip = {
   type: 'ready to ship' | 'active' | 'past';
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
   odometerReading: TripOdometerReading | 'NA'; // if the trip is not active, then this will be 'NA';
+  voucher: TripVoucher | 'NA';
 };
+
+export type TripVoucher = {
+  advance_balance: number; // advance balance given to the driver for the trip
+  additional_balance: {
+    amount: number; // additional balance given to the driver for the trip
+    reason: string; // reason for the additional balance
+    date: Timestamp; // date when the additional balance was given
+  }[]
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export type Wallet = {
+  userId: string;
+  available_balance: number; // current available balance in the wallet
+  transactions: WalletTransaction[]; // list of transactions in the wallet
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export type WalletTransaction = {
+  amount: number; // amount of the transaction, can be positive (credit) or negative (debit)
+  type: 'credit' | 'debit'; // type of transaction
+  reason: string; // brief reason description of the transaction
+  date: Timestamp; // date of the transaction
+}
 
 export type TripOdometerReading = {
   startReading: number | 'Not Provided'; // odometer reading at the start of the trip
