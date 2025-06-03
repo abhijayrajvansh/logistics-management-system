@@ -19,7 +19,7 @@ import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
 import { Trip, TripVoucher } from '@/types';
 import { db } from '@/firebase/database';
-import { doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
   Select,
@@ -33,6 +33,8 @@ import { FaArrowRightLong } from 'react-icons/fa6';
 import { OdometerReadingsDialog } from './odometer-readings-dialog';
 import { IoSpeedometer, IoWallet } from 'react-icons/io5';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/app/context/AuthContext';
+import { Wallet } from '@/types';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -507,6 +509,7 @@ const OdometerReadingsCell = ({ row }: { row: any }) => {
 
 // Add VoucherCell component
 const VoucherCell = ({ row }: { row: any }) => {
+  const { userData } = useAuth();
   const trip = row.original;
   const [isOpen, setIsOpen] = useState(false);
   const [advanceBalance, setAdvanceBalance] = useState(
@@ -522,6 +525,29 @@ const VoucherCell = ({ row }: { row: any }) => {
 
   const handleSaveVoucher = async () => {
     try {
+      // Get manager's wallet
+      const walletsRef = collection(db, 'wallets');
+      const walletQuery = query(walletsRef, where('userId', '==', userData?.userId));
+      const walletSnapshot = await getDocs(walletQuery);
+
+      if (walletSnapshot.empty) {
+        toast.error('Manager does not have a wallet. Please set up a wallet first.');
+        return;
+      }
+
+      const walletDoc = walletSnapshot.docs[0];
+      const wallet = walletDoc.data() as Wallet;
+
+      // Calculate total amount needed for the voucher
+      const totalNeeded = (advanceBalance || 0) + additionalBalances.reduce((sum, balance) => sum + (balance.amount || 0), 0);
+
+      // Check if manager has sufficient balance
+      if (wallet.available_balance < totalNeeded) {
+        toast.error(`Insufficient balance. Available: ₹${wallet.available_balance}, Required: ₹${totalNeeded}`);
+        return;
+      }
+
+      // Update trip voucher
       const tripRef = doc(db, 'trips', trip.id);
       const now = Timestamp.now();
 
@@ -534,6 +560,21 @@ const VoucherCell = ({ row }: { row: any }) => {
 
       await updateDoc(tripRef, {
         voucher: voucherData,
+      });
+
+      // Update manager's wallet balance
+      await updateDoc(doc(db, 'wallets', walletDoc.id), {
+        available_balance: wallet.available_balance - totalNeeded,
+        updatedAt: now,
+        transactions: [
+          ...wallet.transactions,
+          {
+            amount: -totalNeeded,
+            type: 'debit',
+            reason: `Trip voucher for ${trip.tripId}`,
+            date: now,
+          }
+        ]
       });
 
       toast.success('Voucher updated successfully');
