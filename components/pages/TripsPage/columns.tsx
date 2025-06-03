@@ -28,6 +28,7 @@ import {
   query,
   where,
   getDocs,
+  onSnapshot,
 } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
@@ -521,6 +522,7 @@ const VoucherCell = ({ row }: { row: any }) => {
   const { userData } = useAuth();
   const trip = row.original;
   const [isOpen, setIsOpen] = useState(false);
+  const [managerWallet, setManagerWallet] = useState<Wallet | null>(null);
   const [advanceBalance, setAdvanceBalance] = useState(
     trip.voucher && trip.voucher !== 'NA' && trip.voucher.advance_balance !== undefined
       ? trip.voucher.advance_balance
@@ -531,6 +533,30 @@ const VoucherCell = ({ row }: { row: any }) => {
       ? trip.voucher.additional_balance
       : [],
   );
+
+  // Subscribe to real-time wallet updates
+  useEffect(() => {
+    if (!userData?.userId) return;
+
+    const walletsRef = collection(db, 'wallets');
+    const walletQuery = query(walletsRef, where('userId', '==', userData.userId));
+
+    const unsubscribe = onSnapshot(
+      walletQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const walletData = snapshot.docs[0].data() as Wallet;
+          setManagerWallet(walletData);
+        }
+      },
+      (error) => {
+        console.error('Error fetching wallet:', error);
+        toast.error('Error fetching wallet details');
+      },
+    );
+
+    return () => unsubscribe();
+  }, [userData?.userId]);
 
   const handleSaveVoucher = async () => {
     try {
@@ -687,6 +713,16 @@ const VoucherCell = ({ row }: { row: any }) => {
               Manage advance and additional balances for this trip
             </DialogDescription>
           </DialogHeader>
+
+          {/* Add wallet balance display */}
+          <div className="p-4 bg-muted rounded-lg mb-6">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Available Balance:</span>
+              <span className="text-lg font-semibold">
+                ₹{managerWallet?.available_balance.toFixed(2) || '0.00'}
+              </span>
+            </div>
+          </div>
 
           <div className="space-y-6">
             <div className="space-y-2">
