@@ -1,41 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { DataTable } from './data-table';
 import { columns } from './columns';
-import { collection, onSnapshot, query } from 'firebase/firestore';
-import { db } from '@/firebase/database';
-import { Wallet } from '@/types';
 import { SiteHeader } from '@/components/site-header';
+import { useWallets } from '@/hooks/useWallets';
 
 const WalletsPage = () => {
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const walletsRef = collection(db, 'wallets');
-    const walletsQuery = query(walletsRef);
-
-    const unsubscribe = onSnapshot(
-      walletsQuery,
-      (snapshot) => {
-        const walletsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Wallet[];
-        setWallets(walletsData);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error('Error fetching wallets:', error);
-        setError(error as Error);
-        setIsLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, []);
+  const { wallets, isLoading, error } = useWallets();
 
   if (isLoading) {
     return <div className="p-4">Loading wallets...</div>;

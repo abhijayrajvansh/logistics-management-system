@@ -74,11 +74,7 @@ export const columns: ColumnDef<Wallet>[] = [
     header: 'Available Balance',
     cell: ({ row }) => {
       const balance: number = row.getValue('available_balance');
-      return (
-        <div className="font-mono">
-          ₹{balance.toFixed(2)}
-        </div>
-      );
+      return <div className="font-mono">₹{balance.toFixed(2)}</div>;
     },
   },
   {
@@ -86,11 +82,7 @@ export const columns: ColumnDef<Wallet>[] = [
     header: 'Transactions',
     cell: ({ row }) => {
       const transactions = row.getValue('transactions') as any[];
-      return (
-        <div>
-          {transactions.length} transactions
-        </div>
-      );
+      return <div>{transactions.length} transactions</div>;
     },
   },
   {

@@ -50,11 +50,7 @@ export function DeleteWalletDialog({ walletId, isOpen, onClose }: DeleteWalletDi
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
-          <Button 
-            variant="destructive" 
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? 'Deleting...' : 'Delete Wallet'}
           </Button>
         </AlertDialogFooter>
