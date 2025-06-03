@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import { useDrivers } from '@/hooks/useDrivers';
 import {
   Dialog,
@@ -13,12 +13,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ColumnDef } from '@tanstack/react-table';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import { MdDeleteOutline, MdEdit, MdClose } from 'react-icons/md';
 import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
-import { Trip } from '@/types';
+import { Trip, TripVoucher } from '@/types';
 import { db } from '@/firebase/database';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
   Select,
@@ -30,7 +30,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FaArrowRightLong } from 'react-icons/fa6';
 import { OdometerReadingsDialog } from './odometer-readings-dialog';
-import { IoSpeedometer } from "react-icons/io5";
+import { IoSpeedometer, IoWallet } from 'react-icons/io5';
+import { Input } from '@/components/ui/input';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -480,8 +481,8 @@ const OdometerReadingsCell = ({ row }: { row: any }) => {
   // Check if readings are available
   const hasNoReadings = !trip.odometerReading || trip.odometerReading === 'NA';
   const buttonStyles = hasNoReadings
-    ? "p-1 rounded-lg border border-gray-300 text-gray-400 cursor-not-allowed"
-    : "hover:bg-gray-600 p-1 rounded-lg cursor-pointer border border-gray-300 text-gray-800 hover:text-white";
+    ? 'p-1 rounded-lg border border-gray-300 text-gray-400 cursor-not-allowed'
+    : 'hover:bg-gray-600 p-1 rounded-lg cursor-pointer border border-gray-300 text-gray-800 hover:text-white';
 
   return (
     <>
@@ -491,7 +492,7 @@ const OdometerReadingsCell = ({ row }: { row: any }) => {
           onClick={() => !hasNoReadings && setIsOpen(true)}
           disabled={hasNoReadings}
         >
-        <IoSpeedometer size={18}/>
+          <IoSpeedometer size={18} />
         </button>
       </div>
       <OdometerReadingsDialog
@@ -503,8 +504,193 @@ const OdometerReadingsCell = ({ row }: { row: any }) => {
   );
 };
 
-// columns definition for the trips table
-// exporting headless cols
+// Add VoucherCell component
+const VoucherCell = ({ row }: { row: any }) => {
+  const trip = row.original;
+  const [isOpen, setIsOpen] = useState(false);
+  const [advanceBalance, setAdvanceBalance] = useState(
+    trip.voucher && trip.voucher !== 'NA' && trip.voucher.advance_balance !== undefined
+      ? trip.voucher.advance_balance
+      : 0,
+  );
+  const [additionalBalances, setAdditionalBalances] = useState<TripVoucher['additional_balance']>(
+    trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
+      ? trip.voucher.additional_balance
+      : [],
+  );
+
+  const handleSaveVoucher = async () => {
+    try {
+      const tripRef = doc(db, 'trips', trip.id);
+      const voucherData: TripVoucher = {
+        advance_balance: advanceBalance,
+        additional_balance: additionalBalances,
+        createdAt: trip.voucher === 'NA' ? Timestamp.now() : trip.voucher.createdAt,
+        updatedAt: Timestamp.now(),
+      };
+
+      await updateDoc(tripRef, {
+        voucher: voucherData,
+      });
+
+      toast.success('Voucher updated successfully');
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error updating voucher:', error);
+      toast.error('Failed to update voucher');
+    }
+  };
+
+  const addAdditionalBalance = () => {
+    setAdditionalBalances([
+      ...additionalBalances,
+      { amount: 0, reason: '', date: Timestamp.now() },
+    ]);
+  };
+
+  const updateAdditionalBalance = (
+    index: number,
+    field: keyof TripVoucher['additional_balance'][0],
+    value: any,
+  ) => {
+    const updatedBalances = [...additionalBalances];
+    updatedBalances[index] = {
+      ...updatedBalances[index],
+      [field]: value,
+    };
+    setAdditionalBalances(updatedBalances);
+  };
+
+  const removeAdditionalBalance = (index: number) => {
+    setAdditionalBalances(additionalBalances.filter((_, i) => i !== index));
+  };
+
+  const totalBalance = useMemo(() => {
+    if (advanceBalance === undefined && (!additionalBalances || additionalBalances.length === 0)) {
+      return undefined;
+    }
+    const additionalSum =
+      additionalBalances?.reduce((sum, balance) => sum + (balance?.amount || 0), 0) || 0;
+    return (advanceBalance || 0) + additionalSum;
+  }, [advanceBalance, additionalBalances]);
+
+  const buttonStyles =
+    'hover:bg-blue-600 p-1 rounded-lg cursor-pointer border border-blue-500 text-blue-500 hover:text-white';
+
+  return (
+    <>
+      <div className="w-1/2 text-center">
+        <button className={buttonStyles} onClick={() => setIsOpen(true)}>
+          <IoWallet size={18} />
+        </button>
+      </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Trip Voucher</DialogTitle>
+            <DialogDescription>
+              Manage advance and additional balances for this trip
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Advance Balance</Label>
+              <Input
+                type="number"
+                value={advanceBalance}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setAdvanceBalance(Number(e.target.value))
+                }
+                placeholder="Enter advance balance"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>Additional Balances</Label>
+                <Button variant="outline" size="sm" onClick={addAdditionalBalance}>
+                  Add Balance
+                </Button>
+              </div>
+
+              {additionalBalances.map((balance, index) => (
+                <div key={index} className="space-y-2 p-4 border rounded-md relative">
+                  <button
+                    onClick={() => removeAdditionalBalance(index)}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                  >
+                    <MdClose size={20} />
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        value={balance.amount}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateAdditionalBalance(index, 'amount', Number(e.target.value))
+                        }
+                        placeholder="Enter amount"
+                      />
+                    </div>
+                    <div>
+                      <Label>Date</Label>
+                      <Input
+                        type="date"
+                        value={balance.date.toDate().toISOString().split('T')[0]}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateAdditionalBalance(
+                            index,
+                            'date',
+                            Timestamp.fromDate(new Date(e.target.value)),
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Reason</Label>
+                    <Input
+                      value={balance.reason}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        updateAdditionalBalance(index, 'reason', e.target.value)
+                      }
+                      placeholder="Enter reason"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Balance:</span>
+                <span>{totalBalance !== undefined ? `₹${totalBalance}` : 'No Balance'}</span>
+              </div>
+              {advanceBalance !== undefined && (
+                <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                  <span>Advance Balance:</span>
+                  <span>₹{advanceBalance}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveVoucher}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'tripId',
@@ -599,6 +785,11 @@ export const columns: ColumnDef<Trip>[] = [
     accessorKey: 'odometerReading',
     header: 'Odometer',
     cell: OdometerReadingsCell,
+  },
+  {
+    accessorKey: 'voucher',
+    header: 'Voucher',
+    cell: VoucherCell,
   },
   {
     accessorKey: 'actions',
