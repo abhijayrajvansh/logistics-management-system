@@ -552,7 +552,10 @@ const VoucherCell = ({ row }: { row: any }) => {
         trip.voucher && trip.voucher !== 'NA' ? trip.voucher.advance_balance || 0 : 0;
       const previousAdditional =
         trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
-          ? trip.voucher.additional_balance.reduce((sum: number, balance: { amount?: number }) => sum + (balance.amount || 0), 0)
+          ? trip.voucher.additional_balance.reduce(
+              (sum: number, balance: { amount?: number }) => sum + (balance.amount || 0),
+              0,
+            )
           : 0;
 
       // Calculate only the new amount being added
@@ -592,12 +595,28 @@ const VoucherCell = ({ row }: { row: any }) => {
           updatedAt: now,
           transactions: [
             ...wallet.transactions,
-            {
-              amount: -totalNewAmount,
-              type: 'debit',
-              reason: `Trip voucher update for ${trip.tripId}`,
-              date: now,
-            },
+            ...(newAdvanceAmount > 0
+              ? [
+                  {
+                    amount: -newAdvanceAmount,
+                    type: 'debit',
+                    reason: `Advance balance update for ${trip.tripId}`,
+                    date: now,
+                  },
+                ]
+              : []),
+            ...additionalBalances
+              .filter((_, index) => {
+                const oldBalance = trip.voucher?.additional_balance?.[index]?.amount || 0;
+                const newBalance = additionalBalances[index].amount || 0;
+                return newBalance > oldBalance;
+              })
+              .map((balance) => ({
+                amount: -(balance.amount || 0),
+                type: 'debit',
+                reason: `Additional balance to (${trip.tripId}) for ${balance.reason}`,
+                date: now,
+              })),
           ],
         });
       }
