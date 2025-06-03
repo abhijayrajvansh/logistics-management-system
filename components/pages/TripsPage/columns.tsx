@@ -19,7 +19,16 @@ import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
 import { Trip, TripVoucher } from '@/types';
 import { db } from '@/firebase/database';
-import { doc, updateDoc, getDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  Timestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
   Select,
@@ -538,12 +547,26 @@ const VoucherCell = ({ row }: { row: any }) => {
       const walletDoc = walletSnapshot.docs[0];
       const wallet = walletDoc.data() as Wallet;
 
-      // Calculate total amount needed for the voucher
-      const totalNeeded = (advanceBalance || 0) + additionalBalances.reduce((sum, balance) => sum + (balance.amount || 0), 0);
+      // Get previous voucher amounts if they exist
+      const previousAdvance =
+        trip.voucher && trip.voucher !== 'NA' ? trip.voucher.advance_balance || 0 : 0;
+      const previousAdditional =
+        trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
+          ? trip.voucher.additional_balance.reduce((sum, balance) => sum + (balance.amount || 0), 0)
+          : 0;
 
-      // Check if manager has sufficient balance
-      if (wallet.available_balance < totalNeeded) {
-        toast.error(`Insufficient balance. Available: ₹${wallet.available_balance}, Required: ₹${totalNeeded}`);
+      // Calculate only the new amount being added
+      const newAdvanceAmount = Math.max(0, (advanceBalance || 0) - previousAdvance);
+      const newAdditionalAmount =
+        additionalBalances.reduce((sum, balance) => sum + (balance.amount || 0), 0) -
+        previousAdditional;
+      const totalNewAmount = newAdvanceAmount + newAdditionalAmount;
+
+      // Check if manager has sufficient balance for the new amount
+      if (totalNewAmount > 0 && wallet.available_balance < totalNewAmount) {
+        toast.error(
+          `Insufficient balance. Available: ₹${wallet.available_balance}, New amount required: ₹${totalNewAmount}`,
+        );
         return;
       }
 
@@ -562,20 +585,22 @@ const VoucherCell = ({ row }: { row: any }) => {
         voucher: voucherData,
       });
 
-      // Update manager's wallet balance
-      await updateDoc(doc(db, 'wallets', walletDoc.id), {
-        available_balance: wallet.available_balance - totalNeeded,
-        updatedAt: now,
-        transactions: [
-          ...wallet.transactions,
-          {
-            amount: -totalNeeded,
-            type: 'debit',
-            reason: `Trip voucher for ${trip.tripId}`,
-            date: now,
-          }
-        ]
-      });
+      // Only update wallet if there's a new amount to deduct
+      if (totalNewAmount > 0) {
+        await updateDoc(doc(db, 'wallets', walletDoc.id), {
+          available_balance: wallet.available_balance - totalNewAmount,
+          updatedAt: now,
+          transactions: [
+            ...wallet.transactions,
+            {
+              amount: -totalNewAmount,
+              type: 'debit',
+              reason: `Trip voucher update for ${trip.tripId}`,
+              date: now,
+            },
+          ],
+        });
+      }
 
       toast.success('Voucher updated successfully');
       setIsOpen(false);
@@ -670,7 +695,7 @@ const VoucherCell = ({ row }: { row: any }) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className='mb-3'>Amount</Label>
+                      <Label className="mb-3">Amount</Label>
                       <Input
                         type="number"
                         value={balance.amount}
@@ -680,16 +705,16 @@ const VoucherCell = ({ row }: { row: any }) => {
                         placeholder="Enter amount"
                       />
                     </div>
-                  <div>
-                    <Label className='mb-3'>Reason</Label>
-                    <Input
-                      value={balance.reason}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        updateAdditionalBalance(index, 'reason', e.target.value)
-                      }
-                      placeholder="Enter reason"
-                    />
-                  </div>
+                    <div>
+                      <Label className="mb-3">Reason</Label>
+                      <Input
+                        value={balance.reason}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateAdditionalBalance(index, 'reason', e.target.value)
+                        }
+                        placeholder="Enter reason"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
