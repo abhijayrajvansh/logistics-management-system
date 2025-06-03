@@ -11,7 +11,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { doc, deleteDoc } from 'firebase/firestore';
+import {
+  doc,
+  deleteDoc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { toast } from 'sonner';
 
@@ -27,8 +36,31 @@ export function DeleteWalletDialog({ walletId, isOpen, onClose }: DeleteWalletDi
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'wallets', walletId));
-      toast.success('Wallet deleted successfully!');
+      // First get the wallet to find the userId
+      const walletRef = doc(db, 'wallets', walletId);
+      const walletSnap = await getDoc(walletRef);
+
+      if (walletSnap.exists()) {
+        const walletData = walletSnap.data();
+
+        // Find and update the user document
+        const usersRef = collection(db, 'users');
+        const userQuery = query(usersRef, where('userId', '==', walletData.userId));
+        const userSnapshot = await getDocs(userQuery);
+
+        if (!userSnapshot.empty) {
+          const userDoc = userSnapshot.docs[0];
+          await updateDoc(doc(db, 'users', userDoc.id), {
+            walletId: 'NA',
+          });
+        }
+
+        // Then delete the wallet
+        await deleteDoc(walletRef);
+        toast.success('Wallet deleted successfully!');
+      } else {
+        toast.error('Wallet not found');
+      }
       onClose();
     } catch (error: any) {
       console.error('Error deleting wallet:', error);

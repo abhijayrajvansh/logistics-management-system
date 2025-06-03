@@ -1,7 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,11 +91,11 @@ export function CreateWalletForm({ onSuccess }: CreateWalletFormProps) {
       const usersRef = collection(db, 'users');
       const userQuery = query(usersRef, where('userId', '==', formData.userId));
       const userSnapshot = await getDocs(userQuery);
-      
+
       if (!userSnapshot.empty) {
         const userDoc = userSnapshot.docs[0];
         await updateDoc(doc(db, 'users', userDoc.id), {
-          walletId: walletDoc.id
+          walletId: walletDoc.id,
         });
       }
 
