@@ -18,6 +18,7 @@ export type User = {
   displayName: string;
   location: string | 'NA';
   role: 'admin' | 'manager' | 'driver' | 'accountant';
+  walletId: Wallet['id'] | "NA"; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
   createdAt: Date;
 };
 
@@ -93,7 +94,8 @@ export type TripVoucher = {
 }
 
 export type Wallet = {
-  userId: string;
+  id: string; // unique identifier for the wallet
+  userId: User['userId']; // userId of the user who owns the wallet
   available_balance: number; // current available balance in the wallet
   transactions: WalletTransaction[]; // list of transactions in the wallet
   createdAt: Timestamp;
