@@ -11,6 +11,7 @@ import {
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { UpdateWalletForm } from './update-wallet';
 import { DeleteWalletDialog } from './delete-wallet';
+import useUsers from '@/hooks/useUsers';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -68,6 +69,12 @@ export const columns: ColumnDef<Wallet>[] = [
   {
     accessorKey: 'userId',
     header: 'User ID',
+    cell: ({ row }) => {
+      const userId: string = row.getValue('userId');
+      const {users: userData} = useUsers(userId);
+      const username = userData[0]?.displayName
+      return <div className="font-mono">{username}</div>;
+    }
   },
   {
     accessorKey: 'available_balance',
