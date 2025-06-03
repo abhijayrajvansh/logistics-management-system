@@ -552,7 +552,7 @@ const VoucherCell = ({ row }: { row: any }) => {
         trip.voucher && trip.voucher !== 'NA' ? trip.voucher.advance_balance || 0 : 0;
       const previousAdditional =
         trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
-          ? trip.voucher.additional_balance.reduce((sum, balance) => sum + (balance.amount || 0), 0)
+          ? trip.voucher.additional_balance.reduce((sum: number, balance: { amount?: number }) => sum + (balance.amount || 0), 0)
           : 0;
 
       // Calculate only the new amount being added
