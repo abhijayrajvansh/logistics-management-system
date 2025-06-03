@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import { useDrivers } from '@/hooks/useDrivers';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import {
   Dialog,
   DialogContent,
@@ -522,11 +523,13 @@ const VoucherCell = ({ row }: { row: any }) => {
   const handleSaveVoucher = async () => {
     try {
       const tripRef = doc(db, 'trips', trip.id);
+      const now = Timestamp.now();
+
       const voucherData: TripVoucher = {
         advance_balance: advanceBalance,
         additional_balance: additionalBalances,
-        createdAt: trip.voucher === 'NA' ? Timestamp.now() : trip.voucher.createdAt,
-        updatedAt: Timestamp.now(),
+        createdAt: trip.voucher?.createdAt || now,
+        updatedAt: now,
       };
 
       await updateDoc(tripRef, {
@@ -626,7 +629,7 @@ const VoucherCell = ({ row }: { row: any }) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Amount</Label>
+                      <Label className='mb-3'>Amount</Label>
                       <Input
                         type="number"
                         value={balance.amount}
@@ -636,23 +639,8 @@ const VoucherCell = ({ row }: { row: any }) => {
                         placeholder="Enter amount"
                       />
                     </div>
-                    <div>
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={balance.date.toDate().toISOString().split('T')[0]}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          updateAdditionalBalance(
-                            index,
-                            'date',
-                            Timestamp.fromDate(new Date(e.target.value)),
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
                   <div>
-                    <Label>Reason</Label>
+                    <Label className='mb-3'>Reason</Label>
                     <Input
                       value={balance.reason}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -661,20 +649,33 @@ const VoucherCell = ({ row }: { row: any }) => {
                       placeholder="Enter reason"
                     />
                   </div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t space-y-2">
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Total Balance:</span>
                 <span>{totalBalance !== undefined ? `₹${totalBalance}` : 'No Balance'}</span>
               </div>
               {advanceBalance !== undefined && (
-                <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
                   <span>Advance Balance:</span>
                   <span>₹{advanceBalance}</span>
                 </div>
+              )}
+              {trip.voucher && trip.voucher !== 'NA' && (
+                <>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Created:</span>
+                    <span>{formatFirestoreDate(trip.voucher.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Last Updated:</span>
+                    <span>{formatFirestoreDate(trip.voucher.updatedAt)}</span>
+                  </div>
+                </>
               )}
             </div>
           </div>
