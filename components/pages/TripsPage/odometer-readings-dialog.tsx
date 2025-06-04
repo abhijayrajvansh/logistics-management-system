@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { TripOdometerReading } from '@/types';
+import { BsSpeedometer } from 'react-icons/bs';
 
 interface OdometerReadingsDialogProps {
   isOpen: boolean;
@@ -36,11 +37,15 @@ export function OdometerReadingsDialog({ isOpen, onClose, readings }: OdometerRe
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="font-bold">Start Reading</Label>
-              <div className="mt-1 text-sm">{readings.startReading}</div>
+              <div className="mt-1 text-sm">
+                {readings.startReading === undefined ? 'Not Provided' : readings.startReading}
+              </div>
             </div>
             <div>
               <Label className="font-bold">End Reading</Label>
-              <div className="mt-1 text-sm">{readings.endReading}</div>
+              <div className="mt-1 text-sm">
+                {readings.endReading === undefined ? 'Not Provided' : readings.endReading}
+              </div>
             </div>
           </div>
 
@@ -50,21 +55,43 @@ export function OdometerReadingsDialog({ isOpen, onClose, readings }: OdometerRe
               {readings.startPhotoUrl !== 'Not Provided' && (
                 <div>
                   <Label className="font-bold mb-2 block">Start Photo</Label>
-                  <img
-                    src={readings.startPhotoUrl}
-                    alt="Start reading"
-                    className="rounded-lg w-full h-auto"
-                  />
+                  {readings.startPhotoUrl === undefined ? (
+                    <div className='h-full flex items-center justify-center'>
+                      <div className='flex flex-col items-center justify-center gap-3'>
+                        <BsSpeedometer size={30} className='text-gray-500'/>
+                      <p className='text-gray-500'>Not Provided</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={readings.startPhotoUrl}
+                        alt="Start reading"
+                        className="rounded-lg w-full h-auto"
+                      />
+                    </>
+                  )}
                 </div>
               )}
               {readings.endPhotoUrl !== 'Not Provided' && (
                 <div>
                   <Label className="font-bold mb-2 block">End Photo</Label>
-                  <img
-                    src={readings.endPhotoUrl}
-                    alt="End reading"
-                    className="rounded-lg w-full h-auto"
-                  />
+                  {readings.endPhotoUrl === undefined ? (
+                    <div className='h-full flex items-center justify-center'>
+                      <div className='flex flex-col items-center justify-center gap-3'>
+                        <BsSpeedometer size={30} className='text-gray-500'/>
+                      <p className='text-gray-500'>Not Provided</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={readings.endPhotoUrl}
+                        alt="Start reading"
+                        className="rounded-lg w-full h-auto"
+                      />
+                    </>
+                  )}
                 </div>
               )}
             </div>
