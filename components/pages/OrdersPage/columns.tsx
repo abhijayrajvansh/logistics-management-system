@@ -18,12 +18,15 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { FaRegEye } from 'react-icons/fa';
+import { Upload } from 'lucide-react';
+import { UploadProofOfDelivery } from './UploadProofOfDelivery';
 
 // Create a component for the proof cell to manage dialog state
 const ProofCell = ({ row }: { row: any }) => {
   const order = row.original;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showUpload, setShowUpload] = useState(false);
 
   // Check if proof of delivery is available and has photos
   const hasProofImages =
@@ -31,6 +34,9 @@ const ProofCell = ({ row }: { row: any }) => {
     typeof order.proof_of_delivery === 'object' &&
     Array.isArray(order.proof_of_delivery.photo) &&
     order.proof_of_delivery.photo.length > 0;
+
+  // Check if we should show upload option (when proof_of_delivery is 'NA' or undefined)
+  const canUpload = order.proof_of_delivery === 'NA' || !order.proof_of_delivery || !hasProofImages;
 
   const handlePrevious = () => {
     setCurrentImageIndex((prev) =>
@@ -44,23 +50,66 @@ const ProofCell = ({ row }: { row: any }) => {
     );
   };
 
+  const handleDialogOpen = () => {
+    setIsDialogOpen(true);
+    setShowUpload(false);
+  };
+
+  const handleUploadSuccess = () => {
+    setIsDialogOpen(false);
+    setShowUpload(false);
+    // The page will automatically refresh or the parent component will handle the update
+    window.location.reload(); // Simple way to refresh the data
+  };
+
+  const handleUploadCancel = () => {
+    setShowUpload(false);
+  };
+
   return (
     <div className="text-center">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setIsDialogOpen(true)}
-        disabled={!hasProofImages}
-      >
-        <FaRegEye />
-      </Button>
+      {hasProofImages ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleDialogOpen}
+        >
+          <FaRegEye />
+        </Button>
+      ) : canUpload ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            setIsDialogOpen(true);
+            setShowUpload(true);
+          }}
+        >
+          <Upload className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="icon"
+          disabled
+        >
+          <FaRegEye />
+        </Button>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
           </DialogHeader>
-          {hasProofImages ? (
+          
+          {showUpload ? (
+            <UploadProofOfDelivery
+              orderId={order.id}
+              onSuccess={handleUploadSuccess}
+              onCancel={handleUploadCancel}
+            />
+          ) : hasProofImages ? (
             <div className="flex flex-col items-center space-y-4">
               <div className="relative aspect-square w-full ">
                 <Image
@@ -108,7 +157,16 @@ const ProofCell = ({ row }: { row: any }) => {
               )}
             </div>
           ) : (
-            <div className="text-center py-8">No proof of delivery images available</div>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">No proof of delivery images available</p>
+              <Button 
+                onClick={() => setShowUpload(true)}
+                className="mx-auto"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Proof of Delivery
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>
