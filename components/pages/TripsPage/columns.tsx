@@ -826,52 +826,70 @@ const TotalRevenueCell = ({ row }: { row: any }) => {
   const trip = row.original;
 
   useEffect(() => {
-    const fetchTotalRevenue = async () => {
-      try {
-        setIsLoading(true);
-        // Get the trip_orders document using the trip ID
-        const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', trip.id));
+    // Create a reference to the trip_orders document
+    const tripOrdersRef = doc(db, 'trip_orders', trip.id);
 
-        if (!tripOrdersDoc.exists()) {
-          setTotalRevenue(0);
-          return;
+    // Set up real-time listener for the trip_orders document
+    const unsubscribe = onSnapshot(
+      tripOrdersRef,
+      async (tripOrdersDoc) => {
+        try {
+          if (!tripOrdersDoc.exists()) {
+            setTotalRevenue(0);
+            setIsLoading(false);
+            return;
+          }
+
+          const orderIds = tripOrdersDoc.data().orderIds || [];
+
+          // Set up real-time listeners for all orders
+          const ordersUnsubscribe = onSnapshot(
+            query(collection(db, 'orders'), where('__name__', 'in', orderIds)),
+            (ordersSnapshot) => {
+              // Calculate total revenue from all orders
+              const revenue = ordersSnapshot.docs.reduce((sum, doc) => {
+                const orderData = doc.data();
+                return sum + (orderData.total_price || 0);
+              }, 0);
+
+              setTotalRevenue(revenue);
+              setIsLoading(false);
+            },
+            (error) => {
+              console.error('Error listening to orders:', error);
+              toast.error('Failed to load revenue details');
+              setIsLoading(false);
+            },
+          );
+
+          // Clean up orders listener when trip_orders changes or component unmounts
+          return () => {
+            ordersUnsubscribe();
+          };
+        } catch (error) {
+          console.error('Error fetching total revenue:', error);
+          toast.error('Failed to load revenue details');
+          setIsLoading(false);
         }
-
-        const orderIds = tripOrdersDoc.data().orderIds || [];
-
-        // Fetch all order documents in parallel
-        const orderPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
-        const orderDocs = await Promise.all(orderPromises);
-
-        // Calculate total revenue from all orders
-        const revenue = orderDocs
-          .filter((doc) => doc.exists())
-          .reduce((sum, doc) => {
-            const orderData = doc.data();
-            return sum + (orderData.total_price || 0);
-          }, 0);
-
-        setTotalRevenue(revenue);
-      } catch (error) {
-        console.error('Error fetching total revenue:', error);
+      },
+      (error) => {
+        console.error('Error listening to trip_orders:', error);
         toast.error('Failed to load revenue details');
-      } finally {
         setIsLoading(false);
-      }
-    };
+      },
+    );
 
-    fetchTotalRevenue();
+    // Clean up trip_orders listener when component unmounts
+    return () => {
+      unsubscribe();
+    };
   }, [trip.id]);
 
   if (isLoading) {
     return <div className="text-left">Loading...</div>;
   }
 
-  return (
-    <div className="text-left font-medium">
-      ₹{totalRevenue?.toFixed(2) || '0.00'}
-    </div>
-  );
+  return <div className="text-left font-medium">₹{totalRevenue?.toFixed(2) || '0.00'}</div>;
 };
 
 export const columns: ColumnDef<Trip>[] = [
@@ -947,11 +965,6 @@ export const columns: ColumnDef<Trip>[] = [
     header: 'Truck',
   },
   {
-    accessorKey: 'type',
-    header: 'Type',
-    cell: TypeCell,
-  },
-  {
     accessorKey: 'currentStatus',
     header: 'Current Status',
     cell: ({ row }) => {
@@ -965,6 +978,16 @@ export const columns: ColumnDef<Trip>[] = [
     },
   },
   {
+    accessorKey: 'type',
+    header: 'Type',
+    cell: TypeCell,
+  },
+  {
+    accessorKey: 'totalRevenue',
+    header: 'Revenue',
+    cell: TotalRevenueCell,
+  },
+  {
     accessorKey: 'odometerReading',
     header: 'Odometer',
     cell: OdometerReadingsCell,
@@ -973,11 +996,6 @@ export const columns: ColumnDef<Trip>[] = [
     accessorKey: 'voucher',
     header: 'Voucher',
     cell: VoucherCell,
-  },
-  {
-    accessorKey: 'totalRevenue',
-    header: 'Revenue',
-    cell: TotalRevenueCell,
   },
   {
     accessorKey: 'actions',
