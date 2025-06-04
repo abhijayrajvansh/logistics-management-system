@@ -115,7 +115,12 @@ export const columns: ColumnDef<Wallet>[] = [
             <DialogContent className="sm:max-w-[800px] max-h-[80vh]">
               <DialogHeader>
                 <DialogTitle>Transaction History</DialogTitle>
-                <DialogDescription>All transactions for {row.original.userId}</DialogDescription>
+                <DialogDescription>
+                  {(() => {
+                  const { users } = useUsers(row.original.userId);
+                  return `All transactions for ${users[0]?.displayName || row.original.userId}`;
+                  })()}
+                </DialogDescription>
               </DialogHeader>
               <div className="mt-4 space-y-4 overflow-auto max-h-[60vh]">
                 {transactions.length === 0 ? (
