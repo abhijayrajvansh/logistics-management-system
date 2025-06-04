@@ -819,6 +819,61 @@ const VoucherCell = ({ row }: { row: any }) => {
   );
 };
 
+// Add TotalRevenueCell component
+const TotalRevenueCell = ({ row }: { row: any }) => {
+  const [totalRevenue, setTotalRevenue] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const trip = row.original;
+
+  useEffect(() => {
+    const fetchTotalRevenue = async () => {
+      try {
+        setIsLoading(true);
+        // Get the trip_orders document using the trip ID
+        const tripOrdersDoc = await getDoc(doc(db, 'trip_orders', trip.id));
+
+        if (!tripOrdersDoc.exists()) {
+          setTotalRevenue(0);
+          return;
+        }
+
+        const orderIds = tripOrdersDoc.data().orderIds || [];
+
+        // Fetch all order documents in parallel
+        const orderPromises = orderIds.map((id: string) => getDoc(doc(db, 'orders', id)));
+        const orderDocs = await Promise.all(orderPromises);
+
+        // Calculate total revenue from all orders
+        const revenue = orderDocs
+          .filter((doc) => doc.exists())
+          .reduce((sum, doc) => {
+            const orderData = doc.data();
+            return sum + (orderData.total_price || 0);
+          }, 0);
+
+        setTotalRevenue(revenue);
+      } catch (error) {
+        console.error('Error fetching total revenue:', error);
+        toast.error('Failed to load revenue details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTotalRevenue();
+  }, [trip.id]);
+
+  if (isLoading) {
+    return <div className="text-left">Loading...</div>;
+  }
+
+  return (
+    <div className="text-left font-medium">
+      ₹{totalRevenue?.toFixed(2) || '0.00'}
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'tripId',
@@ -918,6 +973,11 @@ export const columns: ColumnDef<Trip>[] = [
     accessorKey: 'voucher',
     header: 'Voucher',
     cell: VoucherCell,
+  },
+  {
+    accessorKey: 'totalRevenue',
+    header: 'Revenue',
+    cell: TotalRevenueCell,
   },
   {
     accessorKey: 'actions',
