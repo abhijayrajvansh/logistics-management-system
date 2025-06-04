@@ -69,11 +69,7 @@ const ProofCell = ({ row }: { row: any }) => {
   return (
     <div className="text-center">
       {hasProofImages ? (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleDialogOpen}
-        >
+        <Button variant="outline" size="icon" onClick={handleDialogOpen}>
           <FaRegEye />
         </Button>
       ) : canUpload ? (
@@ -88,11 +84,7 @@ const ProofCell = ({ row }: { row: any }) => {
           <Upload className="h-4 w-4" />
         </Button>
       ) : (
-        <Button
-          variant="outline"
-          size="icon"
-          disabled
-        >
+        <Button variant="outline" size="icon" disabled>
           <FaRegEye />
         </Button>
       )}
@@ -102,7 +94,7 @@ const ProofCell = ({ row }: { row: any }) => {
           <DialogHeader>
             <DialogTitle>Proof of Delivery - {order.docket_id}</DialogTitle>
           </DialogHeader>
-          
+
           {showUpload ? (
             <UploadProofOfDelivery
               orderId={order.id}
@@ -159,10 +151,7 @@ const ProofCell = ({ row }: { row: any }) => {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">No proof of delivery images available</p>
-              <Button 
-                onClick={() => setShowUpload(true)}
-                className="mx-auto"
-              >
+              <Button onClick={() => setShowUpload(true)} className="mx-auto">
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Proof of Delivery
               </Button>

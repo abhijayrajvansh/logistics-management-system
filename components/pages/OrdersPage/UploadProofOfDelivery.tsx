@@ -17,7 +17,11 @@ interface UploadProofOfDeliveryProps {
   onCancel?: () => void;
 }
 
-export function UploadProofOfDelivery({ orderId, onSuccess, onCancel }: UploadProofOfDeliveryProps) {
+export function UploadProofOfDelivery({
+  orderId,
+  onSuccess,
+  onCancel,
+}: UploadProofOfDeliveryProps) {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoInputs, setPhotoInputs] = useState<number[]>([0]); // Start with one input
   const [isUploading, setIsUploading] = useState(false);
@@ -62,7 +66,7 @@ export function UploadProofOfDelivery({ orderId, onSuccess, onCancel }: UploadPr
 
   const handleUpload = async () => {
     const validFiles = photoFiles.filter((file) => file instanceof File);
-    
+
     if (validFiles.length === 0) {
       toast.error('Please select at least one photo to upload');
       return;
@@ -73,11 +77,11 @@ export function UploadProofOfDelivery({ orderId, onSuccess, onCancel }: UploadPr
     try {
       // Upload all photos
       const uploadPromises = validFiles.map((file, index) =>
-        uploadProofOfDeliveryPhoto(file, orderId, index)
+        uploadProofOfDeliveryPhoto(file, orderId, index),
       );
 
       const photoUrls = await Promise.all(uploadPromises);
-      
+
       // Filter out any failed uploads
       const successfulUploads = photoUrls.filter((url) => url !== '');
 
@@ -97,7 +101,9 @@ export function UploadProofOfDelivery({ orderId, onSuccess, onCancel }: UploadPr
         updated_at: new Date(),
       });
 
-      toast.success(`Successfully uploaded ${successfulUploads.length} proof of delivery photo(s)!`);
+      toast.success(
+        `Successfully uploaded ${successfulUploads.length} proof of delivery photo(s)!`,
+      );
 
       if (onSuccess) {
         onSuccess();
@@ -159,17 +165,12 @@ export function UploadProofOfDelivery({ orderId, onSuccess, onCancel }: UploadPr
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isUploading}
-        >
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>
           Cancel
         </Button>
         <Button
           onClick={handleUpload}
-          disabled={isUploading || photoFiles.filter(f => f instanceof File).length === 0}
+          disabled={isUploading || photoFiles.filter((f) => f instanceof File).length === 0}
         >
           {isUploading ? (
             'Uploading...'
