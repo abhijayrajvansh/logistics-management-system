@@ -1,7 +1,6 @@
 import { DriversRequest } from '../types';
-import { updateDriverLeaveBalance } from './manageDriverLeaveBalance';
-import { Timestamp } from 'firebase/firestore';
 import { formatFirestoreDate } from './fomatTimestampToDate';
+import { updateDriverLeaveBalance } from './manageDriverLeaveBalance';
 
 /**
  * Processes different types of driver requests

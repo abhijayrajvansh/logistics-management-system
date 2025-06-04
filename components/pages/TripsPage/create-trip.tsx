@@ -47,6 +47,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     type: 'ready to ship',
     currentStatus: 'NA', // Default to 'NA' for new trips
     odometerReading: 'NA', // Adding the missing odometerReading property
+    voucher: 'NA', // Optional field, can be empty
   });
 
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -188,7 +189,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       type: 'ready to ship',
       currentStatus: 'NA', // Reset to 'NA'
       odometerReading: 'NA', // Reset odometerReading to 'NA'
+      voucher: formData.voucher, // Reset voucher to 'NA'
     });
+
     setSelectedDriver(null);
     setSelectedOrderIds([]);
 
