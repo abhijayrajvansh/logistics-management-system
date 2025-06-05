@@ -46,6 +46,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
     truck: '',
     type: 'ready to ship',
     currentStatus: 'NA', // Default to 'NA' for new trips
+    odometerReading: 'NA', // Adding the missing odometerReading property
+    voucher: 'NA', // Optional field, can be empty
   });
 
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -91,7 +93,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   // Effect to update truck details when driver is selected
   useEffect(() => {
     if (selectedDriver) {
-      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === selectedDriver.assignedTruckId)?.regNumber ||
+        'Not Assigned';
       setFormData((prevData) => ({
         ...prevData,
         driver: selectedDriver.id,
@@ -121,7 +125,8 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
-      const truckRegNumber = trucks.find(truck => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
       setSelectedDriver(driver);
       setFormData((prevData) => ({
         ...prevData,
@@ -183,7 +188,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       truck: '',
       type: 'ready to ship',
       currentStatus: 'NA', // Reset to 'NA'
+      odometerReading: 'NA', // Reset odometerReading to 'NA'
+      voucher: formData.voucher, // Reset voucher to 'NA'
     });
+
     setSelectedDriver(null);
     setSelectedOrderIds([]);
 
@@ -222,7 +230,9 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
     setIsSubmitting(true);
 
-    const truckRegNumber = trucks.find(truck => truck.id === selectedDriver?.assignedTruckId)?.regNumber || 'Not Assigned';
+    const truckRegNumber =
+      trucks.find((truck) => truck.id === selectedDriver?.assignedTruckId)?.regNumber ||
+      'Not Assigned';
 
     try {
       // Parse and validate form data
@@ -243,7 +253,6 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
       // If a driver was selected, update driver status
       if (selectedDriver) {
-        
         // Update driver status to "OnTrip"
         const driverRef = doc(db, 'drivers', selectedDriver.id);
         await updateDoc(driverRef, {
@@ -296,7 +305,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       <div className="grid gap-6 py-4">
         {/* Row 1: Trip ID, Starting Point, Destination */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
+          <div className="space-y-2 hidden">
             <Label htmlFor="tripId">Trip ID</Label>
             <Input
               id="tripId"
@@ -308,10 +317,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="startingPoint">Starting Point</Label>
+            <Label htmlFor="startingPoint">Origin</Label>
             <Input
               id="startingPoint"
-              placeholder="Enter starting location"
+              placeholder="Enter origin location"
               value={formData.startingPoint}
               onChange={(e) => handleInputChange('startingPoint', e.target.value)}
               required
@@ -326,6 +335,22 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               onChange={(e) => handleInputChange('destination', e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Trip Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => handleInputChange('type', value)}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder="Select trip type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="past">Past</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -355,30 +380,14 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="truck">Vehicle Number</Label>
-            <Input disabled={true}
+            <Input
+              disabled={true}
               id="truck"
               placeholder="Enter vehicle number (or select driver)"
               value={formData.truck}
               onChange={(e) => handleInputChange('truck', e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input
-              disabled={true}
-              id="numberOfStops"
-              type="number"
-              placeholder="Enter number of stops"
-              value={selectedOrderIds.length}
-              onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
-              required
-              min="0"
-            />
-          </div>
-        </div>
-
-        {/* Row 3: Start Date, Type */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="startDate">Start Date</Label>
             <Input
@@ -389,23 +398,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="type">Trip Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select trip type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="past">Past</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        </div>
 
+        {/* Row 3: Start Date, Type */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {formData.type === 'active' && (
             <div className="space-y-2">
               <Label htmlFor="currentStatus">Current Status</Label>
@@ -430,7 +426,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
         {/* Add this section after the last form field group and before the buttons */}
         <div className="space-y-4">
-          <Label>Select Orders for this Trip</Label>
+          <Label className='font-bold'>Select Orders for this Trip</Label>
+          <div className="text-sm text-muted-foreground mb-2">
+            Number of stops in this trip: {selectedOrderIds.length}
+          </div>
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {isLoadingOrders ? (
               <div className="text-center py-4">Loading orders...</div>
@@ -456,7 +455,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                           <span className="font-medium">{order.docket_id}:</span>
                           {order.client_details} <FaArrowRightLong /> {order.receiver_name},{' '}
                         </span>
-                        <span className="font-medium">Deadline</span>:
+                        <span className="font-medium">Deadline:</span>
                         {(() => {
                           try {
                             if (order.deadline instanceof Date) {
@@ -476,7 +475,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
                             return 'Invalid Date';
                           }
                         })()}
-                        , Boxes: {order.total_boxes_count}
+                        , Units: {order.total_boxes_count}
                       </span>
                     </label>
                   </div>

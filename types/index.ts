@@ -16,8 +16,9 @@ export type User = {
   email: string;
   password: string;
   displayName: string;
-  location: string;
-  role: 'admin' | 'manager' | 'driver';
+  location: string | 'NA';
+  role: 'admin' | 'manager' | 'driver' | 'accountant';
+  walletId: Wallet['id'] | "NA"; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
   createdAt: Date;
 };
 
@@ -26,6 +27,7 @@ export type Order = {
   docket_id: string;
   docket_price: number;
   charge_basis: string;
+  minimum_charged_weight: number; // from client rate card, if the charge basis is by weight preferance then this is the minimum weight for which the client will be charged
   client_details: string;
   created_at: Date;
   current_location: string;
@@ -35,12 +37,18 @@ export type Order = {
   lr_no: string;
   payment_mode: 'cash' | 'online' | '-';
   calculated_price: number;
+  GST: 'Included' | 'Excluded';
+  GST_amount: number | 'NA'; // if GST is included in the price, then this will be 'NA'
   total_price: number;
   proof_of_delivery: ProofOfDelivery | 'NA';
   proof_of_payment: ProofOfPayment | 'NA';
+  receiver_city: string;
+  receiver_zone: ReceiverDetails['receiverZone']; // East, West, North, South
   receiver_name: string;
   receiver_details: string;
   receiver_contact: string;
+  order_type: 'Direct' | 'Sublet';
+  sublet_details: string | 'NA'; // if order_type is Direct, then this will be 'NA', if order_type is Sublet, then this will contain the brand name of the sublet company
   status: 'Ready To Transport' | 'Assigned' | 'In Transit' | 'Transferred' | 'Delivered';
   tat: number; // whole numbers, format: hours
   total_boxes_count: number;
@@ -62,7 +70,7 @@ export type ProofOfPayment = {
 export type Trip = {
   id: string;
   tripId: string;
-  startingPoint: string;
+  startingPoint: string; // alias: Origin
   destination: string;
   driver: string;
   numberOfStops: number;
@@ -70,7 +78,43 @@ export type Trip = {
   truck: string;
   type: 'ready to ship' | 'active' | 'past';
   currentStatus?: 'Delivering' | 'Returning' | 'NA';
+  odometerReading: TripOdometerReading | 'NA'; // if the trip is not active, then this will be 'NA';
+  voucher: TripVoucher | 'NA';
 };
+
+export type TripVoucher = {
+  advance_balance: number; // advance balance given to the driver for the trip
+  additional_balance: {
+    amount: number; // additional balance given to the driver for the trip
+    reason: string; // reason for the additional balance
+    date: Timestamp; // date when the additional balance was given
+  }[]
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export type Wallet = {
+  id: string; // unique identifier for the wallet
+  userId: User['userId']; // userId of the user who owns the wallet
+  available_balance: number; // current available balance in the wallet
+  transactions: WalletTransaction[]; // list of transactions in the wallet
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export type WalletTransaction = {
+  amount: number; // amount of the transaction, can be positive (credit) or negative (debit)
+  type: 'credit' | 'debit'; // type of transaction
+  reason: string; // brief reason description of the transaction
+  date: Timestamp; // date of the transaction
+}
+
+export type TripOdometerReading = {
+  startReading: number | 'Not Provided'; // odometer reading at the start of the trip
+  startPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the start of the trip
+  endReading: number | 'Not Provided'; // odometer reading at the end of the trip
+  endPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the end of the trip
+}
 
 export type TripOrders = {
   tripId: string;
@@ -86,11 +130,12 @@ export type Driver = {
   phoneNumber: string;
   languages: string[];
   leaveBalance: LeaveBalance;
-  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14, 16, 18, 20
+  wheelsCapability?: string[] | 'NA'; // 3, 4, 6, 8, 10, 12, 14 another alias: Segment in column name
   assignedTruckId?: string | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
   driverDocuments?: DriverDocuments | 'NA';
   emergencyContact?: EmergencyContact | 'NA';
   referredBy?: ReferredBy | 'NA';
+  date_of_joining?: Timestamp | 'NA'; // if the driver is not assigned to any truck, then this will be 'NA'
 };
 
 export type LeaveBalance = {
@@ -134,7 +179,7 @@ export type Client = {
 };
 
 export type ClientRateCard = {
-  preferance: 'By Weight' | 'Per Boxes';
+  preferance: 'By Weight' | 'Per Units';
   pricePerPref: number;
   minPriceWeight?: number | 'NA'; // if preferance is by weight, then price is should less than this minPriceWeight or "NA"
 };
@@ -143,6 +188,8 @@ export type ReceiverDetails = {
   id: string;
   receiverId: string;
   receiverName: string;
+  receiverCity: string;
+  receiverZone: 'East' | 'West' | 'North' | 'South';
   receiverDetails: string;
   receiverContact: string;
   pincode: string;
@@ -167,10 +214,41 @@ export type Truck = {
   axleConfig: string;
   ownership: 'Owned' | 'OnLoan';
   emiAmount: number;
-  insuranceExpiry: Date;
-  permitExpiry: Date;
+  insuranceExpiry: Timestamp;
+  permitExpiry: Timestamp; // alias: national permit
   odoCurrent: number;
   odoAtLastService: number;
+  toolkitCount: string[] | 'NA'; // number count of toolkits (length of string) in the truck, each string is url of a toolkit photo stored in firebase storage
+  truckDocuments: TruckDocuments | 'NA';
+  maintainanceHistory: TruckMaintenanceHistory[] | 'NA';
+  auditHistory: TruckAuditHistory[] | 'NA';
+};
+
+export type TruckDocuments = {
+  reg_certificate: string;
+  five_year_permit: string;
+  multiple_state_permits: string[]; // mutiple documents can be uploaded
+  pollution_control_certificate: string;
+  fitness_certificate: string;
+};
+
+export type TruckMaintenanceHistory = {
+  maintainance_detail: string;
+  photos: string[]; // array of photo URLs
+  date: Timestamp;
+};
+
+export type TruckAuditHistory = {
+  audit_detail: string;
+  photos: string[]; // array of photo URLs
+  date: Timestamp;
+};
+
+export type TruckCenter = {
+  id: string; // `${truckId}_${centerId}`
+  truckId: string;
+  centerId: string;
+  createdAt: Timestamp;
 };
 
 export type Center = {
@@ -190,28 +268,27 @@ export type TAT_Mapping = {
   updated_at: Timestamp;
 };
 
-
 export type DriversRequest = {
   id: string;
   driverId: string; // reference to the driver who created the request
   type: 'leave' | 'money' | 'food' | 'others';
   proofImageUrl?: string; // URL of the proof image
-  
+
   reason: string;
-  startDate: Date;
-  endDate: Date;
-  
+  startDate: Timestamp; // timestamp or some other format
+  endDate: Timestamp;
+
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  createdAt: Timestamp;
 };
 
 export type PrintDocketSchema = {
-  docketNumber: string;             // 1047256
-  date: string;                     // 31/03/25
+  docketNumber: string; // 1047256
+  date: string; // 31/03/25
 
   consignor: {
-    name: string;                   // G M Mobile Devices
-    city?: string;                  // PUN
+    name: string; // G M Mobile Devices
+    city?: string; // PUN
     address?: string;
     mobile?: string;
     tin?: string;
@@ -219,18 +296,18 @@ export type PrintDocketSchema = {
   };
 
   consignee: {
-    name: string;                   // Shree Shyam Mobiles
-    city?: string;                  // Baddi
+    name: string; // Shree Shyam Mobiles
+    city?: string; // Baddi
     address?: string;
     mobile?: string;
     tin?: string;
     truckNumber?: string;
   };
 
-  noOfPackages: number;             // 6
-  packingType: string;             // Box
-  saidToContain: string;           // GHP2580159
-  actualWeight: number;            // 25
+  noOfPackages: number; // 6
+  packingType: string; // Box
+  saidToContain: string; // GHP2580159
+  actualWeight: number; // 25
   chargedWeight?: number;
 
   modeOfTransport: {
@@ -259,23 +336,23 @@ export type PrintDocketSchema = {
   };
 
   deliveryAt: {
-    billNumber: string;            // 364895
-    value: number;                 // 364895
+    billNumber: string; // 364895
+    value: number; // 364895
     paymentMode: 'Paid' | 'To Pay' | 'Credit';
   };
 
   driverName?: string;
   driverSignature?: string;
 
-  receivedBy: string;              // Jaiz Logistics Inc.
+  receivedBy: string; // Jaiz Logistics Inc.
   receivedSignature?: string;
   receivedDate?: string;
   receivedTime?: string;
 
   transporterDetails: {
-    pan: string;                   // APJPB6449Q
-    gstin: string;                 // 02APJPB6449Q1ZK
-    transporterId: string;        // 88APJPB6449Q1ZI
+    pan: string; // APJPB6449Q
+    gstin: string; // 02APJPB6449Q1ZK
+    transporterId: string; // 88APJPB6449Q1ZI
     gstinTaxPayableBy: {
       consignor: boolean;
       consignee: boolean;

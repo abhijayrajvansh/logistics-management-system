@@ -1,17 +1,18 @@
-import { collection, setDoc, getDocs, doc } from 'firebase/firestore';
+import env from '@/constants';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
-import env from '@/constants';
+import { doc, setDoc } from 'firebase/firestore';
 
 const users: User[] = [
   {
-    userId: 'j0iavmbzNWcry4sONwn1CKiCSNT2',
-    email: 'managerl2' + env.USERID_EMAIL,
-    password: 'managerl2',
-    displayName: 'Manager L2',
-    location: '222222',
-    role: 'manager',
+    userId: 'YFs5BTBkUMYkg7iw7I8ovL3EMit2', // get user ID from the firebase auth user uid
+    email: 'accountant' + env.USERID_EMAIL,
+    password: 'accountant',
+    displayName: 'accountant',
+    location: 'NA',
+    role: 'accountant',
     createdAt: new Date(),
+    walletId: 'NA',
   },
 ];
 

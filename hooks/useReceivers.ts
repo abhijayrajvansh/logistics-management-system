@@ -1,15 +1,24 @@
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from '@/firebase/database';
 import { ReceiverDetails } from '@/types';
 
-export default function useReceivers() {
+interface UseReceiversProps {
+  city?: string;
+}
+
+export default function useReceivers({ city }: UseReceiversProps = {}) {
   const [receivers, setReceivers] = useState<ReceiverDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'receivers'));
+    let q = query(collection(db, 'receivers'));
+
+    // If city is provided, add the filter
+    if (city) {
+      q = query(collection(db, 'receivers'), where('receiverCity', '==', city));
+    }
 
     const unsubscribe = onSnapshot(
       q,
@@ -29,7 +38,7 @@ export default function useReceivers() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [city]);
 
   return { receivers, isLoading, error };
 }

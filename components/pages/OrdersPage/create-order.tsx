@@ -15,9 +15,11 @@ import {
 import { db } from '@/firebase/database';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
+import useReceiversCities from '@/hooks/useReceiversCities';
 import useTATs from '@/hooks/useTATs';
 import { getUniqueVerifiedDocketId } from '@/lib/createUniqueDocketId';
 import { addDoc, collection } from 'firebase/firestore';
+import { ReceiverDetails } from '@/types';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import useUsers from '@/hooks/useUsers';
@@ -32,7 +34,12 @@ const PRICE_PER_VOLUME = 0.01;
 
 export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
   const { clients, isLoading: isLoadingClients } = useClients();
-  const { receivers, isLoading: isLoadingReceivers } = useReceivers();
+  const { cities, isLoading: isLoadingCities } = useReceiversCities();
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [isManualCityEntry, setIsManualCityEntry] = useState(false);
+  const { receivers, isLoading: isLoadingReceivers } = useReceivers({
+    city: selectedCity,
+  });
   const { tats } = useTATs();
 
   const { user } = useAuth();
@@ -69,10 +76,16 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     calculated_price: '',
     total_price: '',
     invoice: '',
+    GST: 'Included' as 'Included' | 'Excluded',
+    GST_amount: 'NA' as number | 'NA',
     status: 'Ready To Transport',
     to_be_transferred: false,
     transfer_center_location: 'NA',
     previous_center_location: 'NA',
+    receiver_city: '',
+    receiver_zone: '' as ReceiverDetails['receiverZone'],
+    order_type: 'Direct' as 'Direct' | 'Sublet',
+    sublet_details: 'NA' as string | 'NA',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,124 +152,23 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
     }
   };
 
-  const calculatePrice = (
-    client: any,
-    boxesCount: string,
-    weight: string,
-    dimensions: string = formData.dimensions,
-  ) => {
-    // console.log('---- Debugging Price Calculation ----');
-    // console.log('Pricing Method:', pricingMethod);
-    // console.log('Dimensions:', dimensions);
-    // console.log('Box Count:', boxesCount);
-    // console.log('Weight:', weight);
-    // console.log('Docket Price:', formData.docket_price);
-
-    let calculatedPrice = 0;
-    // Use the parameter value directly instead of accessing formData to ensure we have the latest value
-    const docketPrice = parseFloat(formData.docket_price || '0');
-
-    // Client preference pricing
-    if (pricingMethod === 'clientPreference' && client?.rateCard) {
-      const chargeBasis = client.rateCard.preferance;
-      // console.log('Client Rate Card Preference:', chargeBasis);
-
-      if (chargeBasis === 'Per Boxes' && boxesCount) {
-        // Calculate price based on boxes
-        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        calculatedPrice = parseInt(boxesCount) * pricePerBox;
-        // console.log(
-        //   'Per Box Calculation:',
-        //   `${boxesCount} boxes × ₹${pricePerBox} = ₹${calculatedPrice}`,
-        // );
-      } else if (chargeBasis === 'By Weight' && weight) {
-        // Calculate price based on weight
-        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
-        const minPriceWeight =
-          client.rateCard.minPriceWeight !== 'NA'
-            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
-            : 0;
-
-        calculatedPrice = parseInt(weight) * pricePerKg;
-        // console.log(
-        //   'By Weight Calculation:',
-        //   `${weight} kg × ₹${pricePerKg} = ₹${calculatedPrice}`,
-        // );
-
-        // If calculated price is less than minimum price weight, use minimum price weight
-        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
-          // console.log(
-          //   'Using minimum price:',
-          //   `₹${minPriceWeight} (min) instead of ₹${calculatedPrice}`,
-          // );
-          calculatedPrice = minPriceWeight;
-        }
-      }
+  const handleCityChange = (value: string) => {
+    if (value === 'add_new') {
+      setIsManualCityEntry(true);
+      setSelectedCity('');
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
+      }));
+    } else {
+      setIsManualCityEntry(false);
+      setSelectedCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        receiver_city: value,
+      }));
     }
-    // Volumetric pricing - fix the implementation
-    else if (pricingMethod === 'volumetric') {
-      // console.log('Using volumetric pricing');
-      if (dimensions && boxesCount) {
-        try {
-          // Parse dimensions (format: LxWxH in cm)
-          // Handle different possible formats (L x W x H or LxWxH)
-          const dimensionValues = dimensions
-            .split(/[xX×\s]+/)
-            .filter(Boolean)
-            .map((dim) => parseFloat(dim));
-          // console.log('Parsed dimensions:', dimensionValues);
-
-          // Make sure we got 3 dimensions
-          if (dimensionValues.length >= 3) {
-            const [length, width, height] = dimensionValues;
-
-            if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
-              // Calculate volume in cubic cm
-              const volumePerBox = length * width * height;
-              const totalVolume = volumePerBox * parseInt(boxesCount || '0');
-
-              // Calculate price based on volume
-              calculatedPrice = totalVolume * PRICE_PER_VOLUME;
-              // console.log('Volumetric Calculation:');
-              // console.log(
-              //   `- Box dimensions: ${length}cm × ${width}cm × ${height}cm = ${volumePerBox}cm³`,
-              // );
-              // console.log(
-              //   `- Total volume: ${volumePerBox}cm³ × ${boxesCount} boxes = ${totalVolume}cm³`,
-              // );
-              // console.log(
-              //   `- Price: ${totalVolume}cm³ × ₹${PRICE_PER_VOLUME}/cm³ = ₹${calculatedPrice}`,
-              // );
-
-              // Round to 2 decimal places for better display
-              calculatedPrice = Math.round(calculatedPrice * 100) / 100;
-            } else {
-              console.error('Found NaN in dimensions:', length, width, height);
-            }
-          } else {
-            console.error('Invalid dimensions format. Expected LxWxH. Got:', dimensionValues);
-          }
-        } catch (error) {
-          console.error('Error calculating volumetric price:', error);
-        }
-      } else {
-        console.error('Missing required data for volumetric pricing:');
-        console.error('- Dimensions:', dimensions);
-        console.error('- Box count:', boxesCount);
-      }
-    }
-
-    // Calculate total price as sum of docket price and calculated price
-    const totalPrice = docketPrice + calculatedPrice;
-    // console.log('Final calculated price:', calculatedPrice);
-    // console.log('Final docket price:', docketPrice);
-    // console.log('Total price (docket + calculated):', totalPrice);
-
-    setFormData((prev) => ({
-      ...prev,
-      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
-      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
-    }));
   };
 
   const handleReceiverChange = (value: string) => {
@@ -269,6 +181,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         receiver_name: '',
         receiver_details: '',
         receiver_contact: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
       }));
     } else {
       setIsManualReceiverEntry(false);
@@ -281,6 +194,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           receiver_name: receiver.receiverName,
           receiver_details: receiver.receiverDetails,
           receiver_contact: receiver.receiverContact,
+          receiver_zone: receiver.receiverZone,
+          receiver_city: receiver.receiverCity,
         }));
       }
     }
@@ -291,29 +206,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       ...prev,
       [field]: value,
     }));
-
-    // Recalculate price when boxes count, weight, or dimensions change
-    if (field === 'total_boxes_count' || field === 'total_order_weight' || field === 'dimensions') {
-      // For client preference pricing
-      if (pricingMethod === 'clientPreference' && selectedClient) {
-        const client = clients.find((c) => c.id === selectedClient);
-        calculatePrice(
-          client,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-      // For volumetric pricing - don't need a client
-      else if (pricingMethod === 'volumetric') {
-        calculatePrice(
-          null,
-          field === 'total_boxes_count' ? value : formData.total_boxes_count,
-          field === 'total_order_weight' ? value : formData.total_order_weight,
-          field === 'dimensions' ? value : formData.dimensions,
-        );
-      }
-    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -343,6 +235,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
           : 'NA',
         previous_center_location: 'NA', // Initially NA since it's a new order
         current_location: userLocation, // Set current location to user's center
+        order_type: formData.order_type,
+        sublet_details: formData.order_type === 'Direct' ? 'NA' : formData.sublet_details,
       };
 
       // Add the order to Firestore
@@ -354,6 +248,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
       // Reset form after successful submission
       setFormData({
+        receiver_city: '',
+        receiver_zone: '' as ReceiverDetails['receiverZone'],
         receiver_name: '',
         receiver_details: '',
         receiver_contact: '',
@@ -369,11 +265,15 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         docket_price: '',
         calculated_price: '',
         total_price: '',
-        invoice: '', // Default value for the invoice enum
+        invoice: '',
+        GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
+        GST_amount: 'NA' as number | 'NA',
         status: '',
         to_be_transferred: false,
         transfer_center_location: 'NA',
         previous_center_location: 'NA',
+        order_type: 'Direct',
+        sublet_details: 'NA',
       });
 
       // Call onSuccess callback if provided
@@ -386,8 +286,6 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       // setTimeout(() => {
       //   window.location.reload();
       // }, 1000);
-
-      // ps: just add toast, no need to refresh - using real time api
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to create order', {
@@ -397,6 +295,95 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  const handleGSTAmountChange = (value: string) => {
+    const amount = value === '' ? 0 : parseFloat(value);
+    setFormData((prev) => ({
+      ...prev,
+      GST_amount: amount,
+    }));
+  };
+
+  // Add this useEffect after other useEffect hooks
+  useEffect(() => {
+    // Skip calculation if required fields are missing
+    if (!formData.total_boxes_count && !formData.total_order_weight && !formData.dimensions) {
+      return;
+    }
+
+    // Get current client if using client preference
+    const client = selectedClient ? clients.find((c) => c.id === selectedClient) : null;
+
+    // Get current values for calculation
+    const docketPrice = parseFloat(formData.docket_price || '0');
+    let calculatedPrice = 0;
+
+    // Client preference pricing
+    if (pricingMethod === 'clientPreference' && client?.rateCard) {
+      const chargeBasis = client.rateCard.preferance;
+
+      if (chargeBasis === 'Per Units' && formData.total_boxes_count) {
+        const pricePerBox = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        calculatedPrice = parseInt(formData.total_boxes_count) * pricePerBox;
+      } else if (chargeBasis === 'By Weight' && formData.total_order_weight) {
+        const pricePerKg = parseFloat(client.rateCard.pricePerPref?.toString() || '0');
+        const minPriceWeight =
+          client.rateCard.minPriceWeight !== 'NA'
+            ? parseFloat(client.rateCard.minPriceWeight?.toString() || '0')
+            : 0;
+
+        calculatedPrice = parseInt(formData.total_order_weight) * pricePerKg;
+
+        if (minPriceWeight > 0 && calculatedPrice < minPriceWeight) {
+          calculatedPrice = minPriceWeight;
+        }
+      }
+    }
+    // Volumetric pricing
+    else if (pricingMethod === 'volumetric' && formData.dimensions && formData.total_boxes_count) {
+      try {
+        const dimensionValues = formData.dimensions
+          .split(/[xX×\s]+/)
+          .filter(Boolean)
+          .map((dim) => parseFloat(dim));
+
+        if (dimensionValues.length >= 3) {
+          const [length, width, height] = dimensionValues;
+          if (!isNaN(length) && !isNaN(width) && !isNaN(height)) {
+            const volumePerBox = length * width * height;
+            const totalVolume = volumePerBox * parseInt(formData.total_boxes_count);
+            calculatedPrice = totalVolume * PRICE_PER_VOLUME;
+            calculatedPrice = Math.round(calculatedPrice * 100) / 100;
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating volumetric price:', error);
+      }
+    }
+
+    // Calculate total price including GST if applicable
+    let totalPrice = docketPrice + calculatedPrice;
+    if (formData.GST === 'Excluded' && typeof formData.GST_amount === 'number') {
+      totalPrice += formData.GST_amount;
+    }
+
+    // Update form data with new prices
+    setFormData((prev) => ({
+      ...prev,
+      calculated_price: calculatedPrice > 0 ? calculatedPrice.toFixed(2) : '0',
+      total_price: totalPrice > 0 ? totalPrice.toFixed(2) : '0',
+    }));
+  }, [
+    formData.total_boxes_count,
+    formData.total_order_weight,
+    formData.dimensions,
+    formData.docket_price,
+    formData.GST,
+    formData.GST_amount,
+    pricingMethod,
+    selectedClient,
+    clients,
+  ]);
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -422,7 +409,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                   onValueChange={handleClientChange}
                   value={selectedClient}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" autoFocus>
                     <SelectValue
                       placeholder={isLoadingClients ? 'Loading clients...' : 'Select a client'}
                     />
@@ -462,6 +449,54 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            {!isManualCityEntry ? (
+              <div className="flex gap-2">
+                <Select
+                  disabled={isLoadingCities}
+                  onValueChange={handleCityChange}
+                  value={selectedCity}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={isLoadingCities ? 'Loading cities...' : 'Select a city'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_new">+ Add New City</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter city name"
+                  value={formData.receiver_city}
+                  onChange={(e) => handleInputChange('receiver_city', e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  className="bg-red-500 hover:bg-red-400 text-white cursor-pointer"
+                  size="icon"
+                  onClick={() => {
+                    setIsManualCityEntry(false);
+                    setSelectedCity('');
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Receiver Selection */}
           <div className="space-y-2">
             <Label htmlFor="receiver">Receiver</Label>
             {!isManualReceiverEntry ? (
@@ -511,6 +546,21 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
             )}
           </div>
 
+          {/* Zone Selection (auto-populated) */}
+          <div className="space-y-2">
+            <Label htmlFor="receiver_zone">Zone</Label>
+            <Input
+              id="receiver_zone"
+              placeholder="Zone"
+              value={formData.receiver_zone}
+              onChange={(e) => handleInputChange('receiver_zone', e.target.value)}
+              required
+              autoFocus={false}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="receiver_details">Receiver Details</Label>
             <Input
@@ -535,11 +585,11 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="total_boxes_count">Total Boxes</Label>
+            <Label htmlFor="total_boxes_count">Total Units</Label>
             <Input
               id="total_boxes_count"
               type="number"
-              placeholder="Enter box count"
+              placeholder="Enter unit count"
               value={formData.total_boxes_count}
               onChange={(e) => handleInputChange('total_boxes_count', e.target.value)}
               required
@@ -582,16 +632,16 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+                <SelectItem value="Per Units">Per Units</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lr_no">LR Number</Label>
+            <Label htmlFor="lr_no">Client Doc Number</Label>
             <Input
               id="lr_no"
-              placeholder="Enter LR number"
+              placeholder="Enter Client Doc number"
               value={formData.lr_no}
               onChange={(e) => handleInputChange('lr_no', e.target.value)}
               required
@@ -675,7 +725,7 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                   if (client?.rateCard) {
                     const chargeBasis = client.rateCard.preferance;
 
-                    if (chargeBasis === 'Per Boxes' && boxesCount) {
+                    if (chargeBasis === 'Per Units' && boxesCount) {
                       const pricePerBox = parseFloat(
                         client.rateCard.pricePerPref?.toString() || '0',
                       );
@@ -763,6 +813,93 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
               </div>
             </RadioGroup>
           </div>
+        </div>
+
+        {/* GST Radio Group */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
+              <Label className="font-semibold">Order Type</Label>
+              <RadioGroup
+                value={formData.order_type}
+                onValueChange={(value: 'Direct' | 'Sublet') => {
+                  handleInputChange('order_type', value);
+
+                  // Reset sublet details if switching to direct order
+                  if (value === 'Direct') {
+                    handleInputChange('sublet_details', 'NA');
+                  }
+                }}
+                className="flex flex-row items-center space-x-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Direct" id="orderTypeDirect" />
+                  <Label htmlFor="orderTypeDirect" className="cursor-pointer">
+                    Direct
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Sublet" id="orderTypeSublet" />
+                  <Label htmlFor="orderTypeSublet" className="cursor-pointer">
+                    Sublet
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+
+          {/* Sublet Details (conditionally rendered) */}
+          {formData.order_type === 'Sublet' && (
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sublet_details">Sublet Details</Label>
+                <Input
+                  id="sublet_details"
+                  placeholder="Enter sublet details"
+                  value={formData.sublet_details === 'NA' ? '' : formData.sublet_details}
+                  onChange={(e) => handleInputChange('sublet_details', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Order Type Selection */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="gst" className="font-bold">
+              GST
+            </Label>
+            <RadioGroup
+              defaultValue="Excluded"
+              value={formData.GST}
+              onValueChange={(value) => handleInputChange('GST', value)}
+              className="flex space-x-4 py-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Included" id="gst-included" />
+                <Label htmlFor="gst-included">Included</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Excluded" id="gst-excluded" />
+                <Label htmlFor="gst-excluded">Excluded</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {formData.GST === 'Excluded' && (
+            <div className="">
+              <Label className="mb-1">GST Amount</Label>
+              <Input
+                type="number"
+                value={formData.GST_amount === 'NA' ? '' : formData.GST_amount.toString()}
+                onChange={(e) => handleGSTAmountChange(e.target.value)}
+                placeholder="Enter GST amount"
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -891,6 +1028,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
               // Reset form data
               setFormData({
+                receiver_city: '',
+                receiver_zone: '' as ReceiverDetails['receiverZone'],
                 receiver_name: '',
                 receiver_details: '',
                 receiver_contact: '',
@@ -907,10 +1046,14 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
                 calculated_price: '',
                 total_price: '',
                 invoice: '',
+                GST: 'Excluded' as 'Included' | 'Excluded', // Reset GST field to default value
+                GST_amount: 'NA' as number | 'NA',
                 status: '',
                 to_be_transferred: false,
                 transfer_center_location: 'NA',
                 previous_center_location: 'NA',
+                order_type: 'Direct',
+                sublet_details: 'NA',
               });
 
               // Generate a new unique docket ID after reset

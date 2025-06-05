@@ -3,7 +3,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
 
-export function useUsers(userIdFilter?: string) {
+export function useUsers(userIdFilter?: string, roleFilter?: string) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -15,24 +15,28 @@ export function useUsers(userIdFilter?: string) {
       // Set up real-time listener for users collection
       const usersRef = collection(db, 'users');
 
-      // filter users based on userId
-      const filteredUsersRef = userIdFilter 
-        ? query(usersRef, where('userId', '==', userIdFilter))
-        : usersRef;
-      
+      // Build query with filters
+      let queryConstraints = [];
+
+      if (userIdFilter) {
+        queryConstraints.push(where('userId', '==', userIdFilter));
+      }
+
+      if (roleFilter) {
+        queryConstraints.push(where('role', '==', roleFilter));
+      }
+
+      const filteredUsersRef =
+        queryConstraints.length > 0 ? query(usersRef, ...queryConstraints) : usersRef;
+
       const unsubscribe = onSnapshot(
         filteredUsersRef,
         (snapshot) => {
           const fetchedUsers = snapshot.docs.map((doc) => {
             const data = doc.data();
             return {
-              userId: doc.id,
-              email: data.email || '',
-              password: data.password || '',
-              displayName: data.displayName || '',
-              location: data.location || '',
-              role: data.role || 'driver',
-              createdAt: data.createdAt?.toDate() || new Date(),
+              location: data.location || 'NA',
+              ...data,
             } as User;
           });
 
@@ -55,7 +59,7 @@ export function useUsers(userIdFilter?: string) {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, []);
+  }, [userIdFilter, roleFilter]); // Added roleFilter to dependencies
 
   return {
     users,

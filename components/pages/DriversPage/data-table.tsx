@@ -102,7 +102,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-1 flex-col space-y-8">
-      <div className="flex justify-between px-4 lg:px-6">
+      <div className="flex justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Manage Drivers</h1>
           <p className="text-[14px] text-black/70 mt-1">

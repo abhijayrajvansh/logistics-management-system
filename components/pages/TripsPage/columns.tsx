@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import { useDrivers } from '@/hooks/useDrivers';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import {
   Dialog,
   DialogContent,
@@ -13,12 +14,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ColumnDef } from '@tanstack/react-table';
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import { MdDeleteOutline, MdEdit, MdClose } from 'react-icons/md';
 import UpdateTripForm from './update-trip';
 import DeleteTripDialog from './delete-trip';
-import { Trip } from '@/types';
+import { Trip, TripVoucher } from '@/types';
 import { db } from '@/firebase/database';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  Timestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+  onSnapshot,
+} from 'firebase/firestore';
 import { toast } from 'sonner';
 import {
   Select,
@@ -29,6 +40,11 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FaArrowRightLong } from 'react-icons/fa6';
+import { OdometerReadingsDialog } from './odometer-readings-dialog';
+import { IoSpeedometer, IoWallet } from 'react-icons/io5';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/app/context/AuthContext';
+import { Wallet } from '@/types';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -300,7 +316,7 @@ const ViewTripDialog = ({
               </div>
             </div>
             <div>
-              <Label className="font-bold">Starting Point</Label>
+              <Label className="font-bold">Origin</Label>
               <div className="mt-1 text-sm">{trip.startingPoint}</div>
             </div>
             <div>
@@ -358,7 +374,7 @@ const ViewTripDialog = ({
                         </span>
                       </div>
                       <div className="mt-1 text-muted-foreground">
-                        <span className="font-medium">Boxes:</span> {order.total_boxes_count} |{' '}
+                        <span className="font-medium">Units:</span> {order.total_boxes_count} |{' '}
                         <span className="font-medium">Deadline:</span>{' '}
                         {(() => {
                           try {
@@ -470,8 +486,412 @@ const ActionCell = ({ row }: { row: any }) => {
   );
 };
 
-// columns definition for the trips table
-// exporting headless cols
+// Add OdometerReadingsCell component
+const OdometerReadingsCell = ({ row }: { row: any }) => {
+  const trip = row.original;
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Check if readings are available
+  const hasNoReadings = !trip.odometerReading || trip.odometerReading === 'NA';
+  const buttonStyles = hasNoReadings
+    ? 'p-1 rounded-lg border border-gray-300 text-gray-400 cursor-not-allowed'
+    : 'hover:bg-gray-600 p-1 rounded-lg cursor-pointer border border-gray-300 text-gray-800 hover:text-white';
+
+  return (
+    <>
+      <div className="w-1/2 text-center">
+        <button
+          className={`${buttonStyles} p-1`}
+          onClick={() => !hasNoReadings && setIsOpen(true)}
+          disabled={hasNoReadings}
+        >
+          <IoSpeedometer size={18} />
+        </button>
+      </div>
+      <OdometerReadingsDialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        readings={trip.odometerReading}
+      />
+    </>
+  );
+};
+
+// Add VoucherCell component
+const VoucherCell = ({ row }: { row: any }) => {
+  const { userData } = useAuth();
+  const trip = row.original;
+  const [isOpen, setIsOpen] = useState(false);
+  const [managerWallet, setManagerWallet] = useState<Wallet | null>(null);
+  const [advanceBalance, setAdvanceBalance] = useState(
+    trip.voucher && trip.voucher !== 'NA' && trip.voucher.advance_balance !== undefined
+      ? trip.voucher.advance_balance
+      : 0,
+  );
+  const [additionalBalances, setAdditionalBalances] = useState<TripVoucher['additional_balance']>(
+    trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
+      ? trip.voucher.additional_balance
+      : [],
+  );
+
+  // Subscribe to real-time wallet updates
+  useEffect(() => {
+    if (!userData?.userId) return;
+
+    const walletsRef = collection(db, 'wallets');
+    const walletQuery = query(walletsRef, where('userId', '==', userData.userId));
+
+    const unsubscribe = onSnapshot(
+      walletQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const walletData = snapshot.docs[0].data() as Wallet;
+          setManagerWallet(walletData);
+        }
+      },
+      (error) => {
+        console.error('Error fetching wallet:', error);
+        toast.error('Error fetching wallet details');
+      },
+    );
+
+    return () => unsubscribe();
+  }, [userData?.userId]);
+
+  const handleSaveVoucher = async () => {
+    try {
+      // Get manager's wallet
+      const walletsRef = collection(db, 'wallets');
+      const walletQuery = query(walletsRef, where('userId', '==', userData?.userId));
+      const walletSnapshot = await getDocs(walletQuery);
+
+      if (walletSnapshot.empty) {
+        toast.error('Manager does not have a wallet. Please set up a wallet first.');
+        return;
+      }
+
+      const walletDoc = walletSnapshot.docs[0];
+      const wallet = walletDoc.data() as Wallet;
+
+      // Get previous voucher amounts if they exist
+      const previousAdvance =
+        trip.voucher && trip.voucher !== 'NA' ? trip.voucher.advance_balance || 0 : 0;
+      const previousAdditional =
+        trip.voucher && trip.voucher !== 'NA' && Array.isArray(trip.voucher.additional_balance)
+          ? trip.voucher.additional_balance.reduce(
+              (sum: number, balance: { amount?: number }) => sum + (balance.amount || 0),
+              0,
+            )
+          : 0;
+
+      // Calculate only the new amount being added
+      const newAdvanceAmount = Math.max(0, (advanceBalance || 0) - previousAdvance);
+      const newAdditionalAmount =
+        additionalBalances.reduce((sum, balance) => sum + (balance.amount || 0), 0) -
+        previousAdditional;
+      const totalNewAmount = newAdvanceAmount + newAdditionalAmount;
+
+      // Check if manager has sufficient balance for the new amount
+      if (totalNewAmount > 0 && wallet.available_balance < totalNewAmount) {
+        toast.error(
+          `Insufficient balance. Available: ₹${wallet.available_balance}, New amount required: ₹${totalNewAmount}`,
+        );
+        return;
+      }
+
+      // Update trip voucher
+      const tripRef = doc(db, 'trips', trip.id);
+      const now = Timestamp.now();
+
+      const voucherData: TripVoucher = {
+        advance_balance: advanceBalance,
+        additional_balance: additionalBalances,
+        createdAt: trip.voucher?.createdAt || now,
+        updatedAt: now,
+      };
+
+      await updateDoc(tripRef, {
+        voucher: voucherData,
+      });
+
+      // Only update wallet if there's a new amount to deduct
+      if (totalNewAmount > 0) {
+        // Prepare transaction records
+        const transactions = [];
+
+        // Add advance balance transaction if there's a new advance amount
+        if (newAdvanceAmount > 0) {
+          transactions.push({
+            amount: -newAdvanceAmount,
+            type: 'debit',
+            reason: `Advance balance update for ${trip.tripId}`,
+            date: now,
+          });
+        }
+
+        // Add transactions for new additional balances
+        const additionalTransactions = additionalBalances
+          .filter((_, index) => {
+            const oldBalance = trip.voucher?.additional_balance?.[index]?.amount || 0;
+            const newBalance = additionalBalances[index].amount || 0;
+            return newBalance > oldBalance;
+          })
+          .map((balance) => ({
+            amount: -(balance.amount || 0),
+            type: 'debit',
+            reason: `Additional balance to (${trip.tripId}) for ${balance.reason}`,
+            date: now,
+          }));
+
+        transactions.push(...additionalTransactions);
+
+        // Update wallet with all transactions
+        await updateDoc(doc(db, 'wallets', walletDoc.id), {
+          available_balance: wallet.available_balance - totalNewAmount,
+          updatedAt: now,
+          transactions: [...wallet.transactions, ...transactions],
+        });
+      }
+
+      toast.success('Voucher updated successfully');
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error updating voucher:', error);
+      toast.error('Failed to update voucher');
+    }
+  };
+
+  const addAdditionalBalance = () => {
+    setAdditionalBalances([
+      ...additionalBalances,
+      { amount: 0, reason: '', date: Timestamp.now() },
+    ]);
+  };
+
+  const updateAdditionalBalance = (
+    index: number,
+    field: keyof TripVoucher['additional_balance'][0],
+    value: any,
+  ) => {
+    const updatedBalances = [...additionalBalances];
+    updatedBalances[index] = {
+      ...updatedBalances[index],
+      [field]: value,
+    };
+    setAdditionalBalances(updatedBalances);
+  };
+
+  const removeAdditionalBalance = (index: number) => {
+    setAdditionalBalances(additionalBalances.filter((_, i) => i !== index));
+  };
+
+  const totalBalance = useMemo(() => {
+    if (advanceBalance === undefined && (!additionalBalances || additionalBalances.length === 0)) {
+      return undefined;
+    }
+    const additionalSum =
+      additionalBalances?.reduce((sum, balance) => sum + (balance?.amount || 0), 0) || 0;
+    return (advanceBalance || 0) + additionalSum;
+  }, [advanceBalance, additionalBalances]);
+
+  const buttonStyles =
+    'hover:bg-blue-600 p-1 rounded-lg cursor-pointer border border-blue-500 text-blue-500 hover:text-white';
+
+  return (
+    <>
+      <div className="w-1/2 text-center">
+        <button className={buttonStyles} onClick={() => setIsOpen(true)}>
+          <IoWallet size={18} />
+        </button>
+      </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Trip Voucher</DialogTitle>
+            <DialogDescription>
+              Manage advance and additional balances for this trip
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Add wallet balance display */}
+          <div className="p-4 bg-muted rounded-lg mb-6">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Available Balance:</span>
+              <span className="text-lg font-semibold">
+                ₹{managerWallet?.available_balance.toFixed(2) || '0.00'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Advance Balance</Label>
+              <Input
+                type="number"
+                value={advanceBalance}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setAdvanceBalance(Number(e.target.value))
+                }
+                placeholder="Enter advance balance"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>Additional Balances</Label>
+                <Button variant="outline" size="sm" onClick={addAdditionalBalance}>
+                  Add Balance
+                </Button>
+              </div>
+
+              {additionalBalances.map((balance, index) => (
+                <div key={index} className="space-y-2 p-4 border rounded-md relative">
+                  <button
+                    onClick={() => removeAdditionalBalance(index)}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                  >
+                    <MdClose size={20} />
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="mb-3">Amount</Label>
+                      <Input
+                        type="number"
+                        value={balance.amount}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateAdditionalBalance(index, 'amount', Number(e.target.value))
+                        }
+                        placeholder="Enter amount"
+                      />
+                    </div>
+                    <div>
+                      <Label className="mb-3">Reason</Label>
+                      <Input
+                        value={balance.reason}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          updateAdditionalBalance(index, 'reason', e.target.value)
+                        }
+                        placeholder="Enter reason"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Balance:</span>
+                <span>{totalBalance !== undefined ? `₹${totalBalance}` : 'No Balance'}</span>
+              </div>
+              {advanceBalance !== undefined && (
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Advance Balance:</span>
+                  <span>₹{advanceBalance}</span>
+                </div>
+              )}
+              {trip.voucher && trip.voucher !== 'NA' && (
+                <>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Created:</span>
+                    <span>{formatFirestoreDate(trip.voucher.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Last Updated:</span>
+                    <span>{formatFirestoreDate(trip.voucher.updatedAt)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveVoucher}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// Add TotalRevenueCell component
+const TotalRevenueCell = ({ row }: { row: any }) => {
+  const [totalRevenue, setTotalRevenue] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const trip = row.original;
+
+  useEffect(() => {
+    // Create a reference to the trip_orders document
+    const tripOrdersRef = doc(db, 'trip_orders', trip.id);
+
+    // Set up real-time listener for the trip_orders document
+    const unsubscribe = onSnapshot(
+      tripOrdersRef,
+      async (tripOrdersDoc) => {
+        try {
+          if (!tripOrdersDoc.exists()) {
+            setTotalRevenue(0);
+            setIsLoading(false);
+            return;
+          }
+
+          const orderIds = tripOrdersDoc.data().orderIds || [];
+
+          // Set up real-time listeners for all orders
+          const ordersUnsubscribe = onSnapshot(
+            query(collection(db, 'orders'), where('__name__', 'in', orderIds)),
+            (ordersSnapshot) => {
+              // Calculate total revenue from all orders
+              const revenue = ordersSnapshot.docs.reduce((sum, doc) => {
+                const orderData = doc.data();
+                return sum + (orderData.total_price || 0);
+              }, 0);
+
+              setTotalRevenue(revenue);
+              setIsLoading(false);
+            },
+            (error) => {
+              console.error('Error listening to orders:', error);
+              toast.error('Failed to load revenue details');
+              setIsLoading(false);
+            },
+          );
+
+          // Clean up orders listener when trip_orders changes or component unmounts
+          return () => {
+            ordersUnsubscribe();
+          };
+        } catch (error) {
+          console.error('Error fetching total revenue:', error);
+          toast.error('Failed to load revenue details');
+          setIsLoading(false);
+        }
+      },
+      (error) => {
+        console.error('Error listening to trip_orders:', error);
+        toast.error('Failed to load revenue details');
+        setIsLoading(false);
+      },
+    );
+
+    // Clean up trip_orders listener when component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, [trip.id]);
+
+  if (isLoading) {
+    return <div className="text-left">Loading...</div>;
+  }
+
+  return <div className="text-left font-medium">₹{totalRevenue?.toFixed(2) || '0.00'}</div>;
+};
+
 export const columns: ColumnDef<Trip>[] = [
   {
     accessorKey: 'tripId',
@@ -479,7 +899,7 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'startingPoint',
-    header: 'Starting Point',
+    header: 'Origin',
   },
   {
     accessorKey: 'destination',
@@ -545,11 +965,6 @@ export const columns: ColumnDef<Trip>[] = [
     header: 'Truck',
   },
   {
-    accessorKey: 'type',
-    header: 'Type',
-    cell: TypeCell,
-  },
-  {
     accessorKey: 'currentStatus',
     header: 'Current Status',
     cell: ({ row }) => {
@@ -561,6 +976,26 @@ export const columns: ColumnDef<Trip>[] = [
         <div className="text-left">-</div>
       );
     },
+  },
+  {
+    accessorKey: 'type',
+    header: 'Type',
+    cell: TypeCell,
+  },
+  {
+    accessorKey: 'totalRevenue',
+    header: 'Revenue',
+    cell: TotalRevenueCell,
+  },
+  {
+    accessorKey: 'odometerReading',
+    header: 'Odometer',
+    cell: OdometerReadingsCell,
+  },
+  {
+    accessorKey: 'voucher',
+    header: 'Voucher',
+    cell: VoucherCell,
   },
   {
     accessorKey: 'actions',

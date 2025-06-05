@@ -54,6 +54,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
     referredBy: 'NA',
+    date_of_joining: new Date() as any,
     driverDocuments: {
       aadhar_front: '',
       aadhar_back: '',
@@ -267,6 +268,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         status: 'Inactive',
         emergencyContact: 'NA',
         referredBy: 'NA',
+        date_of_joining: new Date() as any, // Reset to current date
         driverDocuments: {
           aadhar_front: '',
           aadhar_back: '',
@@ -290,58 +292,118 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid gap-6 py-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Basic Information Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="driverName">Driver Name</Label>
-            <Input
-              id="driverName"
-              placeholder="Enter driver name"
-              value={formData.driverName}
-              onChange={(e) => handleInputChange('driverName', e.target.value)}
-              required
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="driverName">Driver Name</Label>
+          <Input
+            id="driverName"
+            placeholder="Enter driver name"
+            value={formData.driverName}
+            onChange={(e) => handleInputChange('driverName', e.target.value)}
+            required
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Phone Number</Label>
-            <Input
-              id="phoneNumber"
-              placeholder="+91-0000000000"
-              value={formData.phoneNumber}
-              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-              required
-            />
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Input
+            id="phoneNumber"
+            placeholder="+91-0000000000"
+            value={formData.phoneNumber}
+            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Additional Information Section */}
+        <div className="space-y-2">
+          <Label htmlFor="language">Languages</Label>
+          <Select onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="English">English</SelectItem>
+              <SelectItem value="Hindi">Hindi</SelectItem>
+              <SelectItem value="Punjabi">Punjabi</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2 mt-2">
+            {formData.languages.map((lang, index) => (
+              <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                {lang}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newLanguages = formData.languages.filter((_, i) => i !== index);
+                    setFormData((prev) => ({
+                      ...prev,
+                      languages: newLanguages,
+                    }));
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </button>
+              </Badge>
+            ))}
           </div>
         </div>
 
-        {/* Additional Information Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="language">Languages</Label>
-            <Select onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select languages" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="English">English</SelectItem>
-                <SelectItem value="Hindi">Hindi</SelectItem>
-                <SelectItem value="Punjabi">Punjabi</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2 mt-2">
-              {formData.languages.map((lang, index) => (
+        <div className="space-y-2">
+          <Label htmlFor="wheelsCapability">Select Segment</Label>
+          <Select
+            value={
+              !formData.wheelsCapability || formData.wheelsCapability === 'NA'
+                ? 'NA'
+                : formData.wheelsCapability[0]
+            }
+            onValueChange={(value) => {
+              if (value === 'NA') {
+                setFormData((prev) => ({ ...prev, wheelsCapability: 'NA' }));
+              } else {
+                setFormData((prev) => ({
+                  ...prev,
+                  wheelsCapability:
+                    !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                      ? [value]
+                      : prev.wheelsCapability.includes(value)
+                        ? prev.wheelsCapability.filter((w) => w !== value)
+                        : [...prev.wheelsCapability, value],
+                }));
+              }
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select wheels capability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NA">Not Specified</SelectItem>
+              {['3', '4', '6', '8', '10', '12', '14', '16', '18', '20'].map((wheels) => (
+                <SelectItem key={wheels} value={wheels}>
+                  {wheels} Wheeler
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {formData.wheelsCapability && formData.wheelsCapability !== 'NA' && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.wheelsCapability.map((wheel, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {lang}
+                  {wheel} Wheeler
                   <button
                     type="button"
                     onClick={() => {
-                      const newLanguages = formData.languages.filter((_, i) => i !== index);
                       setFormData((prev) => ({
                         ...prev,
-                        languages: newLanguages,
+                        wheelsCapability:
+                          !prev.wheelsCapability || prev.wheelsCapability === 'NA'
+                            ? ['3']
+                            : prev.wheelsCapability.filter((_, i) => i !== index),
                       }));
                     }}
                     className="text-muted-foreground hover:text-foreground"
@@ -351,438 +413,388 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
                 </Badge>
               ))}
             </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value: Driver['status']) => handleInputChange('status', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select driver status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
+              <SelectItem value="On Leave">On Leave</SelectItem>
+              <SelectItem value="On Trip">On Trip</SelectItem>
+              <SelectItem value="Suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Add Date of Joining field */}
+      <div className="space-y-2">
+        <Label>Date of Joining</Label>
+        <Input
+          type="date"
+          value={
+            formData.date_of_joining instanceof Date
+              ? formData.date_of_joining.toISOString().split('T')[0]
+              : ''
+          }
+          onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
+          required
+        />
+      </div>
+
+      {/* Documents Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Documents</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="aadhar_front">
+              Aadhar Card Front (Max 5MB)
+              {!validDocuments.aadhar_front && <span className="text-red-500 ml-1 text-xl">*</span>}
+            </Label>
+            <Input
+              id="aadhar_front"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleFileChange('aadhar_front', e.target.files[0]);
+                } else {
+                  handleFileChange('aadhar_front', null);
+                }
+              }}
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="wheelsCapability">Wheels Capability</Label>
-            <Select
-              value={
-                !formData.wheelsCapability || formData.wheelsCapability === 'NA'
-                  ? 'NA'
-                  : formData.wheelsCapability[0]
-              }
-              onValueChange={(value) => {
-                if (value === 'NA') {
-                  setFormData((prev) => ({ ...prev, wheelsCapability: 'NA' }));
+            <Label htmlFor="aadhar_back">
+              Aadhar Card Back (Max 5MB)
+              {!validDocuments.aadhar_back && <span className="text-red-500 ml-1 text-xl">*</span>}
+            </Label>
+            <Input
+              id="aadhar_back"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleFileChange('aadhar_back', e.target.files[0]);
                 } else {
-                  setFormData((prev) => ({
-                    ...prev,
-                    wheelsCapability:
-                      !prev.wheelsCapability || prev.wheelsCapability === 'NA'
-                        ? [value]
-                        : prev.wheelsCapability.includes(value)
-                          ? prev.wheelsCapability.filter((w) => w !== value)
-                          : [...prev.wheelsCapability, value],
-                  }));
+                  handleFileChange('aadhar_back', null);
                 }
               }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="aadhar_number">Aadhar Number</Label>
+            <Input
+              id="aadhar_number"
+              placeholder="Enter Aadhar number"
+              required
+              value={getDocumentFieldValue('aadhar_number')}
+              onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="license">
+              Driving License (Max 5MB)
+              {!validDocuments.license && <span className="text-red-500 ml-1 text-xl">*</span>}
+            </Label>
+            <Input
+              id="license"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleFileChange('license', e.target.files[0]);
+                } else {
+                  handleFileChange('license', null);
+                }
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="license_number">License Number</Label>
+            <Input
+              id="license_number"
+              placeholder="Enter license number"
+              required
+              value={getDocumentFieldValue('license_number')}
+              onChange={(e) => handleInputChange('driverDocuments.license_number', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="license_expiry">License Expiry Date</Label>
+            <Input
+              id="license_expiry"
+              type="date"
+              required
+              onChange={(e) =>
+                handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
+              }
+              value={getDocumentFieldValue('license_expiry')}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="medicalCertificate">
+              Medical Certificate (Max 5MB)
+              {!validDocuments.medicalCertificate && (
+                <span className="text-red-500 ml-1 text-xl">*</span>
+              )}
+            </Label>
+            <Input
+              id="medicalCertificate"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleFileChange('medicalCertificate', e.target.files[0]);
+                } else {
+                  handleFileChange('medicalCertificate', null);
+                }
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dob">Date of Birth</Label>
+            <Input
+              id="dob"
+              type="date"
+              required
+              onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
+              value={getDocumentFieldValue('dob')}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dob_certificate">
+              DOB Certificate (Max 5MB)
+              {!validDocuments.dob_certificate && (
+                <span className="text-red-500 ml-1 text-xl">*</span>
+              )}
+            </Label>
+            <Input
+              id="dob_certificate"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleFileChange('dob_certificate', e.target.files[0]);
+                } else {
+                  handleFileChange('dob_certificate', null);
+                }
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="documentStatus">Document Status</Label>
+            <Select
+              value={
+                isDriverDocuments(formData.driverDocuments)
+                  ? formData.driverDocuments.status
+                  : 'Pending'
+              }
+              onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select wheels capability" />
+                <SelectValue placeholder="Select document status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NA">Not Specified</SelectItem>
-                {['3', '4', '6', '8', '10', '12', '14', '16', '18', '20'].map((wheels) => (
-                  <SelectItem key={wheels} value={wheels}>
-                    {wheels} Wheeler
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Verified">Verified</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Truck Assignment Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Truck Assignment</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="assignedTruckId">Assign Truck</Label>
+            <Select
+              value={formData.assignedTruckId}
+              onValueChange={(value) => handleInputChange('assignedTruckId', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select truck" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NA">Not Assigned</SelectItem>
+                {trucks.map((truck) => (
+                  <SelectItem key={truck.id} value={truck.id}>
+                    {truck.regNumber} ({truck.axleConfig})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {formData.wheelsCapability && formData.wheelsCapability !== 'NA' && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.wheelsCapability.map((wheel, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {wheel} Wheeler
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          wheelsCapability:
-                            !prev.wheelsCapability || prev.wheelsCapability === 'NA'
-                              ? ['3']
-                              : prev.wheelsCapability.filter((_, i) => i !== index),
-                        }));
-                      }}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
+        </div>
+      </div>
 
+      {/* Emergency Contact Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Emergency Contact</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: Driver['status']) => handleInputChange('status', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select driver status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="On Leave">On Leave</SelectItem>
-                <SelectItem value="On Trip">On Trip</SelectItem>
-                <SelectItem value="Suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="emergency_name">Name</Label>
+            <Input
+              id="emergency_name"
+              placeholder="Emergency contact name"
+              onChange={(e) => {
+                const name = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  emergencyContact: name
+                    ? {
+                        name,
+                        number:
+                          prev.emergencyContact !== 'NA'
+                            ? (prev.emergencyContact as EmergencyContact).number
+                            : '',
+                        residencyAddress:
+                          prev.emergencyContact !== 'NA'
+                            ? (prev.emergencyContact as EmergencyContact).residencyAddress
+                            : '',
+                        residencyProof:
+                          prev.emergencyContact !== 'NA'
+                            ? (prev.emergencyContact as EmergencyContact).residencyProof
+                            : '',
+                      }
+                    : 'NA',
+                }));
+              }}
+              value={
+                formData.emergencyContact !== 'NA'
+                  ? (formData.emergencyContact as EmergencyContact).name
+                  : ''
+              }
+            />
           </div>
-        </div>
-
-        {/* Documents Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Documents</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="aadhar_front">
-                Aadhar Card Front (Max 5MB)
-                {!validDocuments.aadhar_front && (
-                  <span className="text-red-500 ml-1 text-xl">*</span>
-                )}
-              </Label>
-              <Input
-                id="aadhar_front"
-                type="file"
-                accept="image/*,.pdf"
-                required
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileChange('aadhar_front', e.target.files[0]);
-                  } else {
-                    handleFileChange('aadhar_front', null);
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="aadhar_back">
-                Aadhar Card Back (Max 5MB)
-                {!validDocuments.aadhar_back && (
-                  <span className="text-red-500 ml-1 text-xl">*</span>
-                )}
-              </Label>
-              <Input
-                id="aadhar_back"
-                type="file"
-                accept="image/*,.pdf"
-                required
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileChange('aadhar_back', e.target.files[0]);
-                  } else {
-                    handleFileChange('aadhar_back', null);
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="aadhar_number">Aadhar Number</Label>
-              <Input
-                id="aadhar_number"
-                placeholder="Enter Aadhar number"
-                required
-                value={getDocumentFieldValue('aadhar_number')}
-                onChange={(e) => handleInputChange('driverDocuments.aadhar_number', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="license">
-                Driving License (Max 5MB)
-                {!validDocuments.license && <span className="text-red-500 ml-1 text-xl">*</span>}
-              </Label>
-              <Input
-                id="license"
-                type="file"
-                accept="image/*,.pdf"
-                required
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileChange('license', e.target.files[0]);
-                  } else {
-                    handleFileChange('license', null);
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="license_number">License Number</Label>
-              <Input
-                id="license_number"
-                placeholder="Enter license number"
-                required
-                value={getDocumentFieldValue('license_number')}
-                onChange={(e) =>
-                  handleInputChange('driverDocuments.license_number', e.target.value)
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="license_expiry">License Expiry Date</Label>
-              <Input
-                id="license_expiry"
-                type="date"
-                required
-                onChange={(e) =>
-                  handleInputChange('driverDocuments.license_expiry', new Date(e.target.value))
-                }
-                value={getDocumentFieldValue('license_expiry')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="medicalCertificate">
-                Medical Certificate (Max 5MB)
-                {!validDocuments.medicalCertificate && (
-                  <span className="text-red-500 ml-1 text-xl">*</span>
-                )}
-              </Label>
-              <Input
-                id="medicalCertificate"
-                type="file"
-                accept="image/*,.pdf"
-                required
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileChange('medicalCertificate', e.target.files[0]);
-                  } else {
-                    handleFileChange('medicalCertificate', null);
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth</Label>
-              <Input
-                id="dob"
-                type="date"
-                required
-                onChange={(e) => handleInputChange('driverDocuments.dob', new Date(e.target.value))}
-                value={getDocumentFieldValue('dob')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dob_certificate">
-                DOB Certificate (Max 5MB)
-                {!validDocuments.dob_certificate && (
-                  <span className="text-red-500 ml-1 text-xl">*</span>
-                )}
-              </Label>
-              <Input
-                id="dob_certificate"
-                type="file"
-                accept="image/*,.pdf"
-                required
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileChange('dob_certificate', e.target.files[0]);
-                  } else {
-                    handleFileChange('dob_certificate', null);
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="documentStatus">Document Status</Label>
-              <Select
-                value={
-                  isDriverDocuments(formData.driverDocuments)
-                    ? formData.driverDocuments.status
-                    : 'Pending'
-                }
-                onValueChange={(value) => handleInputChange('driverDocuments.status', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select document status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Verified">Verified</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Truck Assignment Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Truck Assignment</h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="assignedTruckId">Assign Truck</Label>
-              <Select
-                value={formData.assignedTruckId}
-                onValueChange={(value) => handleInputChange('assignedTruckId', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select truck" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NA">Not Assigned</SelectItem>
-                  {trucks.map((truck) => (
-                    <SelectItem key={truck.id} value={truck.id}>
-                      {truck.regNumber} ({truck.axleConfig})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Emergency Contact Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Emergency Contact (Optional)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="emergency_name">Name</Label>
-              <Input
-                id="emergency_name"
-                placeholder="Emergency contact name"
-                onChange={(e) => {
-                  const name = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    emergencyContact: name
+          <div className="space-y-2">
+            <Label htmlFor="emergency_number">Phone Number</Label>
+            <Input
+              id="emergency_number"
+              placeholder="Emergency contact number"
+              onChange={(e) => {
+                const number = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  emergencyContact:
+                    prev.emergencyContact !== 'NA'
                       ? {
-                          name,
-                          number:
-                            prev.emergencyContact !== 'NA'
-                              ? (prev.emergencyContact as EmergencyContact).number
-                              : '',
-                          residencyAddress:
-                            prev.emergencyContact !== 'NA'
-                              ? (prev.emergencyContact as EmergencyContact).residencyAddress
-                              : '',
-                          residencyProof:
-                            prev.emergencyContact !== 'NA'
-                              ? (prev.emergencyContact as EmergencyContact).residencyProof
-                              : '',
+                          ...(prev.emergencyContact as EmergencyContact),
+                          number,
                         }
-                      : 'NA',
-                  }));
-                }}
-                value={
-                  formData.emergencyContact !== 'NA'
-                    ? (formData.emergencyContact as EmergencyContact).name
-                    : ''
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="emergency_number">Phone Number</Label>
-              <Input
-                id="emergency_number"
-                placeholder="Emergency contact number"
-                onChange={(e) => {
-                  const number = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    emergencyContact:
-                      prev.emergencyContact !== 'NA'
-                        ? {
-                            ...(prev.emergencyContact as EmergencyContact),
-                            number,
-                          }
-                        : {
-                            name: '',
-                            number,
-                            residencyAddress: '',
-                            residencyProof: '',
-                          },
-                  }));
-                }}
-                value={
-                  formData.emergencyContact !== 'NA'
-                    ? (formData.emergencyContact as EmergencyContact).number
-                    : ''
-                }
-              />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="emergency_address">Residency Address</Label>
-              <Input
-                id="emergency_address"
-                placeholder="Enter complete residency address"
-                onChange={(e) => {
-                  const residencyAddress = e.target.value;
-                  setFormData((prev) => ({
-                    ...prev,
-                    emergencyContact:
-                      prev.emergencyContact !== 'NA'
-                        ? {
-                            ...(prev.emergencyContact as EmergencyContact),
-                            residencyAddress,
-                          }
-                        : {
-                            name: '',
-                            number: '',
-                            residencyAddress,
-                            residencyProof: '',
-                          },
-                  }));
-                }}
-                value={
-                  formData.emergencyContact !== 'NA'
-                    ? (formData.emergencyContact as EmergencyContact).residencyAddress
-                    : ''
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="residency_proof">Residency Proof</Label>
-              <Input
-                id="residency_proof"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    const file = e.target.files[0];
-                    handleFileChange('residency_proof', file);
-                  }
-                }}
-              />
-            </div>
+                      : {
+                          name: '',
+                          number,
+                          residencyAddress: '',
+                          residencyProof: '',
+                        },
+                }));
+              }}
+              value={
+                formData.emergencyContact !== 'NA'
+                  ? (formData.emergencyContact as EmergencyContact).number
+                  : ''
+              }
+            />
           </div>
         </div>
-
-        {/* Referral Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Referral Information (Optional)</h3>
-          <ReferralBySelector
-            value={formData.referredBy || 'NA'}
-            onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="emergency_address">Residency Address</Label>
+            <Input
+              id="emergency_address"
+              placeholder="Enter complete residency address"
+              onChange={(e) => {
+                const residencyAddress = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  emergencyContact:
+                    prev.emergencyContact !== 'NA'
+                      ? {
+                          ...(prev.emergencyContact as EmergencyContact),
+                          residencyAddress,
+                        }
+                      : {
+                          name: '',
+                          number: '',
+                          residencyAddress,
+                          residencyProof: '',
+                        },
+                }));
+              }}
+              value={
+                formData.emergencyContact !== 'NA'
+                  ? (formData.emergencyContact as EmergencyContact).residencyAddress
+                  : ''
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="residency_proof">Residency Proof</Label>
+            <Input
+              id="residency_proof"
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  const file = e.target.files[0];
+                  handleFileChange('residency_proof', file);
+                }
+              }}
+            />
+          </div>
         </div>
+      </div>
 
-        <div className="flex justify-end gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting || !areAllDocumentsValid()}>
-            {isSubmitting ? (
-              <>
-                <IconLoader className="animate-spin mr-2" />
-                Creating...{' '}
-              </>
-            ) : (
-              'Create Driver'
-            )}
-          </Button>
-        </div>
+      {/* Referral Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Referral Information</h3>
+
+        <ReferralBySelector
+          value={formData.referredBy || 'NA'}
+          onChange={(value) => setFormData((prev) => ({ ...prev, referredBy: value }))}
+        />
+      </div>
+
+      <div className="flex justify-end gap-4 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting || !areAllDocumentsValid()}>
+          {isSubmitting ? (
+            <>
+              <IconLoader className="animate-spin mr-2" />
+              Creating...{' '}
+            </>
+          ) : (
+            'Create Driver'
+          )}
+        </Button>
       </div>
     </form>
   );

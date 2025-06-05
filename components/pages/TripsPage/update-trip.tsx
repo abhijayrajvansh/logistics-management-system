@@ -62,7 +62,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const {trucks} = useTrucks();
+  const { trucks } = useTrucks();
 
   const fetchAssociatedOrders = async (tripDocId: string) => {
     try {
@@ -166,8 +166,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         }
       }
 
-      // Find the driver to get their name
-      const selectedDriver = drivers.find((d) => d.id === data.driver);
+      // Find the driver to get their name (only if drivers are loaded)
+      const selectedDriver = drivers.length > 0 ? drivers.find((d) => d.id === data.driver) : null;
 
       setFormData({
         startingPoint: data.startingPoint || '',
@@ -196,7 +196,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         setAssociatedOrders(associatedOrders);
       }
 
-      // Find and set the selected driver
+      // Find and set the selected driver (only if drivers are loaded)
       if (selectedDriver) {
         setSelectedDriver(selectedDriver);
       }
@@ -206,35 +206,58 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     } finally {
       setIsLoading(false);
     }
-  }, [tripId, onCancel, drivers]);
+  }, [tripId, onCancel]);
 
-  // Fetch trip data and associated orders on component mount
+  // Fetch trip data immediately on component mount
   useEffect(() => {
-    if (drivers.length > 0) {
-      fetchTripData();
+    fetchTripData();
+  }, [fetchTripData]);
+
+  // Update driver name and truck when drivers are loaded and a driver is assigned
+  useEffect(() => {
+    if (drivers.length > 0 && formData.driver && formData.driver !== 'Not Assigned') {
+      const driver = drivers.find((d) => d.id === formData.driver);
+      if (driver) {
+        setSelectedDriver(driver);
+        // Get truck registration number
+        const truckRegNumber =
+          trucks.find((truck) => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
+
+        setFormData((prev) => ({
+          ...prev,
+          driverName: driver.driverName,
+          truck: truckRegNumber,
+        }));
+      }
     }
-  }, [drivers, fetchTripData]);
+  }, [drivers, formData.driver, trucks]);
 
   useEffect(() => {
     if (selectedDriver) {
-      const truckRegNumber = trucks.find(truck => truck.id === selectedDriver.assignedTruckId)?.regNumber || 'Not Assigned';
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === selectedDriver.assignedTruckId)?.regNumber ||
+        'Not Assigned';
       setFormData((prevData) => ({
         ...prevData,
         driver: selectedDriver.id,
         truck: truckRegNumber || '',
       }));
     }
-  }, [selectedDriver]);
+  }, [selectedDriver, trucks]);
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
       setSelectedDriver(driver);
+      // Get truck registration number
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
+
       setFormData((prev) => ({
         ...prev,
         driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
-        truck: driver.assignedTruckId || 'Not Assigned', // Use assignedTruckId if available
+        truck: truckRegNumber, // Use truck registration number
       }));
     }
   };
@@ -344,7 +367,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
         // Handle new driver: Set status to OnTrip
         if (formData.driver && formData.driver !== 'Not Assigned') {
-
           // Update new driver's status
           const newDriverRef = doc(db, 'drivers', formData.driver);
           await updateDoc(newDriverRef, {
@@ -353,7 +375,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           });
         }
       }
-
 
       // Get current trip_orders document using the same ID as the trip document
       const tripOrdersDocRef = doc(db, 'trip_orders', tripId);
@@ -463,7 +484,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     loadDrivers();
   }, [tripId]);
 
-  if (isLoading || isLoadingDrivers) {
+  if (isLoading) {
     return <div className="py-8 text-center">Loading trip data...</div>;
   }
 
@@ -472,10 +493,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       <div className="grid gap-6 py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="startingPoint">Starting Point</Label>
+            <Label htmlFor="startingPoint">Origin</Label>
             <Input
               id="startingPoint"
-              placeholder="Enter starting location"
+              placeholder="Enter Origin location"
               value={formData.startingPoint}
               onChange={(e) => handleInputChange('startingPoint', e.target.value)}
               required
@@ -492,17 +513,20 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="numberOfStops">Number of Stops</Label>
-            <Input
-              disabled={true}
-              id="numberOfStops"
-              type="number"
-              placeholder="Enter number of stops"
-              value={selectedOrderIds.length}
-              onChange={(e) => handleInputChange('numberOfStops', e.target.value)}
-              required
-              min="0"
-            />
+            <Label htmlFor="type">Trip Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => handleInputChange('type', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select trip type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="past">Past</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -519,7 +543,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                   placeholder={
                     isLoadingDrivers
                       ? 'Loading drivers...'
-                      : formData.driverName || 'Select a driver'
+                      : formData.driver && formData.driver !== 'Not Assigned'
+                        ? formData.driverName || 'Select a driver'
+                        : 'No driver assigned'
                   }
                 />
               </SelectTrigger>
@@ -534,10 +560,11 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
           </div>
           <div className="space-y-2">
             <Label htmlFor="truck">Vehicle Number</Label>
-            <Input disabled={true}
+            <Input
+              disabled={true}
               id="truck"
-              placeholder="Enter Vehicle number"
-              value={formData.truck}
+              placeholder={formData.truck || 'No vehicle assigned'}
+              value={formData.truck || 'Not Assigned'}
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
             />
@@ -555,23 +582,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="type">Trip Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select trip type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ready to ship">Ready to Ship</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="past">Past</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {formData.type === 'active' && (
             <div className="space-y-2">
               <Label htmlFor="currentStatus">Current Status</Label>
@@ -593,7 +603,10 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
         {/* Orders section */}
         <div className="space-y-4">
-          <Label>Select Orders for this Trip</Label>
+          <Label className="font-bold">Select Orders for this Trip</Label>
+          <div className="text-sm text-muted-foreground mb-2">
+            Number of stops in this trip: {selectedOrderIds.length}
+          </div>
           <ScrollArea className="h-[200px] border rounded-md p-4">
             {isLoadingOrders ? (
               <div className="text-center py-4">Loading orders...</div>
@@ -645,7 +658,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                                 return 'Invalid Date';
                               }
                             })()}
-                            , Boxes: {order.total_boxes_count}
+                            , Units: {order.total_boxes_count}
                           </span>
                         </label>
                       </div>
@@ -697,7 +710,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                                 return 'Invalid Date';
                               }
                             })()}
-                            , Boxes: {order.total_boxes_count}
+                            , Units: {order.total_boxes_count}
                           </span>
                         </label>
                       </div>

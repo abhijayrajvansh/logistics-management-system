@@ -59,7 +59,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
     try {
       // Parse and validate form data
       const rateCard: ClientRateCard = {
-        preferance: formData.rateCard.preferance as 'By Weight' | 'Per Boxes',
+        preferance: formData.rateCard.preferance as 'By Weight' | 'Per Units',
         pricePerPref: parseFloat(formData.rateCard.pricePerPref),
         minPriceWeight:
           formData.rateCard.preferance === 'By Weight'
@@ -165,7 +165,7 @@ export function CreateClientForm({ onSuccess }: CreateClientFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="By Weight">By Weight</SelectItem>
-                <SelectItem value="Per Boxes">Per Boxes</SelectItem>
+                <SelectItem value="Per Units">Per Units</SelectItem>
               </SelectContent>
             </Select>
           </div>

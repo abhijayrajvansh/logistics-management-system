@@ -25,7 +25,7 @@ export function TripsPage() {
       <SiteHeader title="Trips" />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
-          <div className="h-full flex-1 flex-col space-y-8 py-8">
+          <div className="h-full flex-1 flex-col space-y-8 px-4 py-6">
             <DataTable
               columns={columns}
               data={readyToShipTrips}

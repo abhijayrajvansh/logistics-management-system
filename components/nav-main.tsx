@@ -19,6 +19,7 @@ import { FaTruck } from "react-icons/fa";
 import { MdHub } from "react-icons/md";
 import { FaClock } from "react-icons/fa6";
 import { FaHandHoldingMedical } from "react-icons/fa";
+import { FaWallet } from "react-icons/fa";
 
 const navMain = [
   {
@@ -62,19 +63,14 @@ const navMain = [
     icon: MdHub,
   },
   {
-    title: 'Clients',
-    url: '/dashboard/clients',
+    title: 'Rate Cards',
+    url: '/dashboard/ratecard',
     icon: FaHandshake,
   },
   {
-    title: 'Receivers',
-    url: '/dashboard/receivers',
-    icon: RiUserReceived2Fill,
-  },
-  {
-    title: 'TAT Mappings',
-    url: '/dashboard/tats',
-    icon: FaClock,
+    title: 'Wallets',
+    url: '/dashboard/wallets',
+    icon: FaWallet,
   },
 ];
 

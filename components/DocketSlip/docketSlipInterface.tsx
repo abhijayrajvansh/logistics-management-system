@@ -1,4 +1,4 @@
-export interface LogisticsReceiptProps {
+export interface DocketPayloadProps {
   receiptNumber?: string;
   date?: string;
   origin?: {
