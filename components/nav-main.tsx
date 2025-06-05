@@ -19,6 +19,7 @@ import { FaTruck } from "react-icons/fa";
 import { MdHub } from "react-icons/md";
 import { FaClock } from "react-icons/fa6";
 import { FaHandHoldingMedical } from "react-icons/fa";
+import { FaWallet } from "react-icons/fa";
 
 const navMain = [
   {
@@ -75,6 +76,11 @@ const navMain = [
     title: 'TAT Mappings',
     url: '/dashboard/tats',
     icon: FaClock,
+  },
+  {
+    title: 'Wallets',
+    url: '/dashboard/wallets',
+    icon: FaWallet,
   },
 ];
 
