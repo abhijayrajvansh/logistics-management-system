@@ -1,1 +1,5 @@
-dev: vercel build 07
+
+dev: vercel build
+
+main: vercel build 
+
