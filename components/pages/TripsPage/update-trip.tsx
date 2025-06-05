@@ -166,8 +166,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         }
       }
 
-      // Find the driver to get their name
-      const selectedDriver = drivers.find((d) => d.id === data.driver);
+      // Find the driver to get their name (only if drivers are loaded)
+      const selectedDriver = drivers.length > 0 ? drivers.find((d) => d.id === data.driver) : null;
 
       setFormData({
         startingPoint: data.startingPoint || '',
@@ -196,7 +196,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         setAssociatedOrders(associatedOrders);
       }
 
-      // Find and set the selected driver
+      // Find and set the selected driver (only if drivers are loaded)
       if (selectedDriver) {
         setSelectedDriver(selectedDriver);
       }
@@ -206,14 +206,31 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     } finally {
       setIsLoading(false);
     }
-  }, [tripId, onCancel, drivers]);
+  }, [tripId, onCancel]);
 
-  // Fetch trip data and associated orders on component mount
+  // Fetch trip data immediately on component mount
   useEffect(() => {
-    if (drivers.length > 0) {
-      fetchTripData();
+    fetchTripData();
+  }, [fetchTripData]);
+
+  // Update driver name and truck when drivers are loaded and a driver is assigned
+  useEffect(() => {
+    if (drivers.length > 0 && formData.driver && formData.driver !== 'Not Assigned') {
+      const driver = drivers.find((d) => d.id === formData.driver);
+      if (driver) {
+        setSelectedDriver(driver);
+        // Get truck registration number
+        const truckRegNumber =
+          trucks.find((truck) => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
+
+        setFormData((prev) => ({
+          ...prev,
+          driverName: driver.driverName,
+          truck: truckRegNumber,
+        }));
+      }
     }
-  }, [drivers, fetchTripData]);
+  }, [drivers, formData.driver, trucks]);
 
   useEffect(() => {
     if (selectedDriver) {
@@ -226,17 +243,21 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         truck: truckRegNumber || '',
       }));
     }
-  }, [selectedDriver]);
+  }, [selectedDriver, trucks]);
 
   const handleDriverChange = (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
     if (driver) {
       setSelectedDriver(driver);
+      // Get truck registration number
+      const truckRegNumber =
+        trucks.find((truck) => truck.id === driver.assignedTruckId)?.regNumber || 'Not Assigned';
+
       setFormData((prev) => ({
         ...prev,
         driver: driverId, // Use the same ID consistently
         driverName: driver.driverName,
-        truck: driver.assignedTruckId || 'Not Assigned', // Use assignedTruckId if available
+        truck: truckRegNumber, // Use truck registration number
       }));
     }
   };
@@ -463,7 +484,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
     loadDrivers();
   }, [tripId]);
 
-  if (isLoading || isLoadingDrivers) {
+  if (isLoading) {
     return <div className="py-8 text-center">Loading trip data...</div>;
   }
 
@@ -522,7 +543,9 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
                   placeholder={
                     isLoadingDrivers
                       ? 'Loading drivers...'
-                      : formData.driverName || 'Select a driver'
+                      : formData.driver && formData.driver !== 'Not Assigned'
+                        ? formData.driverName || 'Select a driver'
+                        : 'No driver assigned'
                   }
                 />
               </SelectTrigger>
@@ -540,8 +563,8 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
             <Input
               disabled={true}
               id="truck"
-              placeholder="Enter Vehicle number"
-              value={formData.truck}
+              placeholder={formData.truck || 'No vehicle assigned'}
+              value={formData.truck || 'Not Assigned'}
               onChange={(e) => handleInputChange('truck', e.target.value)}
               required
             />
@@ -559,8 +582,6 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-
           {formData.type === 'active' && (
             <div className="space-y-2">
               <Label htmlFor="currentStatus">Current Status</Label>
@@ -582,7 +603,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
 
         {/* Orders section */}
         <div className="space-y-4">
-          <Label className='font-bold'>Select Orders for this Trip</Label>
+          <Label className="font-bold">Select Orders for this Trip</Label>
           <div className="text-sm text-muted-foreground mb-2">
             Number of stops in this trip: {selectedOrderIds.length}
           </div>
