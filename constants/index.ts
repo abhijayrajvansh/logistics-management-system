@@ -17,7 +17,7 @@ const env = {
   USERID_EMAIL: '@jaizlogistics.com',
 
   // console env
-  NODE_ENV: process.env.NEXT_PUBLIC_NODE_ENV as string,
+  DATABASE_ENV: process.env.NEXT_PUBLIC_DATABASE_ENV as string,
 
   // firebase config
   firebase: firebase as FirebaseConfig,
