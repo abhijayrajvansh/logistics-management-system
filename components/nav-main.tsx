@@ -63,19 +63,9 @@ const navMain = [
     icon: MdHub,
   },
   {
-    title: 'Clients',
-    url: '/dashboard/clients',
+    title: 'Rate Cards',
+    url: '/dashboard/ratecard',
     icon: FaHandshake,
-  },
-  {
-    title: 'Receivers',
-    url: '/dashboard/receivers',
-    icon: RiUserReceived2Fill,
-  },
-  {
-    title: 'TAT Mappings',
-    url: '/dashboard/tats',
-    icon: FaClock,
   },
   {
     title: 'Wallets',

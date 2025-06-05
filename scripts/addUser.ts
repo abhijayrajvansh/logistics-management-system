@@ -12,6 +12,7 @@ const users: User[] = [
     location: 'NA',
     role: 'accountant',
     createdAt: new Date(),
+    walletId: 'NA',
   },
 ];
 
