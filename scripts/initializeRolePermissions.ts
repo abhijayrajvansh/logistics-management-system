@@ -7,26 +7,28 @@ import { RolePermissions } from '../types';
 export async function initializeRolePermissions() {
   try {
     console.log('Initializing role permissions in Firestore...');
-    
+
     const initPromises = AVAILABLE_ROLES.map(async (role) => {
       const permissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-      
+
       const rolePermissionData: RolePermissions = {
         roleId: role,
         permissions,
         updatedAt: new Date(),
-        updatedBy: 'system-init'
+        updatedBy: 'system-init',
       };
 
       const roleDoc = doc(db, 'rolePermissions', role);
       await setDoc(roleDoc, rolePermissionData);
-      
-      console.log(`✓ Initialized permissions for role: ${role} (${permissions.length} permissions)`);
+
+      console.log(
+        `✓ Initialized permissions for role: ${role} (${permissions.length} permissions)`,
+      );
     });
 
     await Promise.all(initPromises);
     console.log('✅ All role permissions initialized successfully!');
-    
+
     return { success: true, message: 'Role permissions initialized successfully' };
   } catch (error) {
     console.error('❌ Error initializing role permissions:', error);

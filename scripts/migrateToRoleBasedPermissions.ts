@@ -11,7 +11,7 @@ interface LegacyUser extends Omit<User, 'permissions'> {
 export async function migrateToRoleBasedPermissions() {
   try {
     console.log('🚀 Starting migration to role-based permissions...');
-    
+
     // Step 1: Initialize role permissions in Firestore
     console.log('📋 Step 1: Initializing role permissions...');
     const initResult = await initializeRolePermissions();
@@ -23,27 +23,29 @@ export async function migrateToRoleBasedPermissions() {
     console.log('👥 Step 2: Cleaning up individual user permissions...');
     const usersRef = collection(db, 'users');
     const usersSnapshot = await getDocs(usersRef);
-    
+
     const batch = writeBatch(db);
     let updatedUsers = 0;
     let usersWithCustomPermissions = 0;
 
     usersSnapshot.forEach((userDoc) => {
       const userData = userDoc.data() as LegacyUser;
-      
+
       // Check if user has custom permissions (different from default role permissions)
       if (userData.permissions && userData.permissions.length > 0) {
         usersWithCustomPermissions++;
         console.log(`⚠️  User ${userData.email} has custom permissions that will be removed`);
-        console.log(`   Role: ${userData.role}, Custom permissions: ${userData.permissions.length}`);
+        console.log(
+          `   Role: ${userData.role}, Custom permissions: ${userData.permissions.length}`,
+        );
       }
 
       // Remove the permissions field from user document
       const userRef = doc(db, 'users', userDoc.id);
       batch.update(userRef, {
-        permissions: null // This will remove the field
+        permissions: null, // This will remove the field
       });
-      
+
       updatedUsers++;
     });
 
@@ -55,9 +57,11 @@ export async function migrateToRoleBasedPermissions() {
     console.log(`   - Total users updated: ${updatedUsers}`);
     console.log(`   - Users with custom permissions: ${usersWithCustomPermissions}`);
     console.log(`   - All users now use role-based permissions`);
-    
+
     if (usersWithCustomPermissions > 0) {
-      console.log(`\n⚠️  Note: ${usersWithCustomPermissions} users had custom permissions that were removed.`);
+      console.log(
+        `\n⚠️  Note: ${usersWithCustomPermissions} users had custom permissions that were removed.`,
+      );
       console.log(`   These users will now inherit permissions based on their role.`);
       console.log(`   Review and adjust role permissions if needed using the admin panel.`);
     }
@@ -67,9 +71,8 @@ export async function migrateToRoleBasedPermissions() {
       statistics: {
         totalUsers: updatedUsers,
         usersWithCustomPermissions,
-      }
+      },
     };
-    
   } catch (error) {
     console.error('❌ Migration failed:', error);
     return { success: false, error };

@@ -10,12 +10,12 @@ import { IconLoader, IconDeviceFloppy, IconRefresh } from '@tabler/icons-react';
 import { doc, setDoc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { useAuth } from '@/app/context/AuthContext';
-import { 
-  PERMISSION_FEATURES, 
-  AVAILABLE_ROLES, 
-  DEFAULT_ROLE_PERMISSIONS, 
+import {
+  PERMISSION_FEATURES,
+  AVAILABLE_ROLES,
+  DEFAULT_ROLE_PERMISSIONS,
   Role,
-  FeatureId 
+  FeatureId,
 } from '@/constants/permissions';
 import { RolePermissions } from '@/types';
 
@@ -36,15 +36,17 @@ export default function RolePermissionManager() {
   useEffect(() => {
     const initializePermissions = () => {
       const initialState: RolePermissionState = {};
-      
-      AVAILABLE_ROLES.forEach(role => {
+
+      AVAILABLE_ROLES.forEach((role) => {
         initialState[role] = {};
-        Object.values(PERMISSION_FEATURES).flat().forEach(permission => {
-          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-          initialState[role][permission] = defaultPermissions.includes(permission);
-        });
+        Object.values(PERMISSION_FEATURES)
+          .flat()
+          .forEach((permission) => {
+            const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
+            initialState[role][permission] = defaultPermissions.includes(permission);
+          });
       });
-      
+
       setRolePermissions(initialState);
     };
 
@@ -56,29 +58,34 @@ export default function RolePermissionManager() {
     setLoading(true);
     const unsubscribes: (() => void)[] = [];
 
-    AVAILABLE_ROLES.forEach(role => {
+    AVAILABLE_ROLES.forEach((role) => {
       const roleDoc = doc(db, 'rolePermissions', role);
-      
+
       const unsubscribe = onSnapshot(
         roleDoc,
         (docSnapshot) => {
           if (docSnapshot.exists()) {
             const data = docSnapshot.data() as RolePermissions;
-            setRolePermissions(prev => ({
+            setRolePermissions((prev) => ({
               ...prev,
-              [role]: Object.values(PERMISSION_FEATURES).flat().reduce((acc, permission) => {
-                acc[permission] = data.permissions.includes(permission);
-                return acc;
-              }, {} as { [permission: string]: boolean })
+              [role]: Object.values(PERMISSION_FEATURES)
+                .flat()
+                .reduce(
+                  (acc, permission) => {
+                    acc[permission] = data.permissions.includes(permission);
+                    return acc;
+                  },
+                  {} as { [permission: string]: boolean },
+                ),
             }));
           }
         },
         (error) => {
           console.error(`Error loading permissions for role ${role}:`, error);
           toast.error(`Failed to load permissions for ${role}`);
-        }
+        },
       );
-      
+
       unsubscribes.push(unsubscribe);
     });
 
@@ -86,17 +93,17 @@ export default function RolePermissionManager() {
     setTimeout(() => setLoading(false), 500);
 
     return () => {
-      unsubscribes.forEach(unsubscribe => unsubscribe());
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
   }, []);
 
   const togglePermission = (role: Role, permission: FeatureId) => {
-    setRolePermissions(prev => ({
+    setRolePermissions((prev) => ({
       ...prev,
       [role]: {
         ...prev[role],
-        [permission]: !prev[role]?.[permission]
-      }
+        [permission]: !prev[role]?.[permission],
+      },
     }));
     setHasChanges(true);
   };
@@ -108,7 +115,7 @@ export default function RolePermissionManager() {
     }
 
     setSaving(true);
-    
+
     try {
       const savePromises = AVAILABLE_ROLES.map(async (role) => {
         const permissions = Object.entries(rolePermissions[role] || {})
@@ -119,7 +126,7 @@ export default function RolePermissionManager() {
           roleId: role,
           permissions,
           updatedAt: new Date(),
-          updatedBy: userData.userId
+          updatedBy: userData.userId,
         };
 
         const roleDoc = doc(db, 'rolePermissions', role);
@@ -139,15 +146,17 @@ export default function RolePermissionManager() {
 
   const resetToDefaults = () => {
     const defaultState: RolePermissionState = {};
-    
-    AVAILABLE_ROLES.forEach(role => {
+
+    AVAILABLE_ROLES.forEach((role) => {
       defaultState[role] = {};
-      Object.values(PERMISSION_FEATURES).flat().forEach(permission => {
-        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-        defaultState[role][permission] = defaultPermissions.includes(permission);
-      });
+      Object.values(PERMISSION_FEATURES)
+        .flat()
+        .forEach((permission) => {
+          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
+          defaultState[role][permission] = defaultPermissions.includes(permission);
+        });
     });
-    
+
     setRolePermissions(defaultState);
     setHasChanges(true);
     toast.info('Reset to default permissions');
@@ -155,16 +164,16 @@ export default function RolePermissionManager() {
 
   const initializeRolePermissions = async () => {
     setSaving(true);
-    
+
     try {
       const initPromises = AVAILABLE_ROLES.map(async (role) => {
         const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-        
+
         const rolePermissionData: RolePermissions = {
           roleId: role,
           permissions: defaultPermissions,
           updatedAt: new Date(),
-          updatedBy: userData?.userId || 'admin'
+          updatedBy: userData?.userId || 'admin',
         };
 
         const roleDoc = doc(db, 'rolePermissions', role);
@@ -187,7 +196,7 @@ export default function RolePermissionManager() {
       .replace('FEATURE_', '')
       .replace(/_/g, ' ')
       .toLowerCase()
-      .replace(/\b\w/g, l => l.toUpperCase());
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const getRoleColor = (role: Role) => {
@@ -217,30 +226,20 @@ export default function RolePermissionManager() {
             <div>
               <CardTitle>Role-Based Permission Management</CardTitle>
               <CardDescription>
-                Manage permissions for each role in the system. Changes are saved to all users with that role.
+                Manage permissions for each role in the system. Changes are saved to all users with
+                that role.
               </CardDescription>
             </div>
             <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={initializeRolePermissions}
-                disabled={saving}
-              >
+              <Button variant="outline" onClick={initializeRolePermissions} disabled={saving}>
                 <IconRefresh className="h-4 w-4 mr-2" />
                 Initialize Defaults
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={resetToDefaults}
-                disabled={saving}
-              >
+              <Button variant="outline" onClick={resetToDefaults} disabled={saving}>
                 <IconRefresh className="h-4 w-4 mr-2" />
                 Reset to Defaults
               </Button>
-              <Button 
-                onClick={saveRolePermissions} 
-                disabled={!hasChanges || saving}
-              >
+              <Button onClick={saveRolePermissions} disabled={!hasChanges || saving}>
                 {saving && <IconLoader className="h-4 w-4 animate-spin mr-2" />}
                 <IconDeviceFloppy className="h-4 w-4 mr-2" />
                 Save Changes
@@ -254,7 +253,7 @@ export default function RolePermissionManager() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-3 font-medium">Feature</th>
-                  {AVAILABLE_ROLES.map(role => (
+                  {AVAILABLE_ROLES.map((role) => (
                     <th key={role} className="text-center p-3 font-medium min-w-[120px]">
                       <Badge className={getRoleColor(role)}>
                         {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -267,17 +266,18 @@ export default function RolePermissionManager() {
                 {Object.entries(PERMISSION_FEATURES).flatMap(([featureGroup, permissions]) => [
                   // Feature group header row
                   <tr key={featureGroup} className="border-b bg-gray-50">
-                    <td colSpan={AVAILABLE_ROLES.length + 1} className="p-3 font-semibold text-gray-700">
+                    <td
+                      colSpan={AVAILABLE_ROLES.length + 1}
+                      className="p-3 font-semibold text-gray-700"
+                    >
                       {featureGroup}
                     </td>
                   </tr>,
                   // Permission rows for this feature group
-                  ...permissions.map(permission => (
+                  ...permissions.map((permission) => (
                     <tr key={permission} className="border-b hover:bg-gray-50">
-                      <td className="p-3 pl-6 text-sm">
-                        {formatFeatureName(permission)}
-                      </td>
-                      {AVAILABLE_ROLES.map(role => (
+                      <td className="p-3 pl-6 text-sm">{formatFeatureName(permission)}</td>
+                      {AVAILABLE_ROLES.map((role) => (
                         <td key={`${role}-${permission}`} className="p-3 text-center">
                           <Switch
                             checked={rolePermissions[role]?.[permission] || false}
@@ -287,12 +287,12 @@ export default function RolePermissionManager() {
                         </td>
                       ))}
                     </tr>
-                  ))
+                  )),
                 ])}
               </tbody>
             </table>
           </div>
-          
+
           {hasChanges && (
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-800">

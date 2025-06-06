@@ -26,10 +26,10 @@ export const PermissionsLoader = ({ children }: { children: React.ReactNode }) =
 
     if (userData) {
       setLoading(true);
-      
+
       // Subscribe to role permissions from Firestore
       const rolePermissionsRef = doc(db, 'rolePermissions', userData.role);
-      
+
       const unsubscribe = onSnapshot(
         rolePermissionsRef,
         (doc) => {
@@ -50,7 +50,7 @@ export const PermissionsLoader = ({ children }: { children: React.ReactNode }) =
           // Fallback to default role permissions on error
           const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[userData.role] || [];
           setPermissions(defaultPermissions);
-        }
+        },
       );
 
       return () => unsubscribe();

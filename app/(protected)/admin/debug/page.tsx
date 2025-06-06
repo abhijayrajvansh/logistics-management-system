@@ -40,9 +40,7 @@ export default function SystemDebugPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-red-600">Access Denied</CardTitle>
-              <CardDescription>
-                This debug page is only accessible to admin users.
-              </CardDescription>
+              <CardDescription>This debug page is only accessible to admin users.</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -55,9 +53,7 @@ export default function SystemDebugPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Debug Panel</h1>
-          <p className="text-muted-foreground">
-            Debug and manage the role-based permission system
-          </p>
+          <p className="text-muted-foreground">Debug and manage the role-based permission system</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -82,7 +78,7 @@ export default function SystemDebugPage() {
                 <IconShield className="h-4 w-4 mr-2" />
                 Initialize Role Permissions
               </Button>
-              
+
               <div className="text-sm text-muted-foreground">
                 <p>This will create default role permissions in Firestore for:</p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
@@ -105,9 +101,7 @@ export default function SystemDebugPage() {
                 <IconUsers className="h-5 w-5" />
                 Role-Based Permission System Status
               </CardTitle>
-              <CardDescription>
-                Current status of the permission system transition
-              </CardDescription>
+              <CardDescription>Current status of the permission system transition</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
@@ -116,25 +110,28 @@ export default function SystemDebugPage() {
                   <div className="font-medium">Role System</div>
                   <div className="text-sm text-muted-foreground">Active</div>
                 </div>
-                
+
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{permissions.length}</div>
                   <div className="font-medium">Loaded Permissions</div>
                   <div className="text-sm text-muted-foreground">For {userData.role}</div>
                 </div>
-                
+
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">4</div>
                   <div className="font-medium">Available Roles</div>
-                  <div className="text-sm text-muted-foreground">Admin, Manager, Accountant, Driver</div>
+                  <div className="text-sm text-muted-foreground">
+                    Admin, Manager, Accountant, Driver
+                  </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h4 className="font-medium text-green-800 mb-2">✅ Migration Complete</h4>
                 <p className="text-sm text-green-700">
-                  Your system has been successfully transitioned to role-based permissions. 
-                  Users now inherit permissions based on their assigned role instead of individual permission settings.
+                  Your system has been successfully transitioned to role-based permissions. Users
+                  now inherit permissions based on their assigned role instead of individual
+                  permission settings.
                 </p>
               </div>
             </CardContent>

@@ -30,16 +30,22 @@ export default function PermissionDebugger() {
         <div>
           <h4 className="font-medium mb-2">User Info</h4>
           <div className="space-y-1">
-            <p><strong>Name:</strong> {userData.displayName}</p>
-            <p><strong>Email:</strong> {userData.email}</p>
-            <p><strong>Role:</strong> <Badge variant="outline">{userData.role}</Badge></p>
+            <p>
+              <strong>Name:</strong> {userData.displayName}
+            </p>
+            <p>
+              <strong>Email:</strong> {userData.email}
+            </p>
+            <p>
+              <strong>Role:</strong> <Badge variant="outline">{userData.role}</Badge>
+            </p>
           </div>
         </div>
-        
+
         <div>
           <h4 className="font-medium mb-2">Loaded Permissions ({permissions.length})</h4>
           <div className="grid grid-cols-2 gap-1 max-h-40 overflow-y-auto">
-            {permissions.map(permission => (
+            {permissions.map((permission) => (
               <Badge key={permission} variant="secondary" className="text-xs">
                 {permission.replace('FEATURE_', '').replace(/_/g, ' ').toLowerCase()}
               </Badge>
