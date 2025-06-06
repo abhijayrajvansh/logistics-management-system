@@ -35,7 +35,7 @@ export default function ClientsPage() {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_CLIENTS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">

@@ -18,7 +18,7 @@ export default function TATsPage() {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_TATS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">

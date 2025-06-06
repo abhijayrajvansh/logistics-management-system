@@ -7,9 +7,11 @@ import { PermissionGate } from '@/components/PermissionGate';
 
 export default function AdminDashboard() {
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_DASHBOARD_VIEW"
-      fallback={<div className="p-8 text-center">You don't have permission to view the dashboard.</div>}
+      fallback={
+        <div className="p-8 text-center">You don't have permission to view the dashboard.</div>
+      }
     >
       <SiteHeader title="Dashboard" />
       <div className="flex flex-1 flex-col">

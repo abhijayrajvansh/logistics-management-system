@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 import { AuthProvider } from './context/AuthContext';
 import { PermissionsProvider } from './context/PermissionsContext';
+import { PermissionsLoader } from './context/PermissionsLoader';
 import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = Geist({
@@ -31,8 +32,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <PermissionsProvider>
           <AuthProvider>
-            <Providers>{children}</Providers>
-            <Toaster />
+            <PermissionsLoader>
+              <Providers>{children}</Providers>
+              <Toaster />
+            </PermissionsLoader>
           </AuthProvider>
         </PermissionsProvider>
       </body>

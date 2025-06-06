@@ -12,17 +12,17 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { useFeatureAccess } from '@/app/context/PermissionsContext';
 import { FeatureId } from '@/constants/permissions';
-import { AiFillDashboard } from "react-icons/ai";
-import { FaBoxesStacked, FaLocationDot, FaUsersGear } from "react-icons/fa6";
-import { FaHandshake } from "react-icons/fa6";
-import { RiUserReceived2Fill } from "react-icons/ri";
-import { PiUserSquareFill } from "react-icons/pi";
-import { FaTruck } from "react-icons/fa";
-import { MdHub } from "react-icons/md";
-import { FaClock } from "react-icons/fa6";
-import { FaHandHoldingMedical } from "react-icons/fa";
-import { FaWallet } from "react-icons/fa";
-import { FaCogs } from "react-icons/fa";
+import { AiFillDashboard } from 'react-icons/ai';
+import { FaBoxesStacked, FaLocationDot, FaUsersGear } from 'react-icons/fa6';
+import { FaHandshake } from 'react-icons/fa6';
+import { RiUserReceived2Fill } from 'react-icons/ri';
+import { PiUserSquareFill } from 'react-icons/pi';
+import { FaTruck } from 'react-icons/fa';
+import { MdHub } from 'react-icons/md';
+import { FaClock } from 'react-icons/fa6';
+import { FaHandHoldingMedical } from 'react-icons/fa';
+import { FaWallet } from 'react-icons/fa';
+import { FaCogs } from 'react-icons/fa';
 
 interface NavItem {
   title: string;
@@ -106,7 +106,7 @@ export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeo
   const { can } = useFeatureAccess();
 
   // Filter navigation items based on user permissions
-  const allowedNavItems = navMain.filter(item => can(item.permission));
+  const allowedNavItems = navMain.filter((item) => can(item.permission));
 
   return (
     <SidebarGroup {...props}>
@@ -124,7 +124,7 @@ export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeo
               data-active={pathname === item.url}
               className={pathname === item.url ? 'bg-primary/40 rounded' : ''}
             >
-              <SidebarMenuButton tooltip={item.title} className='hover:bg-primary/30'>
+              <SidebarMenuButton tooltip={item.title} className="hover:bg-primary/30">
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>

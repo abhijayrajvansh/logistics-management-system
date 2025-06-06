@@ -22,7 +22,7 @@ export default function TrucksPage() {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_TRUCKS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">

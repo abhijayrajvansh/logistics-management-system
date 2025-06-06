@@ -15,7 +15,7 @@ interface PermissionGateProps {
  */
 export const PermissionGate = ({ feature, children, fallback = null }: PermissionGateProps) => {
   const { can } = useFeatureAccess();
-  
+
   return can(feature) ? <>{children}</> : <>{fallback}</>;
 };
 
@@ -24,15 +24,18 @@ export const PermissionGate = ({ feature, children, fallback = null }: Permissio
  */
 export const useMultiplePermissions = (features: FeatureId[]) => {
   const { hasPermission } = usePermissions();
-  
-  const results = features.reduce((acc, feature) => {
-    acc[feature] = hasPermission(feature);
-    return acc;
-  }, {} as Record<FeatureId, boolean>);
-  
-  const hasAll = features.every(feature => hasPermission(feature));
-  const hasAny = features.some(feature => hasPermission(feature));
-  
+
+  const results = features.reduce(
+    (acc, feature) => {
+      acc[feature] = hasPermission(feature);
+      return acc;
+    },
+    {} as Record<FeatureId, boolean>,
+  );
+
+  const hasAll = features.every((feature) => hasPermission(feature));
+  const hasAny = features.some((feature) => hasPermission(feature));
+
   return {
     permissions: results,
     hasAll,
@@ -46,17 +49,17 @@ export const useMultiplePermissions = (features: FeatureId[]) => {
 export const withPermission = (
   WrappedComponent: React.ComponentType<any>,
   requiredPermission: FeatureId,
-  fallbackComponent?: React.ComponentType
+  fallbackComponent?: React.ComponentType,
 ) => {
   return function PermissionProtectedComponent(props: any) {
     const { can } = useFeatureAccess();
-    
+
     if (!can(requiredPermission)) {
       if (fallbackComponent) {
         const FallbackComponent = fallbackComponent;
         return <FallbackComponent {...props} />;
       }
-      
+
       return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -68,7 +71,7 @@ export const withPermission = (
         </div>
       );
     }
-    
+
     return <WrappedComponent {...props} />;
   };
 };

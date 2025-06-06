@@ -54,7 +54,7 @@ const RequestsPage = () => {
   );
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_REQUESTS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">
@@ -66,46 +66,46 @@ const RequestsPage = () => {
       }
     >
       <div className="container mx-auto py-10 space-y-8">
-      {/* Title and header */}
-      <div className="flex justify-between px-4 lg:px-6">
-        <div>
-          <h1 className="text-3xl font-semibold">Monitor Driver's Requests</h1>
-          <p className="text-[14px] text-black/70 mt-1">
-            Monitor and manage your drivers' requests records
-          </p>
+        {/* Title and header */}
+        <div className="flex justify-between px-4 lg:px-6">
+          <div>
+            <h1 className="text-3xl font-semibold">Monitor Driver's Requests</h1>
+            <p className="text-[14px] text-black/70 mt-1">
+              Monitor and manage your drivers' requests records
+            </p>
+          </div>
         </div>
+
+        {/* Pending Requests Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columnConfig} data={pendingRequests} searchKey="title" />
+          </CardContent>
+        </Card>
+
+        {/* Approved Requests Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Approved Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columnConfig} data={approvedRequests} searchKey="title" />
+          </CardContent>
+        </Card>
+
+        {/* Rejected Requests Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Rejected Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columnConfig} data={rejectedRequests} searchKey="title" />
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Pending Requests Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable columns={columnConfig} data={pendingRequests} searchKey="title" />
-        </CardContent>
-      </Card>
-
-      {/* Approved Requests Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Approved Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable columns={columnConfig} data={approvedRequests} searchKey="title" />
-        </CardContent>
-      </Card>
-
-      {/* Rejected Requests Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Rejected Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable columns={columnConfig} data={rejectedRequests} searchKey="title" />
-        </CardContent>
-      </Card>
-    </div>
     </PermissionGate>
   );
 };

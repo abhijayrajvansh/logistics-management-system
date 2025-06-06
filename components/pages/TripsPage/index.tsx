@@ -22,7 +22,7 @@ export function TripsPage() {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_TRIPS_VIEW"
       fallback={<div className="p-8 text-center">You don't have permission to view trips.</div>}
     >
@@ -33,7 +33,7 @@ export function TripsPage() {
             <DataTable
               columns={columns}
               data={readyToShipTrips}
-                            activeTripData={activeTrips}
+              activeTripData={activeTrips}
               pastTripData={pastTrips}
             />
           </div>

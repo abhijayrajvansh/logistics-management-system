@@ -2,11 +2,10 @@
 
 import { auth } from '@/firebase/auth';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
-import { usePermissions } from './PermissionsContext';
 import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 
 interface AuthContextType {
@@ -25,20 +24,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setPermissions, clearPermissions } = usePermissions();
+
+  const clearUserData = useCallback(() => {
+    setUserData(null);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (!user) {
-        setUserData(null);
-        clearPermissions(); // Clear permissions on logout
-        setLoading(false);
+        clearUserData();
       }
     });
 
     return () => unsubscribe();
-  }, [clearPermissions]);
+  }, [clearUserData]);
 
   // Subscribe to user data in Firestore when auth state changes
   useEffect(() => {
@@ -60,15 +61,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             permissions: data.permissions || [],
             createdAt: data.createdAt.toDate() || '',
           } as User;
-          
+
           setUserData(userData);
-          
-          // Load permissions - use custom permissions if available, otherwise use default role permissions
-          const userPermissions = userData.permissions && userData.permissions.length > 0 
-            ? userData.permissions 
-            : DEFAULT_ROLE_PERMISSIONS[userData.role] || [];
-          
-          setPermissions(userPermissions);
         }
         setLoading(false);
       },
@@ -79,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     return () => unsubscribe();
-  }, [user?.uid, setPermissions]);
+  }, [user?.uid]);
 
   return (
     <AuthContext.Provider value={{ user, userData, loading }}>

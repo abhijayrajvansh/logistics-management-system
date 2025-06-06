@@ -67,7 +67,7 @@ export default function OrdersPage() {
   }));
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_ORDERS_VIEW"
       fallback={<div className="p-8 text-center">You don't have permission to view orders.</div>}
     >

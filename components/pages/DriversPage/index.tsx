@@ -21,7 +21,7 @@ export default function DriversPage() {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_DRIVERS_VIEW"
       fallback={<div className="p-8 text-center">You don't have permission to view drivers.</div>}
     >

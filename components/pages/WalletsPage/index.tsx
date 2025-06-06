@@ -19,7 +19,7 @@ const WalletsPage = () => {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_WALLETS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">

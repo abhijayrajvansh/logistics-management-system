@@ -19,7 +19,7 @@ const CentersPage = () => {
   }
 
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_CENTERS_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">

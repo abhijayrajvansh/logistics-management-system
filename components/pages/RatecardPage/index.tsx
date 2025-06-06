@@ -1,13 +1,13 @@
-import React from 'react'
-import ClientsPage from '../ClientsPage'
-import { SiteHeader } from '@/components/site-header'
-import ReceiversPage from '../ReceiversPage'
-import TATsPage from '../TATsPage'
-import { PermissionGate } from '@/components/PermissionGate'
+import React from 'react';
+import ClientsPage from '../ClientsPage';
+import { SiteHeader } from '@/components/site-header';
+import ReceiversPage from '../ReceiversPage';
+import TATsPage from '../TATsPage';
+import { PermissionGate } from '@/components/PermissionGate';
 
 const RatecardPage = () => {
   return (
-    <PermissionGate 
+    <PermissionGate
       feature="FEATURE_RATECARD_VIEW"
       fallback={
         <div className="flex items-center justify-center h-64">
@@ -18,12 +18,12 @@ const RatecardPage = () => {
         </div>
       }
     >
-      <SiteHeader title='Rate Card'/>
+      <SiteHeader title="Rate Card" />
       <ClientsPage />
       <ReceiversPage />
       <TATsPage />
     </PermissionGate>
-  )
-}
+  );
+};
 
-export default RatecardPage
+export default RatecardPage;

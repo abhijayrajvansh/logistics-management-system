@@ -1,13 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { FeatureId } from '@/constants/permissions';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import { FeatureId, DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 
 interface PermissionsContextType {
   permissions: string[];
   setPermissions: (permissions: string[]) => void;
   clearPermissions: () => void;
   hasPermission: (featureId: FeatureId) => boolean;
+  loading: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsContextType>({
@@ -15,6 +16,7 @@ const PermissionsContext = createContext<PermissionsContextType>({
   setPermissions: () => {},
   clearPermissions: () => {},
   hasPermission: () => false,
+  loading: false,
 });
 
 interface PermissionsProviderProps {
@@ -23,31 +25,35 @@ interface PermissionsProviderProps {
 
 export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
   const [permissions, setPermissionsState] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const setPermissions = (newPermissions: string[]) => {
+  const setPermissions = useCallback((newPermissions: string[]) => {
     setPermissionsState(newPermissions);
-  };
+  }, []);
 
-  const clearPermissions = () => {
+  const clearPermissions = useCallback(() => {
     setPermissionsState([]);
-  };
+  }, []);
 
-  const hasPermission = (featureId: FeatureId): boolean => {
-    return permissions.includes(featureId);
-  };
-
-  return (
-    <PermissionsContext.Provider
-      value={{
-        permissions,
-        setPermissions,
-        clearPermissions,
-        hasPermission,
-      }}
-    >
-      {children}
-    </PermissionsContext.Provider>
+  const hasPermission = useCallback(
+    (featureId: FeatureId): boolean => {
+      return permissions.includes(featureId);
+    },
+    [permissions],
   );
+
+  const contextValue = useMemo(
+    () => ({
+      permissions,
+      setPermissions,
+      clearPermissions,
+      hasPermission,
+      loading,
+    }),
+    [permissions, setPermissions, clearPermissions, hasPermission, loading],
+  );
+
+  return <PermissionsContext.Provider value={contextValue}>{children}</PermissionsContext.Provider>;
 };
 
 export const usePermissions = () => {

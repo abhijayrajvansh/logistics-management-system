@@ -19,7 +19,7 @@ export type User = {
   location: string | 'NA';
   role: 'admin' | 'manager' | 'driver' | 'accountant';
   permissions?: string[]; // Array of feature IDs that the user has access to
-  walletId: Wallet['id'] | "NA"; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
+  walletId: Wallet['id'] | 'NA'; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
   createdAt: Date;
 };
 
@@ -89,10 +89,10 @@ export type TripVoucher = {
     amount: number; // additional balance given to the driver for the trip
     reason: string; // reason for the additional balance
     date: Timestamp; // date when the additional balance was given
-  }[]
+  }[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
-}
+};
 
 export type Wallet = {
   id: string; // unique identifier for the wallet
@@ -101,21 +101,21 @@ export type Wallet = {
   transactions: WalletTransaction[]; // list of transactions in the wallet
   createdAt: Timestamp;
   updatedAt: Timestamp;
-}
+};
 
 export type WalletTransaction = {
   amount: number; // amount of the transaction, can be positive (credit) or negative (debit)
   type: 'credit' | 'debit'; // type of transaction
   reason: string; // brief reason description of the transaction
   date: Timestamp; // date of the transaction
-}
+};
 
 export type TripOdometerReading = {
   startReading: number | 'Not Provided'; // odometer reading at the start of the trip
   startPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the start of the trip
   endReading: number | 'Not Provided'; // odometer reading at the end of the trip
   endPhotoUrl: string | 'Not Provided'; // URL of the photo taken at the end of the trip
-}
+};
 
 export type TripOrders = {
   tripId: string;
