@@ -98,12 +98,6 @@ const navMain: NavItem[] = [
     icon: FaCogs,
     permission: 'FEATURE_ADMIN_PANEL' as FeatureId,
   },
-  {
-    title: 'System Debug',
-    url: '/admin/debug',
-    icon: FaCogs,
-    permission: 'FEATURE_ADMIN_PANEL' as FeatureId,
-  },
 ];
 
 export function AdminNavPanel({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
