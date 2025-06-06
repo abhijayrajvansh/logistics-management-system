@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { CreateReceiverForm } from './create-receiver';
 import useReceivers from '@/hooks/useReceivers';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function ReceiversPage() {
   const { receivers, isLoading, error } = useReceivers();
@@ -34,7 +35,17 @@ export default function ReceiversPage() {
   }
 
   return (
-    <>
+    <PermissionGate 
+      feature="FEATURE_RECEIVERS_VIEW"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600 mt-2">You don't have permission to view receivers.</p>
+          </div>
+        </div>
+      }
+    >
       {/* <SiteHeader title="Receivers" /> */}
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4">
@@ -71,6 +82,6 @@ export default function ReceiversPage() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }

@@ -3,10 +3,14 @@
 import { SectionCards } from '@/components/section-cards';
 import AnalyticsChart from '../../AnalyticsChart';
 import { SiteHeader } from '../../site-header';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function AdminDashboard() {
   return (
-    <>
+    <PermissionGate 
+      feature="FEATURE_DASHBOARD_VIEW"
+      fallback={<div className="p-8 text-center">You don't have permission to view the dashboard.</div>}
+    >
       <SiteHeader title="Dashboard" />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
@@ -28,6 +32,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }

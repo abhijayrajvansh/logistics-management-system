@@ -6,6 +6,7 @@ import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
 import useOrders from '@/hooks/useOrders';
 import useUsers from '@/hooks/useUsers';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
@@ -66,7 +67,10 @@ export default function OrdersPage() {
   }));
 
   return (
-    <>
+    <PermissionGate 
+      feature="FEATURE_ORDERS_VIEW"
+      fallback={<div className="p-8 text-center">You don't have permission to view orders.</div>}
+    >
       <SiteHeader title="Orders" />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
@@ -82,6 +86,6 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }

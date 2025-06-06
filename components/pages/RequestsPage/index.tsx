@@ -8,6 +8,7 @@ import { useRequests } from '@/hooks/useRequests';
 import { useDrivers } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
 import { processDriverRequest } from '@/lib/manageDriverRequest';
+import { PermissionGate } from '@/components/PermissionGate';
 
 const RequestsPage = () => {
   const { requests, approveRequest, rejectRequest } = useRequests();
@@ -53,7 +54,18 @@ const RequestsPage = () => {
   );
 
   return (
-    <div className="container mx-auto py-10 space-y-8">
+    <PermissionGate 
+      feature="FEATURE_REQUESTS_VIEW"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600 mt-2">You don't have permission to view requests.</p>
+          </div>
+        </div>
+      }
+    >
+      <div className="container mx-auto py-10 space-y-8">
       {/* Title and header */}
       <div className="flex justify-between px-4 lg:px-6">
         <div>
@@ -94,6 +106,7 @@ const RequestsPage = () => {
         </CardContent>
       </Card>
     </div>
+    </PermissionGate>
   );
 };
 

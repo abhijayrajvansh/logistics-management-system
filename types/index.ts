@@ -18,6 +18,7 @@ export type User = {
   displayName: string;
   location: string | 'NA';
   role: 'admin' | 'manager' | 'driver' | 'accountant';
+  permissions?: string[]; // Array of feature IDs that the user has access to
   walletId: Wallet['id'] | "NA"; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
   createdAt: Date;
 };

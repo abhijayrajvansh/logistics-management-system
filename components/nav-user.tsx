@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { usePermissions } from '@/app/context/PermissionsContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ export function UserNavProfile() {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { userData } = useAuth();
+  const { clearPermissions } = usePermissions();
 
   const getUsername = (email: string | null | undefined) => {
     if (!email) return '';
@@ -48,6 +50,7 @@ export function UserNavProfile() {
     try {
       setIsLoggingOut(true);
       await signOut(auth);
+      clearPermissions(); // Clear permissions on logout
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);

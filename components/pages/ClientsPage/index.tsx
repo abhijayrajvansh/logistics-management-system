@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { CreateClientForm } from './create-client';
 import useClients from '@/hooks/useClients';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function ClientsPage() {
   const { clients, isLoading, error } = useClients();
@@ -34,7 +35,17 @@ export default function ClientsPage() {
   }
 
   return (
-    <>
+    <PermissionGate 
+      feature="FEATURE_CLIENTS_VIEW"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600 mt-2">You don't have permission to view clients.</p>
+          </div>
+        </div>
+      }
+    >
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4">
           {/* Header with Create Client Button */}
@@ -70,6 +81,6 @@ export default function ClientsPage() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }
