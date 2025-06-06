@@ -224,10 +224,9 @@ export default function RolePermissionManager() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Role-Based Permission Management</CardTitle>
-              <CardDescription>
-                Manage permissions for each role in the system. Changes are saved to all users with
-                that role.
+              <CardTitle className='text-xl'>Grant Permissions & Manage Role-Based Access</CardTitle>
+              <CardDescription className='mt-2'>
+                Changes are saved to all users with its respective role.
               </CardDescription>
             </div>
             <div className="flex space-x-2">
