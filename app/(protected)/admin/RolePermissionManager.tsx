@@ -224,8 +224,10 @@ export default function RolePermissionManager() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className='text-xl'>Grant Permissions & Manage Role-Based Access</CardTitle>
-              <CardDescription className='mt-2'>
+              <CardTitle className="text-xl">
+                Grant Permissions & Manage Role-Based Access
+              </CardTitle>
+              <CardDescription className="mt-2">
                 Changes are saved to all users with its respective role.
               </CardDescription>
             </div>
@@ -247,11 +249,18 @@ export default function RolePermissionManager() {
           </div>
         </CardHeader>
         <CardContent>
+          {hasChanges && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                You have unsaved changes. Click "Save Changes" to apply them.
+              </p>
+            </div>
+          )}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse min-w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-3 font-medium">Feature</th>
+                  <th className="text-left p-3 font-bold">Features List</th>
                   {AVAILABLE_ROLES.map((role) => (
                     <th key={role} className="text-center p-3 font-medium min-w-[120px]">
                       <Badge className={getRoleColor(role)}>
