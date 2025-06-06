@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-const PermissionManager = dynamic(() => import('../PermissionManager'), { ssr: false });
+const RolePermissionManager = dynamic(() => import('../RolePermissionManager'), { ssr: false });
 
 export default function AdminPage() {
   const { userData, loading } = useAuth();
@@ -34,8 +34,10 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <PermissionManager />
+    <main className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <RolePermissionManager />
+      </div>
     </main>
   );
 }

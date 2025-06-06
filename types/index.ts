@@ -18,7 +18,6 @@ export type User = {
   displayName: string;
   location: string | 'NA';
   role: 'admin' | 'manager' | 'driver' | 'accountant';
-  permissions?: string[]; // Array of feature IDs that the user has access to
   walletId: Wallet['id'] | 'NA'; // if the user has a wallet, then this will be the wallet ID, otherwise it will be undefined
   createdAt: Date;
 };
@@ -361,4 +360,12 @@ export type PrintDocketSchema = {
       notPayable: boolean;
     };
   };
+};
+
+// Role-based permission system types
+export type RolePermissions = {
+  roleId: string; // Role name (admin, manager, accountant, driver)
+  permissions: string[]; // Array of feature IDs
+  updatedAt: Date;
+  updatedBy: string; // User ID who last updated the permissions
 };

@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             displayName: data.displayName || '',
             location: data.location || '',
             role: data.role || '',
-            permissions: data.permissions || [],
+            walletId: data.walletId || 'NA',
             createdAt: data.createdAt.toDate() || '',
           } as User;
 
