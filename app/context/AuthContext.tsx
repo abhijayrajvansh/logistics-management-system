@@ -6,7 +6,6 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 
 interface AuthContextType {
   user: FirebaseUser | null;
