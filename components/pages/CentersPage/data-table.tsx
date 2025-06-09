@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { CreateCenterForm } from './create-center';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -111,23 +112,25 @@ export function DataTable<TData, TValue>({
             create, view and manage your centers at ease.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Create Center</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Center</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new center. Click submit when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateCenterForm onSuccess={handleCenterSuccess} />
-          </DialogContent>
-        </Dialog>
+        <PermissionGate feature="FEATURE_CENTERS_CREATE" fallback={null}>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Create Center</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create New Center</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new center. Click submit when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateCenterForm onSuccess={handleCenterSuccess} />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <TabsContent
