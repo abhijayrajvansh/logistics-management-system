@@ -1,13 +1,15 @@
-import { FEATURE_IDS } from '../constants/permissions';
+import { FEATURE_IDS, FeatureId } from '../constants/permissions';
 import { glob } from 'glob';
 import * as fs from 'fs';
 import * as path from 'path';
 
+interface ImplementationStatus {
+  implemented: boolean;
+  usageLocations: string[];
+}
+
 async function checkPermissionImplementation() {
-  const implementationStatus = new Map<string, {
-    implemented: boolean;
-    usageLocations: string[];
-  }>();
+  const implementationStatus = new Map<FeatureId, ImplementationStatus>();
 
   // Initialize all features as not implemented
   FEATURE_IDS.forEach(featureId => {
@@ -18,8 +20,13 @@ async function checkPermissionImplementation() {
   });
 
   // Get all TypeScript files in the project
-  const files = await glob('**/*.{ts,tsx}', {
-    ignore: ['node_modules/**', 'dist/**', '.next/**']
+  const files = await new Promise<string[]>((resolve, reject) => {
+    glob('**/*.{ts,tsx}', {
+      ignore: ['node_modules/**', 'dist/**', '.next/**']
+    }, (err, matches) => {
+      if (err) reject(err);
+      else resolve(matches);
+    });
   });
 
   // Look for PermissionGate and useFeatureAccess usage
@@ -60,7 +67,7 @@ async function checkPermissionImplementation() {
   console.log('✅ Implemented Features:', implemented.size);
   implemented.forEach((status, featureId) => {
     console.log(`\n${featureId}:`);
-    status.usageLocations.forEach(location => {
+    status.usageLocations.forEach((location: string) => {
       console.log(`  - ${location}`);
     });
   });
