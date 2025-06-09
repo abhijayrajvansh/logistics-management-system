@@ -1020,9 +1020,17 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate features={['FEATURE_TRIPS_EDIT', 'FEATURE_TRIPS_DELETE']}>
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
-    cell: ActionCell,
+    cell: ({ row }) => (
+      <PermissionGate features={['FEATURE_TRIPS_EDIT', 'FEATURE_TRIPS_DELETE']}>
+        <ActionCell row={row} />
+      </PermissionGate>
+    ),
   },
 ];
 
