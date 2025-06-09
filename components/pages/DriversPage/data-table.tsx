@@ -48,6 +48,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CreateDriverForm } from './create-driver';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -109,26 +110,28 @@ export function DataTable<TData, TValue>({
             Create, view and manage your drivers at ease.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon className="size-4" />
-              <span className="hidden font-semibold lg:inline ml-2">Create Driver</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Driver</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new driver. Click submit when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateDriverForm
-              onSuccess={handleDriverSuccess}
-              onCancel={() => setDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <PermissionGate feature="FEATURE_DRIVERS_CREATE">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon className="size-4" />
+                <span className="hidden font-semibold lg:inline ml-2">Create Driver</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Driver</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new driver. Click submit when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateDriverForm
+                onSuccess={handleDriverSuccess}
+                onCancel={() => setDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <div className="rounded-md border">

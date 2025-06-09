@@ -19,6 +19,7 @@ import {
 import useTrucks from '@/hooks/useTrucks';
 import useUsers from '@/hooks/useUsers';
 import { ViewDriverDetails } from './ViewDriverDetails';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row, table }: { row: any; table: any }) => {
@@ -38,18 +39,22 @@ const ActionCell = ({ row, table }: { row: any; table: any }) => {
     <>
       <div className="text-center space-x-2">
         <ViewDriverDetails driver={driver} />
-        <button
-          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-          onClick={() => setIsEditDialogOpen(true)}
-        >
-          <MdEdit size={15} />
-        </button>
-        <button
-          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-          onClick={() => setIsDeleteDialogOpen(true)}
-        >
-          <MdDeleteOutline size={15} />
-        </button>
+        <PermissionGate feature="FEATURE_DRIVERS_EDIT">
+          <button
+            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <MdEdit size={15} />
+          </button>
+        </PermissionGate>
+        <PermissionGate feature="FEATURE_DRIVERS_DELETE">
+          <button
+            className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <MdDeleteOutline size={15} />
+          </button>
+        </PermissionGate>
       </div>
 
       {/* Edit Dialog */}
@@ -279,21 +284,29 @@ export const columns: ColumnDef<Driver>[] = [
   },
   {
     accessorKey: 'driverDocuments',
-    header: 'Documents Status',
-    cell: ({ row }) => {
-      const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || 'NA';
-      const status = docs === 'NA' ? 'Pending' : docs.status;
-      return (
-        <Badge
-          variant="outline"
-          className={`text-xs ${
-            status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {status}
-        </Badge>
-      );
-    },
+    header: () => (
+      <PermissionGate feature="FEATURE_DRIVERS_DOCUMENTS_VIEW" fallback={null}>
+        <div>Documents Status</div>
+      </PermissionGate>
+    ),
+    cell: ({ row }) => (
+      <PermissionGate feature="FEATURE_DRIVERS_DOCUMENTS_VIEW" fallback={null}>
+        {(() => {
+          const docs = (row.getValue('driverDocuments') as Driver['driverDocuments']) || 'NA';
+          const status = docs === 'NA' ? 'Pending' : docs.status;
+          return (
+            <Badge
+              variant="outline"
+              className={`text-xs ${
+                status === 'Verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}
+            >
+              {status}
+            </Badge>
+          );
+        })()}
+      </PermissionGate>
+    ),
   },
   {
     accessorKey: 'date_of_joining',
