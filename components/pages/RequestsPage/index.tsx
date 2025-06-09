@@ -9,16 +9,24 @@ import { useDrivers } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
 import { processDriverRequest } from '@/lib/manageDriverRequest';
 import { PermissionGate } from '@/components/PermissionGate';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
 
 const RequestsPage = () => {
   const { requests, approveRequest, rejectRequest } = useRequests();
   const { drivers } = useDrivers();
+  const { can } = useFeatureAccess();
 
   const pendingRequests = requests.filter((req) => req.status === 'pending');
   const approvedRequests = requests.filter((req) => req.status === 'approved');
   const rejectedRequests = requests.filter((req) => req.status === 'rejected');
 
   const handleApprove = async (id: string) => {
+    // Check permission before allowing approval
+    if (!can('FEATURE_REQUESTS_APPROVE')) {
+      toast.error('You do not have permission to approve requests');
+      return;
+    }
+
     try {
       // Find the request to be approved
       const request = requests.find((req) => req.id === id);
@@ -39,6 +47,12 @@ const RequestsPage = () => {
   };
 
   const handleReject = async (id: string) => {
+    // Check permission before allowing rejection
+    if (!can('FEATURE_REQUESTS_REJECT')) {
+      toast.error('You do not have permission to reject requests');
+      return;
+    }
+
     try {
       await rejectRequest(id);
       toast.success('Request rejected successfully');
