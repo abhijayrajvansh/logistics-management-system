@@ -216,13 +216,13 @@ export default function RolePermissionManager() {
           </div>
         </CardHeader>
         <CardContent>
-          {hasChanges && (
+          {/* {hasChanges && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-800">
                 You have unsaved changes. Click "Save Changes" to apply them.
               </p>
             </div>
-          )}
+          )} */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-full">
               <thead>
