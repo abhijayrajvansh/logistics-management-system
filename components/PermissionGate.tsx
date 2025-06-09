@@ -28,10 +28,10 @@ export const PermissionGate = ({
     return can(feature) ? <>{children}</> : <>{fallback}</>;
   }
 
-  // Handle multiple features (all required)
+  // Handle multiple features (any one required)
   if (features && features.length > 0) {
-    const hasAllPermissions = features.every((f) => can(f));
-    return hasAllPermissions ? <>{children}</> : <>{fallback}</>;
+    const hasAnyPermission = features.some((f) => can(f));
+    return hasAnyPermission ? <>{children}</> : <>{fallback}</>;
   }
 
   // If neither feature nor features is provided, default to showing fallback

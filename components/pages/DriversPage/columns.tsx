@@ -318,9 +318,29 @@ export const columns: ColumnDef<Driver>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate
+        features={[
+          'FEATURE_DRIVERS_EDIT',
+          'FEATURE_DRIVERS_DELETE',
+          'FEATURE_DRIVERS_DOCUMENTS_VIEW',
+        ]}
+      >
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
-    cell: ActionCell,
+    cell: ({ row, table }) => (
+      <PermissionGate
+        features={[
+          'FEATURE_DRIVERS_EDIT',
+          'FEATURE_DRIVERS_DELETE',
+          'FEATURE_DRIVERS_DOCUMENTS_VIEW',
+        ]}
+      >
+        <ActionCell row={row} table={table} />
+      </PermissionGate>
+    ),
     meta: {
       className: 'text-center',
     },
