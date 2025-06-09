@@ -22,16 +22,16 @@ export async function initializeRolePermissions() {
       await setDoc(roleDoc, rolePermissionData);
 
       console.log(
-        `✓ Initialized permissions for role: ${role} (${permissions.length} permissions)`,
+        `Initialized permissions for role: ${role} (${permissions.length} permissions)`,
       );
     });
 
     await Promise.all(initPromises);
-    console.log('✅ All role permissions initialized successfully!');
+    console.log('All role permissions initialized successfully!');
 
     return { success: true, message: 'Role permissions initialized successfully' };
   } catch (error) {
-    console.error('❌ Error initializing role permissions:', error);
+    console.error('Error initializing role permissions:', error);
     return { success: false, error };
   }
 }
