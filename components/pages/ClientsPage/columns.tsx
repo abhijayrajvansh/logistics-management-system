@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import DeleteClientDialog from './delete-client';
 import UpdateClientForm from './update-client';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // Create a component for the actions cell to manage edit dialog state
 const ActionCell = ({ row }: { row: any }) => {
@@ -30,18 +31,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_CLIENTS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+      
+      <PermissionGate feature="FEATURE_CLIENTS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* Edit Client Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -119,7 +125,14 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate 
+        features={['FEATURE_CLIENTS_EDIT', 'FEATURE_CLIENTS_DELETE']} 
+        fallback={null}
+      >
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
     cell: ActionCell,
   },

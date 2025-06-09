@@ -56,23 +56,25 @@ export default function ClientsPage() {
                 Create, view and manage your clients at ease.
               </p>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="rounded-lg">
-                  <PlusIcon />
-                  <span className="hidden font-semibold lg:inline">Create Client</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Client</DialogTitle>
-                  <DialogDescription>
-                    Fill out the form below to create a new client. Click submit when you're done.
-                  </DialogDescription>
-                </DialogHeader>
-                <CreateClientForm onSuccess={handleClientSuccess} />
-              </DialogContent>
-            </Dialog>
+            <PermissionGate feature="FEATURE_CLIENTS_CREATE">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm" className="rounded-lg">
+                    <PlusIcon />
+                    <span className="hidden font-semibold lg:inline">Create Client</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Client</DialogTitle>
+                    <DialogDescription>
+                      Fill out the form below to create a new client. Click submit when you're done.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateClientForm onSuccess={handleClientSuccess} />
+                </DialogContent>
+              </Dialog>
+            </PermissionGate>
           </div>
 
           {/* Client Data Table */}
