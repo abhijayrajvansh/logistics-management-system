@@ -447,24 +447,25 @@ export const columns: ColumnDef<Truck>[] = [
       const [isDialogOpen, setIsDialogOpen] = useState(false);
       const toolkits = row.original.toolkitCount;
 
-      // Handle undefined, null, or 'NA' cases
-      if (!toolkits || toolkits === 'NA') {
+      const content = () => {
+        // Handle undefined, null, or 'NA' cases
+        if (!toolkits || toolkits === 'NA') {
+          return (
+            <button
+              className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
+              disabled
+              title="No toolkits added"
+            >
+              <span className="text-sm">0</span>
+              <TbTools size={15} />
+            </button>
+          );
+        }
+
+        const count = toolkits.length;
+
         return (
-          <button
-            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
-            disabled
-            title="No toolkits added"
-          >
-            <span className="text-sm">0</span>
-            <TbTools size={15} />
-          </button>
-        );
-      }
-
-      const count = toolkits.length;
-
-      return (
-        <>
+          <>
             <button
               className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
               onClick={() => setIsDialogOpen(true)}
@@ -506,9 +507,11 @@ export const columns: ColumnDef<Truck>[] = [
                 )}
               </DialogContent>
             </Dialog>
-          </PermissionGate>
-        </>
-      );
+          </>
+        );
+      };
+
+      return <PermissionGate feature="FEATURE_TRUCKS_TOOLKIT_DETAILS">{content()}</PermissionGate>;
     },
   },
   {
