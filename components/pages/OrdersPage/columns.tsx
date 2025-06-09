@@ -20,6 +20,7 @@ import Image from 'next/image';
 import { FaRegEye } from 'react-icons/fa';
 import { Upload } from 'lucide-react';
 import { UploadProofOfDelivery } from './UploadProofOfDelivery';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // Create a component for the proof cell to manage dialog state
 const ProofCell = ({ row }: { row: any }) => {
@@ -219,18 +220,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_ORDERS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+      
+      <PermissionGate feature="FEATURE_ORDERS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* Edit Order Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -254,7 +260,7 @@ const ActionCell = ({ row }: { row: any }) => {
         orderId={order.order_id}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        order={order} // Pass the full order object
+        order={order}
       />
     </div>
   );

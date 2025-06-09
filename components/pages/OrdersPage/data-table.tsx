@@ -52,6 +52,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { CreateOrderForm } from './create-order';
 import { FaDownload } from 'react-icons/fa';
 import { redirect } from 'next/navigation';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -59,14 +60,14 @@ export function DataTable<TData, TValue>({
   inTransitData = [],
   transferredData = [],
   deliveredData = [],
-  upcomingTransfersData = [], // Add this prop
+  upcomingTransfersData = [],
 }: {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   inTransitData?: TData[];
   transferredData?: TData[];
   deliveredData?: TData[];
-  upcomingTransfersData?: TData[]; // Add type
+  upcomingTransfersData?: TData[];
 }) {
   const [data, setData] = React.useState(() => initialData);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -286,23 +287,26 @@ export function DataTable<TData, TValue>({
             Create, view and manage your orders at ease.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Create Order</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent onOpenAutoFocus={e => e.preventDefault()} className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Order</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new order. Click submit when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateOrderForm onSuccess={handleOrderSuccess} />
-          </DialogContent>
-        </Dialog>
+
+        <PermissionGate feature="FEATURE_ORDERS_CREATE">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Create Order</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent onOpenAutoFocus={e => e.preventDefault()} className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Order</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new order. Click submit when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateOrderForm onSuccess={handleOrderSuccess} />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       {/* Ready to Transport & Assigned Orders Section */}
