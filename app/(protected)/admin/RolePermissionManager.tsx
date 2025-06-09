@@ -162,35 +162,6 @@ export default function RolePermissionManager() {
     toast.info('Reset to default permissions');
   };
 
-  const initializeRolePermissions = async () => {
-    setSaving(true);
-
-    try {
-      const initPromises = AVAILABLE_ROLES.map(async (role) => {
-        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role] || [];
-
-        const rolePermissionData: RolePermissions = {
-          roleId: role,
-          permissions: defaultPermissions,
-          updatedAt: new Date(),
-          updatedBy: userData?.userId || 'admin',
-        };
-
-        const roleDoc = doc(db, 'rolePermissions', role);
-        return setDoc(roleDoc, rolePermissionData);
-      });
-
-      await Promise.all(initPromises);
-      setHasChanges(false);
-      toast.success('Role permissions initialized with default values');
-    } catch (error) {
-      console.error('Error initializing role permissions:', error);
-      toast.error('Failed to initialize role permissions');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const formatFeatureName = (permission: string) => {
     return permission
       .replace('FEATURE_', '')
@@ -232,10 +203,6 @@ export default function RolePermissionManager() {
               </CardDescription>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" onClick={initializeRolePermissions} disabled={saving}>
-                <IconRefresh className="h-4 w-4 mr-2" />
-                Initialize Defaults
-              </Button>
               <Button variant="outline" onClick={resetToDefaults} disabled={saving}>
                 <IconRefresh className="h-4 w-4 mr-2" />
                 Reset to Defaults
