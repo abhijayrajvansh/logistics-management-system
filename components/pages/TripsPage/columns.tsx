@@ -1007,8 +1007,16 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'voucher',
-    header: 'Voucher',
-    cell: VoucherCell,
+    header: () => (
+      <PermissionGate feature="FEATURE_TRIPS_HANDLE_VOUCHER" fallback={null}>
+        <div>Voucher</div>
+      </PermissionGate>
+    ),
+    cell: ({ row }) => (
+      <PermissionGate feature="FEATURE_TRIPS_HANDLE_VOUCHER" fallback={null}>
+        <VoucherCell row={row} />
+      </PermissionGate>
+    ),
   },
   {
     accessorKey: 'actions',
