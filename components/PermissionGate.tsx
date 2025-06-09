@@ -5,18 +5,37 @@ import { FeatureId } from '@/constants/permissions';
 import { ReactNode } from 'react';
 
 interface PermissionGateProps {
-  feature: FeatureId;
+  feature?: FeatureId;
+  features?: FeatureId[];
   children: ReactNode;
   fallback?: ReactNode;
 }
 
 /**
  * Component that conditionally renders children based on user permissions
+ * Supports both single feature and multiple features (all required)
  */
-export const PermissionGate = ({ feature, children, fallback = null }: PermissionGateProps) => {
+export const PermissionGate = ({
+  feature,
+  features,
+  children,
+  fallback = null,
+}: PermissionGateProps) => {
   const { can } = useFeatureAccess();
 
-  return can(feature) ? <>{children}</> : <>{fallback}</>;
+  // Handle single feature (backward compatibility)
+  if (feature && !features) {
+    return can(feature) ? <>{children}</> : <>{fallback}</>;
+  }
+
+  // Handle multiple features (all required)
+  if (features && features.length > 0) {
+    const hasAllPermissions = features.every((f) => can(f));
+    return hasAllPermissions ? <>{children}</> : <>{fallback}</>;
+  }
+
+  // If neither feature nor features is provided, default to showing fallback
+  return <>{fallback}</>;
 };
 
 /**

@@ -53,12 +53,14 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
   return (
     <>
+    <PermissionGate feature="FEATURE_DRIVERS_DOCUMENTS_VIEW">
       <button
         className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray hover:text-white"
         onClick={() => setIsOpen(true)}
       >
         <IconEye size={15} />
       </button>
+      </PermissionGate>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
