@@ -443,23 +443,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <PermissionGate feature='FEATURE_TRIPS_EDIT'>
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      </PermissionGate>
-      <PermissionGate feature='FEATURE_TRIPS_DELETE'>
-      {trip.type !== 'past' && (
+      <PermissionGate feature="FEATURE_TRIPS_EDIT">
         <button
-          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-          onClick={() => setIsDeleteDialogOpen(true)}
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
         >
-          <MdDeleteOutline size={15} />
+          <MdEdit size={15} />
         </button>
-      )}
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRIPS_DELETE">
+        {trip.type !== 'past' && (
+          <button
+            className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <MdDeleteOutline size={15} />
+          </button>
+        )}
       </PermissionGate>
 
       {/* Edit Trip Dialog */}
@@ -994,8 +994,16 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'odometerReading',
-    header: 'Odometer',
-    cell: OdometerReadingsCell,
+    header: () => (
+      <PermissionGate feature="FEATURE_TRIPS_ODOMETER_VIEW" fallback={null}>
+        <div>Odometer</div>
+      </PermissionGate>
+    ),
+    cell: ({ row }) => (
+      <PermissionGate feature="FEATURE_TRIPS_ODOMETER_VIEW" fallback={null}>
+        <OdometerReadingsCell row={row} />
+      </PermissionGate>
+    ),
   },
   {
     accessorKey: 'voucher',
