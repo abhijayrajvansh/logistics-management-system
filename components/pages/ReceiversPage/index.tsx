@@ -69,7 +69,8 @@ export default function ReceiversPage() {
                   <DialogHeader>
                     <DialogTitle>Create New Receiver</DialogTitle>
                     <DialogDescription>
-                      Fill out the form below to create a new receiver. Click submit when you're done.
+                      Fill out the form below to create a new receiver. Click submit when you're
+                      done.
                     </DialogDescription>
                   </DialogHeader>
                   <CreateReceiverForm onSuccess={handleReceiverSuccess} />

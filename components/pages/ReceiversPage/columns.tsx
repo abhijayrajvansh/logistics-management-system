@@ -40,7 +40,7 @@ const ActionCell = ({ row }: { row: any }) => {
           <MdEdit size={15} />
         </button>
       </PermissionGate>
-      
+
       <PermissionGate feature="FEATURE_RECEIVERS_DELETE">
         <button
           className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
@@ -83,12 +83,12 @@ const ActionsHeader = () => {
   const { can } = useFeatureAccess();
   const hasEditPermission = can('FEATURE_RECEIVERS_EDIT');
   const hasDeletePermission = can('FEATURE_RECEIVERS_DELETE');
-  
+
   // Only show Actions header if user has either edit or delete permissions
   if (hasEditPermission || hasDeletePermission) {
     return <div className="text-center">Actions</div>;
   }
-  
+
   return null;
 };
 
