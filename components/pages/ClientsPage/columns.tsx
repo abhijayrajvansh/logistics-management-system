@@ -39,7 +39,7 @@ const ActionCell = ({ row }: { row: any }) => {
           <MdEdit size={15} />
         </button>
       </PermissionGate>
-      
+
       <PermissionGate feature="FEATURE_CLIENTS_DELETE">
         <button
           className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
@@ -126,10 +126,7 @@ export const columns: ColumnDef<Client>[] = [
   {
     accessorKey: 'actions',
     header: () => (
-      <PermissionGate 
-        features={['FEATURE_CLIENTS_EDIT', 'FEATURE_CLIENTS_DELETE']} 
-        fallback={null}
-      >
+      <PermissionGate features={['FEATURE_CLIENTS_EDIT', 'FEATURE_CLIENTS_DELETE']} fallback={null}>
         <div className="text-center">Actions</div>
       </PermissionGate>
     ),

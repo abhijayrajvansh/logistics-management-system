@@ -57,23 +57,25 @@ export default function ReceiversPage() {
                 Create, view and manage your receivers at ease.
               </p>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="rounded-lg">
-                  <PlusIcon />
-                  <span className="hidden font-semibold lg:inline">Create Receiver</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Receiver</DialogTitle>
-                  <DialogDescription>
-                    Fill out the form below to create a new receiver. Click submit when you're done.
-                  </DialogDescription>
-                </DialogHeader>
-                <CreateReceiverForm onSuccess={handleReceiverSuccess} />
-              </DialogContent>
-            </Dialog>
+            <PermissionGate feature="FEATURE_RECEIVERS_CREATE">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm" className="rounded-lg">
+                    <PlusIcon />
+                    <span className="hidden font-semibold lg:inline">Create Receiver</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Receiver</DialogTitle>
+                    <DialogDescription>
+                      Fill out the form below to create a new receiver. Click submit when you're done.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateReceiverForm onSuccess={handleReceiverSuccess} />
+                </DialogContent>
+              </Dialog>
+            </PermissionGate>
           </div>
 
           {/* Receiver Data Table */}
