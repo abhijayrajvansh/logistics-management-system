@@ -1,5 +1,7 @@
 'use client';
 
+import { PermissionGate } from '@/components/PermissionGate';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -7,21 +9,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { PermissionGate } from '@/components/PermissionGate';
+import useTrucks from '@/hooks/useTrucks';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import { Truck, TruckMaintenanceHistory } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { MdDeleteOutline, MdEdit, MdBuildCircle, MdRemoveRedEye } from 'react-icons/md';
+import { FaClock } from 'react-icons/fa6';
+import { MdBuildCircle, MdDeleteOutline, MdEdit, MdRemoveRedEye } from 'react-icons/md';
+import { TbTools } from 'react-icons/tb';
+import AuditHistoryDialog from './AuditHistoryDialog';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import useTrucks from '@/hooks/useTrucks';
-import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import ViewTruckDetails from './ViewTruckDetails';
-import { TbTools } from 'react-icons/tb';
-import { FaClock } from 'react-icons/fa6';
-import AuditHistoryDialog from './AuditHistoryDialog';
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -437,8 +436,13 @@ export const columns: ColumnDef<Truck>[] = [
     },
   },
   {
+    id: 'toolkitCount',
     accessorKey: 'toolkitCount',
-    header: 'Toolkits',
+    header: () => (
+      <PermissionGate feature="FEATURE_TRUCKS_TOOLKIT_DETAILS">
+        <div>Toolkits</div>
+      </PermissionGate>
+    ),
     cell: ({ row }) => {
       const [isDialogOpen, setIsDialogOpen] = useState(false);
       const toolkits = row.original.toolkitCount;
@@ -461,19 +465,6 @@ export const columns: ColumnDef<Truck>[] = [
 
       return (
         <>
-          <PermissionGate 
-            feature="FEATURE_TRUCKS_TOOLKIT_DETAILS"
-            fallback={
-              <button
-                className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
-                disabled
-                title="No permission to view toolkits"
-              >
-                <span className="text-sm">{count}</span>
-                <TbTools size={15} />
-              </button>
-            }
-          >
             <button
               className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
               onClick={() => setIsDialogOpen(true)}
@@ -522,7 +513,19 @@ export const columns: ColumnDef<Truck>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate
+        features={[
+          'FEATURE_TRUCKS_VIEW_DETAILS',
+          'FEATURE_TRUCKS_EDIT',
+          'FEATURE_TRUCKS_DELETE',
+          'FEATURE_TRUCKS_MAINTENANCE_HISTORY',
+          'FEATURE_TRUCKS_AUDIT_HISTORY',
+        ]}
+      >
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
     cell: ActionCell,
   },
