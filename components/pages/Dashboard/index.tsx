@@ -19,16 +19,24 @@ export default function AdminDashboard() {
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div className="flex flex-col lg:flex-row">
               <div className="flex-1">
-                <div className="px-6 lg:px-8 my-5">
-                  <h1 className="text-3xl font-semibold">Real Time Analytics</h1>
-                  <p className="text-[14px] text-black/70 mt-1">
-                    analyse all your data in real time.
-                  </p>
-                </div>
-                <SectionCards />
-                <div className="mt-4">
-                  <AnalyticsChart />
-                </div>
+                <PermissionGate feature="FEATURE_ANALYTICS_VIEW"
+                  fallback={
+                    <div className="p-8 text-center">
+                      You don't have permission to view analytics.
+                    </div>
+                  }
+                  >
+                  <div className="px-6 lg:px-8 my-5">
+                    <h1 className="text-3xl font-semibold">Real Time Analytics</h1>
+                    <p className="text-[14px] text-black/70 mt-1">
+                      analyse all your data in real time.
+                    </p>
+                  </div>
+                  <SectionCards />
+                  <div className="mt-4">
+                    <AnalyticsChart />
+                  </div>
+                </PermissionGate>
               </div>
             </div>
           </div>
