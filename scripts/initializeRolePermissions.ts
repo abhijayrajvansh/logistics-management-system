@@ -6,7 +6,7 @@ import { RolePermissions } from '../types';
 
 export async function initializeRolePermissions() {
   try {
-    console.log('Initializing role permissions in Firestore...');
+    console.log(' > Updating role permissions in Firestore...');
 
     let totalAddedPerms = 0;
     let totalRemovedPerms = 0;
