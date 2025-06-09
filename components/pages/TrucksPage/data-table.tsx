@@ -34,6 +34,8 @@ import {
 import * as React from 'react';
 import { z } from 'zod';
 
+import { PermissionGate } from '@/components/PermissionGate';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -161,24 +163,26 @@ export function DataTable<TData, TValue>({
             Add, update, and track your fleet of trucks.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Add Truck</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Truck</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to add a new truck to your fleet. Click Add Truck when
-                you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateTruckForm onSuccess={handleTruckSuccess} />
-          </DialogContent>
-        </Dialog>
+        <PermissionGate feature="FEATURE_TRUCKS_CREATE">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Add Truck</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Truck</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to add a new truck to your fleet. Click Add Truck when
+                  you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateTruckForm onSuccess={handleTruckSuccess} />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <TabsContent
