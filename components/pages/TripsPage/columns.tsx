@@ -45,6 +45,7 @@ import { IoSpeedometer, IoWallet } from 'react-icons/io5';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/app/context/AuthContext';
 import { Wallet } from '@/types';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -442,12 +443,15 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
+      <PermissionGate feature='FEATURE_TRIPS_EDIT'>
       <button
         className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
         onClick={() => setIsEditDialogOpen(true)}
       >
         <MdEdit size={15} />
       </button>
+      </PermissionGate>
+      <PermissionGate feature='FEATURE_TRIPS_DELETE'>
       {trip.type !== 'past' && (
         <button
           className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
@@ -456,6 +460,7 @@ const ActionCell = ({ row }: { row: any }) => {
           <MdDeleteOutline size={15} />
         </button>
       )}
+      </PermissionGate>
 
       {/* Edit Trip Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
