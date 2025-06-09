@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "pg": "tsx scripts/playground.ts",
-    "script:seedusers": "tsx scripts/seedUsers.ts",
-    "script:permissions": "tsx scripts/initializeRolePermissions.ts"
+    "script:seed-users": "tsx scripts/seedUsers.ts",
+    "script:update-permissions": "tsx scripts/initializeRolePermissions.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

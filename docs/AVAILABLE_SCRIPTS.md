@@ -6,7 +6,7 @@ This document provides an overview of the scripts available in the `scripts/` di
 
 ### 1. Initialize Role Permissions
 - **File**: `initializeRolePermissions.ts`
-- **npm Command**: `npm run script:permissions`
+- **Command**: `pnpm run script:update-permissions`
 - **Purpose**: Updates or initializes role-based permissions in Firestore for all available roles.
 - **Use Cases**:
   - Initial setup of application permissions
@@ -16,7 +16,7 @@ This document provides an overview of the scripts available in the `scripts/` di
 
 ### 2. Seed Users
 - **File**: `seedUsers.ts`
-- **npm Command**: `npm run script:seedusers`
+- **Command**: `pnpm run script:seed-users`
 - **Purpose**: Seeds initial user data into the database
 - **Use Cases**:
   - Initial setup of application with default users
@@ -37,13 +37,13 @@ To run any of these scripts, use the corresponding npm command in the project ro
 
 ```bash
 # Initialize/Update Role Permissions
-npm run script:permissions
+pnpm run script:update-permissions
 
 # Seed Users
-npm run script:seedusers
+pnpm run script:seed-users
 
 # Run Playground
-npm run pg
+pnpm run pg
 ```
 
 Note: Make sure you have the necessary environment variables and database connections configured before running these scripts.
