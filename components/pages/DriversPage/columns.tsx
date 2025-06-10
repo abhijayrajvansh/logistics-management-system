@@ -195,8 +195,14 @@ const ManagerCell = ({ managerId }: { managerId: string | 'NA' }) => {
 
   const manager = users.find((user) => user.userId === managerId);
   return (
-    <Badge variant="default" className="bg-blue-100 text-blue-800">
-      {manager?.displayName || 'Unknown Manager'}
+    <Badge 
+      variant="default" 
+      className={manager?.displayName 
+      ? "bg-blue-100 text-blue-800 border-blue-500"
+      : "bg-gray-100 text-gray-800 border-black"
+      }
+    >
+      {manager?.displayName || 'No Manager'}
     </Badge>
   );
 };
