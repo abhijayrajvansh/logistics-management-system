@@ -4,10 +4,10 @@ import { db } from '../firebase/database';
 
 const sampleRequests = [
   {
-    driverId: 'test-driver-1',
-    tripId: 'test-trip-1',
+    driverId: 'zly3XKWGt5VsvPSvPMCohxhIRws2',
+    tripId: 'TRIP-2025-001',
     type: 'Leave',
-    reason: 'Personal leave for family emergency',
+    reason: 'Medical appointment',
     startDate: Timestamp.now(),
     endDate: Timestamp.fromDate(new Date(Date.now() + 86400000)), // 1 day later
     status: 'pending',
@@ -15,10 +15,32 @@ const sampleRequests = [
     proofImageUrl: '',
   },
   {
-    driverId: 'test-driver-2',
-    tripId: 'test-trip-2',
+    driverId: 'zly3XKWGt5VsvPSvPMCohxhIRws2',
+    tripId: 'TRIP-2025-002',
+    type: 'Maintenance',
+    reason: 'Brake system inspection and repair',
+    startDate: Timestamp.now(),
+    endDate: Timestamp.fromDate(new Date(Date.now() + 43200000)), // 12 hours later
+    status: 'pending',
+    createdAt: Timestamp.now(),
+    proofImageUrl: '',
+  },
+  {
+    driverId: 'zly3XKWGt5VsvPSvPMCohxhIRws2',
+    tripId: 'TRIP-2025-003',
     type: 'Money',
-    reason: 'Advance for fuel and toll expenses',
+    reason: 'Fuel advance for long-haul trip',
+    startDate: Timestamp.now(),
+    endDate: Timestamp.fromDate(new Date(Date.now() + 259200000)), // 3 days later
+    status: 'pending',
+    createdAt: Timestamp.now(),
+    proofImageUrl: '',
+  },
+  {
+    driverId: 'zly3XKWGt5VsvPSvPMCohxhIRws2',
+    tripId: 'TRIP-2025-004',
+    type: 'Food',
+    reason: 'Per diem for interstate route',
     startDate: Timestamp.now(),
     endDate: Timestamp.fromDate(new Date(Date.now() + 172800000)), // 2 days later
     status: 'pending',
@@ -26,34 +48,12 @@ const sampleRequests = [
     proofImageUrl: '',
   },
   {
-    driverId: 'test-driver-3',
-    tripId: 'test-trip-3',
-    type: 'Maintenance',
-    reason: 'Truck tire replacement needed urgently',
-    startDate: Timestamp.now(),
-    endDate: Timestamp.fromDate(new Date(Date.now() + 86400000)),
-    status: 'approved',
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000)), // 1 day ago
-    proofImageUrl: '',
-  },
-  {
-    driverId: 'test-driver-4',
-    tripId: 'test-trip-4',
-    type: 'Food',
-    reason: 'Meal allowance for long distance trip',
-    startDate: Timestamp.now(),
-    endDate: Timestamp.fromDate(new Date(Date.now() + 259200000)), // 3 days later
-    status: 'rejected',
-    createdAt: Timestamp.fromDate(new Date(Date.now() - 172800000)), // 2 days ago
-    proofImageUrl: '',
-  },
-  {
-    driverId: 'test-driver-5',
-    tripId: 'test-trip-5',
+    driverId: 'zly3XKWGt5VsvPSvPMCohxhIRws2',
+    tripId: 'TRIP-2025-005',
     type: 'Toll',
-    reason: 'Highway toll charges reimbursement',
+    reason: 'Highway toll expenses for route Mumbai-Delhi',
     startDate: Timestamp.now(),
-    endDate: Timestamp.fromDate(new Date(Date.now() + 86400000)),
+    endDate: Timestamp.fromDate(new Date(Date.now() + 86400000)), // 1 day later
     status: 'pending',
     createdAt: Timestamp.now(),
     proofImageUrl: '',
@@ -76,4 +76,10 @@ async function seedDriverRequests() {
 }
 
 // Run the seeding function
-seedDriverRequests();
+seedDriverRequests()
+  .catch((error) => {
+    console.error('Seeding failed:', error);
+  })
+  .finally(() => {
+    process.exit(0);
+  });
