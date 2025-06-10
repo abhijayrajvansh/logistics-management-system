@@ -16,7 +16,7 @@ interface ManagerSelectorProps {
 }
 
 export function ManagerSelector({ value, onChange }: ManagerSelectorProps) {
-  const { users, isLoading } = useUsers(undefined, 'MANAGER');
+  const { users, isLoading } = useUsers(undefined, 'manager');
 
   return (
     <Select value={value} onValueChange={onChange}>

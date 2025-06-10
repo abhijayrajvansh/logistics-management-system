@@ -227,6 +227,14 @@ export const columns: ColumnDef<Driver>[] = [
     },
   },
   {
+    accessorKey: 'assignedManagerId',
+    header: 'Manager',
+    cell: ({ row }) => {
+      const managerId = row.getValue('assignedManagerId') as string | 'NA';
+      return <ManagerCell managerId={managerId} />;
+    },
+  },
+  {
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => {
@@ -365,12 +373,5 @@ export const columns: ColumnDef<Driver>[] = [
       className: 'text-center',
     },
   },
-  {
-    accessorKey: 'assignedManagerId',
-    header: 'Manager',
-    cell: ({ row }) => {
-      const managerId = row.getValue('assignedManagerId') as string | 'NA';
-      return <ManagerCell managerId={managerId} />;
-    },
-  },
+  
 ];
