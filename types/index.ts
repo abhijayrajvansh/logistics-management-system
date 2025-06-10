@@ -274,6 +274,7 @@ export type DriversRequest = {
   id: string;
   driverId: string; // reference to the driver who created the request
   tripId: string;
+  managerId: string; // reference to the manager who will approve/reject the request
   type: 'Leave' | 'Money' | 'Food' | 'Others' | 'Maintenance' | 'Toll';
   proofImageUrl?: string; // URL of the proof image
 

@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 
-export const useRequests = () => {
+export const useRequests = (managerId?: string) => {
   const [requests, setRequests] = useState<DriversRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -70,7 +70,17 @@ export const useRequests = () => {
   useEffect(() => {
     try {
       const requestsRef = collection(db, DRIVER_REQUEST_COLLECTION);
-      const requestsQuery = query(requestsRef, orderBy('createdAt', 'desc'));
+
+      // Build query with optional managerId filter
+      let requestsQuery;
+      if (managerId) {
+        requestsQuery = query(
+          requestsRef,
+          where('managerId', '==', managerId),
+        );
+      } else {
+        requestsQuery = query(requestsRef);
+      }
 
       const unsubscribe = onSnapshot(
         requestsQuery,
@@ -110,7 +120,7 @@ export const useRequests = () => {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, [fetchRequestDetails]);
+  }, [fetchRequestDetails, managerId]);
 
   const approveRequest = useCallback(async (requestId: string) => {
     try {

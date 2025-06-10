@@ -1,17 +1,22 @@
 'use client';
 
-import React from 'react';
-import { columns } from './columns';
-import { DataTable } from './data-table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/app/context/AuthContext';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
+import { PermissionGate } from '@/components/PermissionGate';
 import { Badge } from '@/components/ui/badge';
 import { useRequests } from '@/hooks/useRequests';
-import { toast } from 'sonner';
 import { processDriverRequest } from '@/lib/manageDriverRequest';
-import { PermissionGate } from '@/components/PermissionGate';
-import { useFeatureAccess } from '@/app/context/PermissionsContext';
+import React from 'react';
+import { toast } from 'sonner';
+import { columns } from './columns';
+import { DataTable } from './data-table';
 
 const RequestsPage = () => {
+  const { userData } = useAuth();
+
+  // Filter requests by managerId if the current user is a manager
+  const managerId = userData?.role === 'manager' ? userData.userId : undefined;
+
   const {
     requestsWithDetails,
     approveRequest,
@@ -22,7 +27,7 @@ const RequestsPage = () => {
     getRejectedRequests,
     pendingCount,
     totalCount,
-  } = useRequests();
+  } = useRequests(managerId);
   const { can } = useFeatureAccess();
 
   const pendingRequests = getPendingRequests();
