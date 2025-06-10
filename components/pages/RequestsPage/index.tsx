@@ -110,50 +110,6 @@ const RequestsPage = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-4 lg:px-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
-                  <div className="text-2xl font-bold">{totalCount}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                  <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Approved</p>
-                  <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
-                  <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Pending Requests Table */}
         <Card>
           <CardHeader>
