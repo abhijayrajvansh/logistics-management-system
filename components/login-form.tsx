@@ -52,8 +52,9 @@ export function LoginForm({
   const handleGoogleAuth = async () => {
     try {
       await googleAuth.mutate();
-      router.push('/dashboard');
+      // Successful login will be handled by the auth redirect
     } catch (error) {
+      // Error will be handled by the useAuth hook through URL redirect
       console.error('Google login failed:', error);
     }
   };

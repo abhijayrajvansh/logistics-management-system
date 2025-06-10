@@ -73,11 +73,12 @@ export function useHandleAuthentication(): UseAuthReturn {
       const userExists = await checkUserExistsInFirestore(result.user.email!);
 
       if (!userExists) {
-        // If user doesn't exist in Firestore, sign out and throw error
+        // If user doesn't exist in Firestore, sign out and redirect with error
         await signOut(auth);
-        throw new Error(
-          'This Google account is not authorized. Please contact your admin.',
-        );
+        window.location.href =
+          '/login?error=' +
+          encodeURIComponent('This Google account is not authorized. Please contact your admin.');
+        return;
       }
     } catch (error) {
       setGoogleError(error as Error);
