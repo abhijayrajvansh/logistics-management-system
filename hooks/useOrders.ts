@@ -20,15 +20,18 @@ export function useOrders(locationFilter?: string) {
     try {
       const ordersRef = collection(db, 'orders');
 
-      // Query orders for current location and transferred orders
-      const ordersQuery = query(
-        ordersRef,
-        or(
-          where('current_location', '==', locationFilter),
-          where('transfer_center_location', '==', locationFilter),
-          where('previous_center_location', '==', locationFilter),
-        ),
-      );
+      // Create query based on locationFilter
+      const ordersQuery =
+        locationFilter === 'NA'
+          ? query(ordersRef) // No location filter when "NA"
+          : query(
+              ordersRef,
+              or(
+                where('current_location', '==', locationFilter),
+                where('transfer_center_location', '==', locationFilter),
+                where('previous_center_location', '==', locationFilter),
+              ),
+            );
 
       const unsubscribe = onSnapshot(
         ordersQuery,
@@ -46,26 +49,8 @@ export function useOrders(locationFilter?: string) {
               ...data,
             } as Order;
 
-            // Show transferred orders in the origin center's transferred list
-            if (
-              order.previous_center_location === locationFilter &&
-              order.status === 'Transferred'
-            ) {
-              transferred.push(order);
-              return;
-            }
-
-            // Show transferred orders as "Ready to Transport" in the destination center
-            if (
-              order.transfer_center_location === locationFilter &&
-              order.status === 'Transferred'
-            ) {
-              readyAndAssigned.push(order);
-              return;
-            }
-
-            // For orders at current location
-            if (order.current_location === locationFilter) {
+            if (locationFilter === 'NA') {
+              // When locationFilter is "NA", categorize all orders based on their status
               switch (order.status) {
                 case 'Ready To Transport':
                 case 'Assigned':
@@ -74,18 +59,59 @@ export function useOrders(locationFilter?: string) {
                 case 'In Transit':
                   inTransit.push(order);
                   break;
+                case 'Transferred':
+                  transferred.push(order);
+                  break;
                 case 'Delivered':
                   delivered.push(order);
                   break;
               }
-            }
+              // For "NA", upcoming transfers include all in-transit orders
+              if (order.status === 'In Transit') {
+                upcoming.push(order);
+              }
+            } else {
+              // Show transferred orders in the origin center's transferred list
+              if (
+                order.previous_center_location === locationFilter &&
+                order.status === 'Transferred'
+              ) {
+                transferred.push(order);
+                return;
+              }
 
-            // Add orders to upcoming transfers for the destination center
-            if (
-              order.transfer_center_location === locationFilter 
-              && (order.status === 'In Transit')
-            ) {
-              upcoming.push(order);
+              // Show transferred orders as "Ready to Transport" in the destination center
+              if (
+                order.transfer_center_location === locationFilter &&
+                order.status === 'Transferred'
+              ) {
+                readyAndAssigned.push(order);
+                return;
+              }
+
+              // For orders at current location
+              if (order.current_location === locationFilter) {
+                switch (order.status) {
+                  case 'Ready To Transport':
+                  case 'Assigned':
+                    readyAndAssigned.push(order);
+                    break;
+                  case 'In Transit':
+                    inTransit.push(order);
+                    break;
+                  case 'Delivered':
+                    delivered.push(order);
+                    break;
+                }
+              }
+
+              // Add orders to upcoming transfers for the destination center
+              if (
+                order.transfer_center_location === locationFilter &&
+                order.status === 'In Transit'
+              ) {
+                upcoming.push(order);
+              }
             }
           });
 
