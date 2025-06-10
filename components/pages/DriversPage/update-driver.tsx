@@ -19,6 +19,7 @@ import { uploadDriverDocument } from '@/lib/uploadDriverDocument';
 import useTrucks from '@/hooks/useTrucks';
 import { Badge } from '@/components/ui/badge';
 import { ReferralBySelector } from './ReferralBySelector';
+import { ManagerSelector } from './ManagerSelector';
 
 interface UpdateDriverFormProps {
   driverId: string;
@@ -47,6 +48,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
     languages: [] as string[],
     wheelsCapability: 'NA',
     assignedTruckId: 'NA',
+    assignedManagerId: 'NA',
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
     date_of_joining: new Date() as any,
@@ -93,6 +95,7 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             emergencyContact: data.emergencyContact || 'NA',
             referredBy: data.referredBy || 'NA',
             date_of_joining: data.date_of_joining?.toDate?.() || new Date(),
+            assignedManagerId: data.assignedManagerId || 'NA',
             driverDocuments: {
               ...data.driverDocuments,
               dob: data.driverDocuments?.dob?.toDate() || new Date(),
@@ -475,6 +478,18 @@ export function UpdateDriverForm({ driverId, onSuccess, onCancel }: UpdateDriver
             onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
             required
           />
+        </div>
+
+        {/* Manager Assignment Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Manager Assignment</h3>
+          <div className="space-y-2">
+            <Label htmlFor="assignedManagerId">Assigned Manager</Label>
+            <ManagerSelector
+              value={formData.assignedManagerId}
+              onChange={(value) => handleInputChange('assignedManagerId', value)}
+            />
+          </div>
         </div>
 
         {/* Documents Section */}
