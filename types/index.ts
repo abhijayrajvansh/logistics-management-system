@@ -126,6 +126,7 @@ export type TripOrders = {
 export type Driver = {
   id: string;
   driverId: string;
+  assignedManagerId: string | "NA"; // ID of the manager who is assigned to the driver
   driverName: string;
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;

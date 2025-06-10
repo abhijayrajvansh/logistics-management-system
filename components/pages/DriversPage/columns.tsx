@@ -181,6 +181,26 @@ const DateCell = ({ date }: { date: any }) => {
   return <span>{formatDate(date)}</span>;
 };
 
+// Add ManagerCell component before columns definition
+const ManagerCell = ({ managerId }: { managerId: string | 'NA' }) => {
+  const { users } = useUsers();
+
+  if (managerId === 'NA') {
+    return (
+      <Badge variant="outline" className="bg-gray-100 text-gray-800">
+        Not Assigned
+      </Badge>
+    );
+  }
+
+  const manager = users.find((user) => user.userId === managerId);
+  return (
+    <Badge variant="default" className="bg-blue-100 text-blue-800">
+      {manager?.displayName || 'Unknown Manager'}
+    </Badge>
+  );
+};
+
 export const columns: ColumnDef<Driver>[] = [
   {
     accessorKey: 'driverId',
@@ -343,6 +363,14 @@ export const columns: ColumnDef<Driver>[] = [
     ),
     meta: {
       className: 'text-center',
+    },
+  },
+  {
+    accessorKey: 'assignedManagerId',
+    header: 'Manager',
+    cell: ({ row }) => {
+      const managerId = row.getValue('assignedManagerId') as string | 'NA';
+      return <ManagerCell managerId={managerId} />;
     },
   },
 ];
