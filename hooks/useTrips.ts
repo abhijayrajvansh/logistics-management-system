@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, or } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { Trip } from '@/types';
 import { serializeData } from '@/lib/serializeData';
 
-export function useTrips() {
+export function useTrips(locationFilter?: string) {
   const [readyToShipTrips, setReadyToShipTrips] = useState<Trip[]>([]);
   const [activeTrips, setActiveTrips] = useState<Trip[]>([]);
   const [pastTrips, setPastTrips] = useState<Trip[]>([]);
@@ -14,13 +14,28 @@ export function useTrips() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!locationFilter) return;
+
     setIsLoading(true);
 
     try {
-      // Set up real-time listener for trips collection
       const tripsRef = collection(db, 'trips');
+
+      // Create query based on locationFilter
+      const tripsQuery =
+        locationFilter === 'NA'
+          ? query(tripsRef) // No location filter when "NA"
+          : query(
+              tripsRef,
+              or(
+                where('currentLocation', '==', locationFilter),
+                where('startingPoint', '==', locationFilter),
+                where('destination', '==', locationFilter),
+              ),
+            );
+
       const unsubscribe = onSnapshot(
-        tripsRef,
+        tripsQuery,
         (snapshot) => {
           const readyToShip: Trip[] = [];
           const active: Trip[] = [];
@@ -72,7 +87,7 @@ export function useTrips() {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, []);
+  }, [locationFilter]);
 
   return {
     readyToShipTrips,

@@ -33,6 +33,8 @@ import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import useTrucks from '@/hooks/useTrucks';
+import { useAuth } from '@/app/context/AuthContext';
+import useUsers from '@/hooks/useUsers';
 
 interface UpdateTripFormProps {
   tripId: string;
@@ -47,7 +49,14 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   const [associatedOrders, setAssociatedOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
+  // Add user authentication and location context
+  // const { user } = useAuth();
+  // const { users: currentUser } = useUsers(user?.uid);
+  // const userLocation = currentUser?.[0]?.location;
+
   const [formData, setFormData] = useState({
+    currentLocation: '',
     startingPoint: '',
     destination: '',
     driver: '',
@@ -170,6 +179,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
       const selectedDriver = drivers.length > 0 ? drivers.find((d) => d.id === data.driver) : null;
 
       setFormData({
+        currentLocation: data.currentLocation,
         startingPoint: data.startingPoint || '',
         destination: data.destination || '',
         driver: data.driver || '',
@@ -212,6 +222,16 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   useEffect(() => {
     fetchTripData();
   }, [fetchTripData]);
+
+  // // Update currentLocation when userLocation becomes available
+  // useEffect(() => {
+  //   if (userLocation) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       currentLocation: userLocation,
+  //     }));
+  //   }
+  // }, [userLocation]);
 
   // Update driver name and truck when drivers are loaded and a driver is assigned
   useEffect(() => {
@@ -491,7 +511,7 @@ export function UpdateTripForm({ tripId, onSuccess, onCancel }: UpdateTripFormPr
   return (
     <form onSubmit={handleFormSubmit}>
       <div className="grid gap-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="startingPoint">Origin</Label>
             <Input

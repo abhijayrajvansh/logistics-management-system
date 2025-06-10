@@ -268,16 +268,14 @@ export function DataTable<TData, TValue>({
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            
-            <PermissionGate feature='FEATURE_TRIPS_CREATE'>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Create Trip</span>
-            </Button>
+          <PermissionGate feature="FEATURE_TRIPS_CREATE">
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Create Trip</span>
+              </Button>
+            </DialogTrigger>
           </PermissionGate>
-          
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Trip</DialogTitle>
