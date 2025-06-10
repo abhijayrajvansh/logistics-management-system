@@ -24,6 +24,8 @@ type EnhancedRequest = DriversRequest & {
     destination: string;
     startingPoint: string;
   } | null;
+  // Legacy fields for backward compatibility
+  requestType?: string;
 };
 
 // Helper function to format dates consistently
@@ -100,7 +102,18 @@ export const columns = ({
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => {
-        const type = row.getValue('type') as DriversRequest['type'];
+        const request = row.original;
+        // Handle both 'type' and 'requestType' fields for backward compatibility
+        const type = request.type || request.requestType || row.getValue('type');
+        
+        if (!type) {
+          return (
+            <Badge variant="secondary" className="text-xs">
+              Unknown
+            </Badge>
+          );
+        }
+        
         return (
           <Badge variant="outline" className="capitalize">
             {type}
@@ -140,7 +153,11 @@ export const columns = ({
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as DriversRequest['status'];
+        const request = row.original;
+        // Handle both 'declined' and 'rejected' for backward compatibility
+        const rawStatus = request.status as any;
+        const status = rawStatus === 'declined' ? 'rejected' : rawStatus;
+        
         return (
           <Badge
             variant={

@@ -102,10 +102,13 @@ export function DataTable<TData, TValue>({
     if (query) {
       // Filter data based on multiple fields
       const filteredData = initialData.filter((item: any) => {
+        const type = item.type || item.requestType;
+        const status = item.status === 'declined' ? 'rejected' : item.status;
+        
         return (
           item.reason?.toLowerCase().includes(query) ||
-          item.type?.toLowerCase().includes(query) ||
-          item.status?.toLowerCase().includes(query) ||
+          type?.toLowerCase().includes(query) ||
+          status?.toLowerCase().includes(query) ||
           item.driverDetails?.driverName?.toLowerCase().includes(query) ||
           item.id?.toLowerCase().includes(query)
         );

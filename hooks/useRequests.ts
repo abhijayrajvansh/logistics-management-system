@@ -74,14 +74,16 @@ export const useRequests = () => {
 
       const unsubscribe = onSnapshot(
         requestsQuery,
-        async (snapshot) => {
-          const requestsData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            proofImageUrl: doc.data().proofImageUrl || '',
-          })) as DriversRequest[];
+        async (snapshot) => {        const requestsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          proofImageUrl: doc.data().proofImageUrl || '',
+          // Handle backward compatibility
+          type: doc.data().type || doc.data().requestType,
+          status: doc.data().status === 'declined' ? 'rejected' : doc.data().status,
+        })) as DriversRequest[];
 
-          setRequests(requestsData);
+        setRequests(requestsData);
 
           // Count pending requests
           const pending = requestsData.filter((req) => req.status === 'pending').length;
