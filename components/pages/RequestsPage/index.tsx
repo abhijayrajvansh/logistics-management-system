@@ -111,25 +111,19 @@ const RequestsPage = () => {
         </div>
 
         {/* Pending Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
               Pending Requests
               <Badge variant="outline" className="ml-2">
                 {pendingRequests.length}
               </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingRequests.length > 0 ? (
-              <DataTable columns={columnConfig} data={pendingRequests} searchKey="reason" />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No pending requests found
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={pendingRequests} searchKey="reason" />
+          </div>
+        </div>
 
         {/* Approved Requests Table */}
         <Card>
