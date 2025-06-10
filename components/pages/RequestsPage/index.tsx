@@ -103,7 +103,7 @@ const RequestsPage = () => {
         {/* Title and header */}
         <div className="flex justify-between px-4 lg:px-6">
           <div>
-            <h1 className="text-3xl font-semibold">Monitor Driver's Requests</h1>
+            <h1 className="text-3xl font-semibold">Manage Driver's Requests</h1>
             <p className="text-[14px] text-black/70 mt-1">
               Monitor and manage your drivers' requests records
             </p>

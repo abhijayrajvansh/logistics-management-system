@@ -104,7 +104,7 @@ export function DataTable<TData, TValue>({
       const filteredData = initialData.filter((item: any) => {
         const type = item.type || item.requestType;
         const status = item.status === 'declined' ? 'rejected' : item.status;
-        
+
         return (
           item.reason?.toLowerCase().includes(query) ||
           type?.toLowerCase().includes(query) ||

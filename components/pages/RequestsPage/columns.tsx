@@ -75,7 +75,7 @@ export const columns = ({
             <div className="font-medium">
               {request.driverDetails?.driverName || 'Unknown Driver'}
             </div>
-            <div className="text-xs text-muted-foreground">ID: {request.driverId}</div>
+            {/* <div className="text-xs text-muted-foreground">ID: {request.driverId}</div> */}
           </div>
         );
       },
@@ -93,7 +93,7 @@ export const columns = ({
             <div className="text-xs font-medium">
               {request.tripDetails.startingPoint} → {request.tripDetails.destination}
             </div>
-            <div className="text-xs text-muted-foreground">Trip ID: {request.tripId}</div>
+            {/* <div className="text-xs text-muted-foreground">Trip ID: {request.tripId}</div> */}
           </div>
         );
       },
@@ -105,7 +105,7 @@ export const columns = ({
         const request = row.original;
         // Handle both 'type' and 'requestType' fields for backward compatibility
         const type = request.type || request.requestType || row.getValue('type');
-        
+
         if (!type) {
           return (
             <Badge variant="secondary" className="text-xs">
@@ -113,7 +113,7 @@ export const columns = ({
             </Badge>
           );
         }
-        
+
         return (
           <Badge variant="outline" className="capitalize">
             {type}
@@ -157,7 +157,7 @@ export const columns = ({
         // Handle both 'declined' and 'rejected' for backward compatibility
         const rawStatus = request.status as any;
         const status = rawStatus === 'declined' ? 'rejected' : rawStatus;
-        
+
         return (
           <Badge
             variant={
