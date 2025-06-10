@@ -126,46 +126,34 @@ const RequestsPage = () => {
         </div>
 
         {/* Approved Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
               Approved Requests
               <Badge variant="default" className="ml-2">
                 {approvedRequests.length}
               </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {approvedRequests.length > 0 ? (
-              <DataTable columns={columnConfig} data={approvedRequests} searchKey="reason" />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No approved requests found
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={approvedRequests} searchKey="reason" />
+          </div>
+        </div>
 
         {/* Rejected Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
               Rejected Requests
               <Badge variant="destructive" className="ml-2">
                 {rejectedRequests.length}
               </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rejectedRequests.length > 0 ? (
-              <DataTable columns={columnConfig} data={rejectedRequests} searchKey="reason" />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No rejected requests found
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={rejectedRequests} searchKey="reason" />
+          </div>
+        </div>
       </div>
     </PermissionGate>
   );
