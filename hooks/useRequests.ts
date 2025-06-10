@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DriversRequest, Driver, Trip } from '@/types';
-import { collection, onSnapshot, doc, updateDoc, query, orderBy, where, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+  query,
+  orderBy,
+  where,
+  getDoc,
+} from 'firebase/firestore';
 import { db } from '@/firebase/database';
 
 export const useRequests = () => {
@@ -62,7 +71,7 @@ export const useRequests = () => {
     try {
       const requestsRef = collection(db, DRIVER_REQUEST_COLLECTION);
       const requestsQuery = query(requestsRef, orderBy('createdAt', 'desc'));
-      
+
       const unsubscribe = onSnapshot(
         requestsQuery,
         async (snapshot) => {
@@ -71,16 +80,16 @@ export const useRequests = () => {
             ...doc.data(),
             proofImageUrl: doc.data().proofImageUrl || '',
           })) as DriversRequest[];
-          
+
           setRequests(requestsData);
-          
+
           // Count pending requests
-          const pending = requestsData.filter(req => req.status === 'pending').length;
+          const pending = requestsData.filter((req) => req.status === 'pending').length;
           setPendingCount(pending);
-          
+
           // Fetch additional details
           await fetchRequestDetails(requestsData);
-          
+
           setIsLoading(false);
         },
         (err) => {
@@ -130,38 +139,47 @@ export const useRequests = () => {
 
   // Filter functions for different request statuses
   const getPendingRequests = useCallback(() => {
-    return requestsWithDetails.filter(req => req.status === 'pending');
+    return requestsWithDetails.filter((req) => req.status === 'pending');
   }, [requestsWithDetails]);
 
   const getApprovedRequests = useCallback(() => {
-    return requestsWithDetails.filter(req => req.status === 'approved');
+    return requestsWithDetails.filter((req) => req.status === 'approved');
   }, [requestsWithDetails]);
 
   const getRejectedRequests = useCallback(() => {
-    return requestsWithDetails.filter(req => req.status === 'rejected');
+    return requestsWithDetails.filter((req) => req.status === 'rejected');
   }, [requestsWithDetails]);
 
   // Filter by request type
-  const getRequestsByType = useCallback((type: DriversRequest['type']) => {
-    return requestsWithDetails.filter(req => req.type === type);
-  }, [requestsWithDetails]);
+  const getRequestsByType = useCallback(
+    (type: DriversRequest['type']) => {
+      return requestsWithDetails.filter((req) => req.type === type);
+    },
+    [requestsWithDetails],
+  );
 
   // Filter by driver
-  const getRequestsByDriver = useCallback((driverId: string) => {
-    return requestsWithDetails.filter(req => req.driverId === driverId);
-  }, [requestsWithDetails]);
+  const getRequestsByDriver = useCallback(
+    (driverId: string) => {
+      return requestsWithDetails.filter((req) => req.driverId === driverId);
+    },
+    [requestsWithDetails],
+  );
 
   // Filter by trip
-  const getRequestsByTrip = useCallback((tripId: string) => {
-    return requestsWithDetails.filter(req => req.tripId === tripId);
-  }, [requestsWithDetails]);
+  const getRequestsByTrip = useCallback(
+    (tripId: string) => {
+      return requestsWithDetails.filter((req) => req.tripId === tripId);
+    },
+    [requestsWithDetails],
+  );
 
   // Get recent requests (last 30 days)
   const getRecentRequests = useCallback(() => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return requestsWithDetails.filter(req => {
+
+    return requestsWithDetails.filter((req) => {
       const createdAt = req.createdAt?.toDate ? req.createdAt.toDate() : new Date(req.createdAt);
       return createdAt >= thirtyDaysAgo;
     });
@@ -171,19 +189,19 @@ export const useRequests = () => {
     // Raw data
     requests,
     requestsWithDetails,
-    
+
     // Loading states
     isLoading,
     error,
-    
+
     // Counts
     pendingCount,
     totalCount: requests.length,
-    
+
     // Actions
     approveRequest,
     rejectRequest,
-    
+
     // Filters
     getPendingRequests,
     getApprovedRequests,

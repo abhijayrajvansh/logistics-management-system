@@ -4,21 +4,30 @@ import React from 'react';
 import { columns } from './columns';
 import { DataTable } from './data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useRequests } from '@/hooks/useRequests';
-import { useDrivers } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
 import { processDriverRequest } from '@/lib/manageDriverRequest';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useFeatureAccess } from '@/app/context/PermissionsContext';
 
 const RequestsPage = () => {
-  const { requests, approveRequest, rejectRequest } = useRequests();
-  const { drivers } = useDrivers();
+  const {
+    requestsWithDetails,
+    approveRequest,
+    rejectRequest,
+    isLoading,
+    getPendingRequests,
+    getApprovedRequests,
+    getRejectedRequests,
+    pendingCount,
+    totalCount,
+  } = useRequests();
   const { can } = useFeatureAccess();
 
-  const pendingRequests = requests.filter((req) => req.status === 'pending');
-  const approvedRequests = requests.filter((req) => req.status === 'approved');
-  const rejectedRequests = requests.filter((req) => req.status === 'rejected');
+  const pendingRequests = getPendingRequests();
+  const approvedRequests = getApprovedRequests();
+  const rejectedRequests = getRejectedRequests();
 
   const handleApprove = async (id: string) => {
     // Check permission before allowing approval
@@ -29,7 +38,7 @@ const RequestsPage = () => {
 
     try {
       // Find the request to be approved
-      const request = requests.find((req) => req.id === id);
+      const request = requestsWithDetails.find((req) => req.id === id);
       if (!request) {
         throw new Error('Request not found');
       }
@@ -63,9 +72,20 @@ const RequestsPage = () => {
   };
 
   const columnConfig = React.useMemo(
-    () => columns({ onApprove: handleApprove, onReject: handleReject, drivers }),
-    [handleApprove, handleReject, drivers],
+    () => columns({ onApprove: handleApprove, onReject: handleReject }),
+    [handleApprove, handleReject],
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="text-gray-600 mt-2">Loading requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PermissionGate
@@ -90,33 +110,110 @@ const RequestsPage = () => {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-4 lg:px-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
+                  <div className="text-2xl font-bold">{totalCount}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Approved</p>
+                  <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                  <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Pending Requests Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Pending Requests</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              Pending Requests
+              <Badge variant="outline" className="ml-2">
+                {pendingRequests.length}
+              </Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columnConfig} data={pendingRequests} searchKey="title" />
+            {pendingRequests.length > 0 ? (
+              <DataTable columns={columnConfig} data={pendingRequests} searchKey="reason" />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No pending requests found
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Approved Requests Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Approved Requests</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              Approved Requests
+              <Badge variant="default" className="ml-2">
+                {approvedRequests.length}
+              </Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columnConfig} data={approvedRequests} searchKey="title" />
+            {approvedRequests.length > 0 ? (
+              <DataTable columns={columnConfig} data={approvedRequests} searchKey="reason" />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No approved requests found
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Rejected Requests Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Rejected Requests</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              Rejected Requests
+              <Badge variant="destructive" className="ml-2">
+                {rejectedRequests.length}
+              </Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columnConfig} data={rejectedRequests} searchKey="title" />
+            {rejectedRequests.length > 0 ? (
+              <DataTable columns={columnConfig} data={rejectedRequests} searchKey="reason" />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No rejected requests found
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
