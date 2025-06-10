@@ -6,6 +6,9 @@ import {
   signOut,
 } from 'firebase/auth';
 import { auth } from '@/firebase/auth';
+import { db } from '@/firebase/database';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { User } from '@/types';
 
 interface UseAuthReturn {
   login: {
@@ -28,10 +31,28 @@ export function useHandleAuthentication(): UseAuthReturn {
   const [isGooglePending, setIsGooglePending] = useState(false);
   const [googleError, setGoogleError] = useState<Error | null>(null);
 
+  const checkUserExistsInFirestore = async (email: string): Promise<boolean> => {
+    // Query Firestore to find a user with the given email
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  };
+
   const handleEmailLogin = async (data: { email: string; password: string }) => {
     try {
       setIsLoginPending(true);
       setLoginError(null);
+
+      // First check if user exists in Firestore
+      const userExists = await checkUserExistsInFirestore(data.email);
+
+      if (!userExists) {
+        // If user doesn't exist in Firestore, throw error
+        throw new Error('Invalid login credentials. Please try again.');
+      }
+
+      // If user exists in Firestore, attempt Firebase Auth
       await signInWithEmailAndPassword(auth, data.email, data.password);
     } catch (error) {
       setLoginError(error as Error);
@@ -46,7 +67,18 @@ export function useHandleAuthentication(): UseAuthReturn {
       setIsGooglePending(true);
       setGoogleError(null);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+
+      // Check if the Google user exists in Firestore
+      const userExists = await checkUserExistsInFirestore(result.user.email!);
+
+      if (!userExists) {
+        // If user doesn't exist in Firestore, sign out and throw error
+        await signOut(auth);
+        throw new Error(
+          'This Google account is not authorized. Please contact your admin.',
+        );
+      }
     } catch (error) {
       setGoogleError(error as Error);
       throw error;
