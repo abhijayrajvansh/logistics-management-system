@@ -44,8 +44,8 @@ export function CreateOrderForm({ onSuccess }: CreateOrderFormProps) {
 
   const { user } = useAuth();
   const { users: currentUser } = useUsers(user?.uid);
-  const { centers, isLoading: isLoadingCenters } = useCenters();
   const userLocation = currentUser?.[0]?.location;
+  const { centers, isLoading: isLoadingCenters } = useCenters();
 
   const [isManualClientEntry, setIsManualClientEntry] = useState(false);
   const [isManualReceiverEntry, setIsManualReceiverEntry] = useState(false);

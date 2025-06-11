@@ -1,22 +1,39 @@
 'use client';
 
+import { useAuth } from '@/app/context/AuthContext';
 import { SiteHeader } from '@/components/site-header';
 import { columns } from './columns';
 import { DataTable } from './data-tabel';
 import { useTrips } from '@/hooks/useTrips';
+import useUsers from '@/hooks/useUsers';
 import { PermissionGate } from '@/components/PermissionGate';
 
 export function TripsPage() {
-  const { readyToShipTrips, activeTrips, pastTrips, isLoading, error } = useTrips();
+  const { user, loading: authLoading } = useAuth();
+
+  const { users: currentUser, isLoading: isLoadingUsers, error: errorUsers } = useUsers(user?.uid);
+
+  // got the user location from the currentUser
+  // this is the location of the user who is logged in, works only for manager. !admin !driver (no accounts yet)
+  const userLocation = currentUser?.[0]?.location;
+  const {
+    readyToShipTrips,
+    activeTrips,
+    pastTrips,
+    isLoading: isLoadingTrips,
+    error,
+  } = useTrips(userLocation);
+
+  const isLoading = authLoading || isLoadingUsers || (userLocation && isLoadingTrips);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading trips...</div>;
   }
 
-  if (error) {
+  if (error || errorUsers) {
     return (
       <div className="flex items-center justify-center h-screen text-red-500">
-        {error.message || 'Error loading trips'}
+        {error?.message || errorUsers?.message || 'Error loading trips'}
       </div>
     );
   }

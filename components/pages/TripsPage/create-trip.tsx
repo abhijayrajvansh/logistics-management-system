@@ -22,6 +22,8 @@ import { toast } from 'sonner';
 import { fetchAvailableOrders } from '@/lib/fetchAvailableOrders';
 import { fetchActiveDrivers } from '@/lib/fetchActiveDrivers';
 import useTrucks from '@/hooks/useTrucks';
+import { useAuth } from '@/app/context/AuthContext';
+import useUsers from '@/hooks/useUsers';
 
 interface CreateTripFormProps {
   onSuccess?: () => void;
@@ -35,9 +37,15 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const { trucks } = useTrucks();
 
+  // Add user authentication and location context
+  const { user } = useAuth();
+  const { users: currentUser } = useUsers(user?.uid);
+  const userLocation = currentUser?.[0]?.location;
+
   // Define form data with proper types matching the Trip interface
   const [formData, setFormData] = useState<Omit<Trip, 'id' | 'startDate'> & { startDate: string }>({
     tripId: '',
+    currentLocation: userLocation || '',
     startingPoint: '',
     destination: '',
     driver: '',
@@ -71,6 +79,16 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   useEffect(() => {
     generateUniqueId();
   }, []);
+
+  // Update currentLocation when userLocation becomes available
+  useEffect(() => {
+    if (userLocation) {
+      setFormData((prev) => ({
+        ...prev,
+        currentLocation: userLocation,
+      }));
+    }
+  }, [userLocation]);
 
   // Load active drivers when component mounts
   useEffect(() => {
@@ -180,6 +198,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const resetForm = () => {
     setFormData({
       tripId: '', // Will be regenerated
+      currentLocation: userLocation || '',
       startingPoint: '',
       destination: '',
       driver: '',
@@ -216,6 +235,12 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate that userLocation is available
+    if (!userLocation) {
+      toast.error('Unable to determine your location. Please refresh the page and try again.');
+      return;
+    }
+
     // Only validate driver and truck assignment for active trips
     if (formData.type === 'active') {
       if (!selectedDriver || !formData.truck || formData.truck === 'Not Assigned') {
@@ -238,6 +263,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
       // Parse and validate form data
       const validatedData: Omit<Trip, 'id'> = {
         ...formData,
+        currentLocation: userLocation, // Ensure we use the actual userLocation
         startDate: new Date(formData.startDate),
         numberOfStops: selectedOrderIds.length,
         currentStatus: formData.currentStatus,
@@ -303,8 +329,19 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
   return (
     <form onSubmit={handleFormSubmit}>
       <div className="grid gap-6 py-4">
-        {/* Row 1: Trip ID, Starting Point, Destination */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Display current location info */}
+        {userLocation ? (
+          <div className="text-sm text-muted-foreground mb-4">
+            <strong>Current Location:</strong> {userLocation}
+          </div>
+        ) : (
+          <div className="text-sm text-yellow-600 mb-4">
+            <strong>Warning:</strong> Unable to determine your location. Please refresh the page.
+          </div>
+        )}
+
+        {/* Row 1: Starting Point, Destination */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2 hidden">
             <Label htmlFor="tripId">Trip ID</Label>
             <Input
@@ -342,7 +379,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
               value={formData.type}
               onValueChange={(value) => handleInputChange('type', value)}
             >
-              <SelectTrigger className='w-full'>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select trip type" />
               </SelectTrigger>
               <SelectContent>
@@ -426,7 +463,7 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
 
         {/* Add this section after the last form field group and before the buttons */}
         <div className="space-y-4">
-          <Label className='font-bold'>Select Orders for this Trip</Label>
+          <Label className="font-bold">Select Orders for this Trip</Label>
           <div className="text-sm text-muted-foreground mb-2">
             Number of stops in this trip: {selectedOrderIds.length}
           </div>
@@ -495,7 +532,10 @@ export function CreateTripForm({ onSuccess }: CreateTripFormProps) {
           >
             Reset
           </Button>
-          <Button type="submit" disabled={isSubmitting || isGeneratingId || isLoadingDrivers}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || isGeneratingId || isLoadingDrivers || !userLocation}
+          >
             {isSubmitting ? 'Creating Trip...' : 'Create Trip'}
           </Button>
         </div>

@@ -70,6 +70,7 @@ export type ProofOfPayment = {
 export type Trip = {
   id: string;
   tripId: string;
+  currentLocation: string;
   startingPoint: string; // alias: Origin
   destination: string;
   driver: string;
@@ -125,6 +126,7 @@ export type TripOrders = {
 export type Driver = {
   id: string;
   driverId: string;
+  assignedManagerId: string | "NA"; // ID of the manager who is assigned to the driver
   driverName: string;
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;
@@ -271,7 +273,9 @@ export type TAT_Mapping = {
 export type DriversRequest = {
   id: string;
   driverId: string; // reference to the driver who created the request
-  type: 'leave' | 'money' | 'food' | 'others';
+  tripId: string;
+  managerId: string; // reference to the manager who will approve/reject the request
+  type: 'Leave' | 'Money' | 'Food' | 'Others' | 'Maintenance' | 'Toll';
   proofImageUrl?: string; // URL of the proof image
 
   reason: string;

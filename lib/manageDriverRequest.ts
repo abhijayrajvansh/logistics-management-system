@@ -9,15 +9,25 @@ import { updateDriverLeaveBalance } from './manageDriverLeaveBalance';
  */
 export async function processDriverRequest(request: DriversRequest): Promise<void> {
   try {
-    switch (request.type) {
+    // Convert request type to lowercase for case-insensitive comparison
+    const requestType = request.type.toLowerCase();
+
+    switch (requestType) {
       case 'leave':
         await processLeaveRequest(request);
         break;
       case 'money':
-        await processMoneyRequest(request);
+        await processOtherRequest(request);
         break;
       case 'food':
-        await processFoodRequest(request);
+        await processOtherRequest(request);
+        break;
+      case 'maintenance':
+        await processOtherRequest(request); // Handle maintenance as a type of other request
+        break;
+
+      case 'toll':
+        await processOtherRequest(request);
         break;
       case 'others':
         await processOtherRequest(request);

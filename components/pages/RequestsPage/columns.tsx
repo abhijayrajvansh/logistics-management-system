@@ -3,7 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
-import { Driver, DriversRequest } from '@/types';
+import { DriversRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { ProofCell } from './ProofCell';
 import { PermissionGate } from '@/components/PermissionGate';
@@ -11,14 +11,55 @@ import { PermissionGate } from '@/components/PermissionGate';
 type RequestColumnsProps = {
   onApprove: (id: string) => Promise<void>;
   onReject: (id: string) => Promise<void>;
-  drivers: Driver[];
+};
+
+// Enhanced request type with driver and trip details
+type EnhancedRequest = DriversRequest & {
+  driverDetails?: {
+    driverName: string;
+    driverId: string;
+  } | null;
+  tripDetails?: {
+    tripId: string;
+    destination: string;
+    startingPoint: string;
+  } | null;
+  // Legacy fields for backward compatibility
+  requestType?: string;
+};
+
+// Helper function to format dates consistently
+const formatDate = (dateValue: any): string => {
+  if (!dateValue) return 'N/A';
+
+  try {
+    // Handle Firestore Timestamp
+    if (dateValue && typeof dateValue === 'object' && 'toDate' in dateValue) {
+      return dateValue.toDate().toLocaleDateString();
+    }
+    // Handle regular Date object
+    if (dateValue instanceof Date) {
+      return dateValue.toLocaleDateString();
+    }
+    // Handle string date
+    if (typeof dateValue === 'string') {
+      return new Date(dateValue).toLocaleDateString();
+    }
+    // Handle timestamp with seconds
+    if (dateValue && typeof dateValue === 'object' && 'seconds' in dateValue) {
+      return new Date(dateValue.seconds * 1000).toLocaleDateString();
+    }
+  } catch (error) {
+    console.error('Error formatting date:', error);
+  }
+
+  return 'Invalid Date';
 };
 
 export const columns = ({
   onApprove,
   onReject,
-  drivers,
-}: RequestColumnsProps): ColumnDef<DriversRequest>[] => {
+}: RequestColumnsProps): ColumnDef<EnhancedRequest>[] => {
   return [
     {
       accessorKey: 'id',
@@ -28,16 +69,51 @@ export const columns = ({
       accessorKey: 'driverId',
       header: 'Driver',
       cell: ({ row }) => {
-        const driverId = row.getValue('driverId') as string;
-        const driver = drivers.find((d) => d.id === driverId);
-        return driver?.driverName || 'Unknown Driver';
+        const request = row.original;
+        return (
+          <div className="space-y-1">
+            <div className="font-medium">
+              {request.driverDetails?.driverName || 'Unknown Driver'}
+            </div>
+            {/* <div className="text-xs text-muted-foreground">ID: {request.driverId}</div> */}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'tripId',
+      header: 'Trip Info',
+      cell: ({ row }) => {
+        const request = row.original;
+        if (!request.tripDetails) {
+          return <span className="text-muted-foreground text-xs">No trip data</span>;
+        }
+        return (
+          <div className="space-y-1">
+            <div className="text-xs font-medium">
+              {request.tripDetails.startingPoint} → {request.tripDetails.destination}
+            </div>
+            {/* <div className="text-xs text-muted-foreground">Trip ID: {request.tripId}</div> */}
+          </div>
+        );
       },
     },
     {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => {
-        const type = row.getValue('type') as DriversRequest['type'];
+        const request = row.original;
+        // Handle both 'type' and 'requestType' fields for backward compatibility
+        const type = request.type || request.requestType || row.getValue('type');
+
+        if (!type) {
+          return (
+            <Badge variant="secondary" className="text-xs">
+              Unknown
+            </Badge>
+          );
+        }
+
         return (
           <Badge variant="outline" className="capitalize">
             {type}
@@ -54,36 +130,7 @@ export const columns = ({
       header: 'Start Date',
       cell: ({ row }) => {
         const startDateValue = row.getValue('startDate');
-
-        // Handle different date formats that might come from Firestore
-        let formattedDate = '';
-
-        if (startDateValue) {
-          try {
-            // Handle if it's a Date object
-            if (startDateValue instanceof Date) {
-              formattedDate = startDateValue.toLocaleDateString();
-            }
-            // Handle string date format
-            else if (typeof startDateValue === 'string') {
-              formattedDate = new Date(startDateValue).toLocaleDateString();
-            }
-            // Handle timestamp object
-            else if (
-              startDateValue &&
-              typeof startDateValue === 'object' &&
-              'seconds' in startDateValue
-            ) {
-              formattedDate = new Date(
-                (startDateValue.seconds as number) * 1000,
-              ).toLocaleDateString();
-            }
-          } catch (error) {
-            console.error('Error formatting TAT date:', error);
-          }
-        }
-
-        return <div className="text-left">{formattedDate}</div>;
+        return <div className="text-left">{formatDate(startDateValue)}</div>;
       },
     },
     {
@@ -91,36 +138,7 @@ export const columns = ({
       header: 'End Date',
       cell: ({ row }) => {
         const endDateValue = row.getValue('endDate');
-
-        // Handle different date formats that might come from Firestore
-        let formattedDate = '';
-
-        if (endDateValue) {
-          try {
-            // Handle if it's a Date object
-            if (endDateValue instanceof Date) {
-              formattedDate = endDateValue.toLocaleDateString();
-            }
-            // Handle string date format
-            else if (typeof endDateValue === 'string') {
-              formattedDate = new Date(endDateValue).toLocaleDateString();
-            }
-            // Handle timestamp object
-            else if (
-              endDateValue &&
-              typeof endDateValue === 'object' &&
-              'seconds' in endDateValue
-            ) {
-              formattedDate = new Date(
-                (endDateValue.seconds as number) * 1000,
-              ).toLocaleDateString();
-            }
-          } catch (error) {
-            console.error('Error formatting TAT date:', error);
-          }
-        }
-
-        return <div className="text-left">{formattedDate}</div>;
+        return <div className="text-left">{formatDate(endDateValue)}</div>;
       },
     },
     {
@@ -135,7 +153,11 @@ export const columns = ({
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as DriversRequest['status'];
+        const request = row.original;
+        // Handle both 'declined' and 'rejected' for backward compatibility
+        const rawStatus = request.status as any;
+        const status = rawStatus === 'declined' ? 'rejected' : rawStatus;
+
         return (
           <Badge
             variant={
@@ -152,44 +174,13 @@ export const columns = ({
       header: 'Created At',
       cell: ({ row }) => {
         const createdAtValue = row.getValue('createdAt');
-
-        // Handle different date formats that might come from Firestore
-        let formattedDate = '';
-
-        if (createdAtValue) {
-          try {
-            // Handle if it's a Date object
-            if (createdAtValue instanceof Date) {
-              formattedDate = createdAtValue.toLocaleDateString();
-            }
-            // Handle string date format
-            else if (typeof createdAtValue === 'string') {
-              formattedDate = new Date(createdAtValue).toLocaleDateString();
-            }
-            // Handle timestamp object
-            else if (
-              createdAtValue &&
-              typeof createdAtValue === 'object' &&
-              'seconds' in createdAtValue
-            ) {
-              formattedDate = new Date(
-                (createdAtValue.seconds as number) * 1000,
-              ).toLocaleDateString();
-            }
-          } catch (error) {
-            console.error('Error formatting TAT date:', error);
-          }
-        }
-
-        return <div className="text-left">{formattedDate}</div>;
+        return <div className="text-left">{formatDate(createdAtValue)}</div>;
       },
     },
     {
       id: 'actions',
       header: () => (
-        <PermissionGate
-          features={['FEATURE_REQUESTS_APPROVE', 'FEATURE_REQUESTS_REJECT']}
-        >
+        <PermissionGate features={['FEATURE_REQUESTS_APPROVE', 'FEATURE_REQUESTS_REJECT']}>
           <div className="text-center">Actions</div>
         </PermissionGate>
       ),

@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import useTrucks from '@/hooks/useTrucks';
 import { ReferralBySelector } from './ReferralBySelector';
+import { ManagerSelector } from './ManagerSelector';
 
 interface CreateDriverFormProps {
   onSuccess?: () => void;
@@ -54,6 +55,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
     status: 'Active' as Driver['status'],
     emergencyContact: 'NA',
     referredBy: 'NA',
+    assignedManagerId: 'NA',
     date_of_joining: new Date() as any,
     driverDocuments: {
       aadhar_front: '',
@@ -268,6 +270,7 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
         status: 'Inactive',
         emergencyContact: 'NA',
         referredBy: 'NA',
+        assignedManagerId: 'NA',
         date_of_joining: new Date() as any, // Reset to current date
         driverDocuments: {
           aadhar_front: '',
@@ -449,6 +452,18 @@ export function CreateDriverForm({ onSuccess, onCancel }: CreateDriverFormProps)
           onChange={(e) => handleInputChange('date_of_joining', new Date(e.target.value))}
           required
         />
+      </div>
+
+      {/* Manager Assignment Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Manager Assignment</h3>
+        <div className="space-y-2">
+          <Label htmlFor="assignedManagerId">Assigned Manager</Label>
+          <ManagerSelector
+            value={formData.assignedManagerId}
+            onChange={(value) => handleInputChange('assignedManagerId', value)}
+          />
+        </div>
       </div>
 
       {/* Documents Section */}

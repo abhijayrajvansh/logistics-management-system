@@ -94,15 +94,28 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  // Handle search input change
+  // Handle search input change with multi-field search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
+    const query = e.target.value.toLowerCase();
     setSearchQuery(query);
 
-    if (searchKey && query) {
-      table.getColumn(searchKey)?.setFilterValue(query);
-    } else if (searchKey) {
-      table.getColumn(searchKey)?.setFilterValue('');
+    if (query) {
+      // Filter data based on multiple fields
+      const filteredData = initialData.filter((item: any) => {
+        const type = item.type || item.requestType;
+        const status = item.status === 'declined' ? 'rejected' : item.status;
+
+        return (
+          item.reason?.toLowerCase().includes(query) ||
+          type?.toLowerCase().includes(query) ||
+          status?.toLowerCase().includes(query) ||
+          item.driverDetails?.driverName?.toLowerCase().includes(query) ||
+          item.id?.toLowerCase().includes(query)
+        );
+      });
+      setData(filteredData);
+    } else {
+      setData(initialData);
     }
   };
 
@@ -114,7 +127,7 @@ export function DataTable<TData, TValue>({
           <div className="relative w-72">
             <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Search by reason, type, status, driver name, or ID..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="pl-8"

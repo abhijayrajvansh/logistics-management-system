@@ -1,24 +1,38 @@
 'use client';
 
+import { useAuth } from '@/app/context/AuthContext';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
+import { PermissionGate } from '@/components/PermissionGate';
+import { Badge } from '@/components/ui/badge';
+import { useRequests } from '@/hooks/useRequests';
+import { processDriverRequest } from '@/lib/manageDriverRequest';
 import React from 'react';
+import { toast } from 'sonner';
 import { columns } from './columns';
 import { DataTable } from './data-table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRequests } from '@/hooks/useRequests';
-import { useDrivers } from '@/hooks/useDrivers';
-import { toast } from 'sonner';
-import { processDriverRequest } from '@/lib/manageDriverRequest';
-import { PermissionGate } from '@/components/PermissionGate';
-import { useFeatureAccess } from '@/app/context/PermissionsContext';
 
 const RequestsPage = () => {
-  const { requests, approveRequest, rejectRequest } = useRequests();
-  const { drivers } = useDrivers();
+  const { userData } = useAuth();
+
+  // Filter requests by managerId if the current user is a manager
+  const managerId = userData?.role === 'manager' ? userData.userId : undefined;
+
+  const {
+    requestsWithDetails,
+    approveRequest,
+    rejectRequest,
+    isLoading,
+    getPendingRequests,
+    getApprovedRequests,
+    getRejectedRequests,
+    pendingCount,
+    totalCount,
+  } = useRequests(managerId);
   const { can } = useFeatureAccess();
 
-  const pendingRequests = requests.filter((req) => req.status === 'pending');
-  const approvedRequests = requests.filter((req) => req.status === 'approved');
-  const rejectedRequests = requests.filter((req) => req.status === 'rejected');
+  const pendingRequests = getPendingRequests();
+  const approvedRequests = getApprovedRequests();
+  const rejectedRequests = getRejectedRequests();
 
   const handleApprove = async (id: string) => {
     // Check permission before allowing approval
@@ -29,7 +43,7 @@ const RequestsPage = () => {
 
     try {
       // Find the request to be approved
-      const request = requests.find((req) => req.id === id);
+      const request = requestsWithDetails.find((req) => req.id === id);
       if (!request) {
         throw new Error('Request not found');
       }
@@ -63,9 +77,20 @@ const RequestsPage = () => {
   };
 
   const columnConfig = React.useMemo(
-    () => columns({ onApprove: handleApprove, onReject: handleReject, drivers }),
-    [handleApprove, handleReject, drivers],
+    () => columns({ onApprove: handleApprove, onReject: handleReject }),
+    [handleApprove, handleReject],
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="text-gray-600 mt-2">Loading requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PermissionGate
@@ -83,7 +108,7 @@ const RequestsPage = () => {
         {/* Title and header */}
         <div className="flex justify-between px-4 lg:px-6">
           <div>
-            <h1 className="text-3xl font-semibold">Monitor Driver's Requests</h1>
+            <h1 className="text-3xl font-semibold">Manage Driver's Requests</h1>
             <p className="text-[14px] text-black/70 mt-1">
               Monitor and manage your drivers' requests records
             </p>
@@ -91,34 +116,49 @@ const RequestsPage = () => {
         </div>
 
         {/* Pending Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columnConfig} data={pendingRequests} searchKey="title" />
-          </CardContent>
-        </Card>
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              Pending Requests
+              <Badge variant="outline" className="ml-2">
+                {pendingRequests.length}
+              </Badge>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={pendingRequests} searchKey="reason" />
+          </div>
+        </div>
 
         {/* Approved Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Approved Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columnConfig} data={approvedRequests} searchKey="title" />
-          </CardContent>
-        </Card>
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              Approved Requests
+              <Badge variant="default" className="ml-2">
+                {approvedRequests.length}
+              </Badge>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={approvedRequests} searchKey="reason" />
+          </div>
+        </div>
 
         {/* Rejected Requests Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Rejected Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columnConfig} data={rejectedRequests} searchKey="title" />
-          </CardContent>
-        </Card>
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              Rejected Requests
+              <Badge variant="destructive" className="ml-2">
+                {rejectedRequests.length}
+              </Badge>
+            </h2>
+          </div>
+          <div>
+            <DataTable columns={columnConfig} data={rejectedRequests} searchKey="reason" />
+          </div>
+        </div>
       </div>
     </PermissionGate>
   );

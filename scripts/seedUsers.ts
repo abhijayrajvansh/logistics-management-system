@@ -7,11 +7,12 @@ const seedTypes = ['add', 'update'] as const;
 
 const users: User[] = [
   {
-    userId: 'MK5OwprsXAVghVv1K1JVX1gZAHw2', // get user ID from the firebase auth user uid
-    email: 'yash' + env.USERID_EMAIL,
+    userId: 'NTVvdyfCNvN0eO7N8x84KIdRBto2', // get user ID from the firebase auth user uid
+    email: 'r.abhijay@uptut.com',
+    // email: 'yash' + env.USERID_EMAIL,
     password: 'password',
-    displayName: 'Yash Khattar',
-    location: '123456',
+    displayName: 'Abhijay (Uptut ID)',
+    location: 'NA',
     role: 'admin',
     createdAt: new Date(),
     walletId: 'NA',
