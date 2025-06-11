@@ -6,9 +6,18 @@ import { columns } from './columns';
 import { SiteHeader } from '@/components/site-header';
 import { useWallets } from '@/hooks/useWallets';
 import { PermissionGate } from '@/components/PermissionGate';
+import { useAuth } from '@/app/context/AuthContext';
 
 const WalletsPage = () => {
-  const { wallets, isLoading, error } = useWallets();
+  const { userData } = useAuth();
+
+  // Check if user has a wallet ID and it's not 'NA'
+  const userWalletId =
+    userData?.walletId && userData.walletId !== 'NA' ? userData.walletId : undefined;
+
+  const { wallets, isLoading, error } = useWallets({
+    filterWalletId: userWalletId,
+  });
 
   if (isLoading) {
     return <div className="p-4">Loading wallets...</div>;
