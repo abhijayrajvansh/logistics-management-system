@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PermissionGate } from '@/components/PermissionGate';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
 import { MdDeleteOutline, MdEdit } from 'react-icons/md';
 import { UpdateWalletForm } from './update-wallet';
 import { DeleteWalletDialog } from './delete-wallet';
@@ -25,18 +27,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_WALLETS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+
+      <PermissionGate feature="FEATURE_WALLETS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* Edit Wallet Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -63,6 +70,20 @@ const ActionCell = ({ row }: { row: any }) => {
       />
     </div>
   );
+};
+
+// Component for conditional Actions header
+const ActionsHeader = () => {
+  const { can } = useFeatureAccess();
+  const hasEditPermission = can('FEATURE_WALLETS_EDIT');
+  const hasDeletePermission = can('FEATURE_WALLETS_DELETE');
+
+  // Only show Actions header if user has either edit or delete permissions
+  if (hasEditPermission || hasDeletePermission) {
+    return <div className="text-center">Actions</div>;
+  }
+
+  return null;
 };
 
 export const columns: ColumnDef<Wallet>[] = [
@@ -94,14 +115,19 @@ export const columns: ColumnDef<Wallet>[] = [
   },
   {
     id: 'view-transactions',
-    header: () => <div className="text-center">Transaction History</div>,
+    header: () => {
+      const { can } = useFeatureAccess();
+      return can('FEATURE_WALLETS_TRANSACTIONS_VIEW') ? (
+        <div className="text-center">Transaction History</div>
+      ) : null;
+    },
     cell: ({ row }) => {
       const [isOpen, setIsOpen] = useState(false);
       const wallet = row.original;
       const transactions = wallet.transactions || [];
 
       return (
-        <>
+        <PermissionGate feature="FEATURE_WALLETS_TRANSACTIONS_VIEW">
           <div className="text-center">
             <button
               onClick={() => setIsOpen(true)}
@@ -117,8 +143,8 @@ export const columns: ColumnDef<Wallet>[] = [
                 <DialogTitle>Transaction History</DialogTitle>
                 <DialogDescription>
                   {(() => {
-                  const { users } = useUsers(row.original.userId);
-                  return `All transactions for ${users[0]?.displayName || row.original.userId}`;
+                    const { users } = useUsers(row.original.userId);
+                    return `All transactions for ${users[0]?.displayName || row.original.userId}`;
                   })()}
                 </DialogDescription>
               </DialogHeader>
@@ -150,13 +176,13 @@ export const columns: ColumnDef<Wallet>[] = [
               </div>
             </DialogContent>
           </Dialog>
-        </>
+        </PermissionGate>
       );
     },
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: ActionsHeader,
     id: 'actions',
     cell: ActionCell,
   },

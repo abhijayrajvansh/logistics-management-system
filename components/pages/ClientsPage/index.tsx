@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { CreateClientForm } from './create-client';
 import useClients from '@/hooks/useClients';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function ClientsPage() {
   const { clients, isLoading, error } = useClients();
@@ -34,7 +35,17 @@ export default function ClientsPage() {
   }
 
   return (
-    <>
+    <PermissionGate
+      feature="FEATURE_CLIENTS_VIEW"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600 mt-2">You don't have permission to view clients.</p>
+          </div>
+        </div>
+      }
+    >
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4">
           {/* Header with Create Client Button */}
@@ -45,23 +56,25 @@ export default function ClientsPage() {
                 Create, view and manage your clients at ease.
               </p>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="rounded-lg">
-                  <PlusIcon />
-                  <span className="hidden font-semibold lg:inline">Create Client</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Client</DialogTitle>
-                  <DialogDescription>
-                    Fill out the form below to create a new client. Click submit when you're done.
-                  </DialogDescription>
-                </DialogHeader>
-                <CreateClientForm onSuccess={handleClientSuccess} />
-              </DialogContent>
-            </Dialog>
+            <PermissionGate feature="FEATURE_CLIENTS_CREATE">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm" className="rounded-lg">
+                    <PlusIcon />
+                    <span className="hidden font-semibold lg:inline">Create Client</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Client</DialogTitle>
+                    <DialogDescription>
+                      Fill out the form below to create a new client. Click submit when you're done.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateClientForm onSuccess={handleClientSuccess} />
+                </DialogContent>
+              </Dialog>
+            </PermissionGate>
           </div>
 
           {/* Client Data Table */}
@@ -70,6 +83,6 @@ export default function ClientsPage() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }

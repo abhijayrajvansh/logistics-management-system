@@ -45,6 +45,7 @@ import { IoSpeedometer, IoWallet } from 'react-icons/io5';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/app/context/AuthContext';
 import { Wallet } from '@/types';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // Create TypeCell component for handling type updates
 const TypeCell = ({ row }: { row: any }) => {
@@ -442,20 +443,24 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      {trip.type !== 'past' && (
+      <PermissionGate feature="FEATURE_TRIPS_EDIT">
         <button
-          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-          onClick={() => setIsDeleteDialogOpen(true)}
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
         >
-          <MdDeleteOutline size={15} />
+          <MdEdit size={15} />
         </button>
-      )}
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRIPS_DELETE">
+        {trip.type !== 'past' && (
+          <button
+            className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <MdDeleteOutline size={15} />
+          </button>
+        )}
+      </PermissionGate>
 
       {/* Edit Trip Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -989,19 +994,43 @@ export const columns: ColumnDef<Trip>[] = [
   },
   {
     accessorKey: 'odometerReading',
-    header: 'Odometer',
-    cell: OdometerReadingsCell,
+    header: () => (
+      <PermissionGate feature="FEATURE_TRIPS_ODOMETER_VIEW" fallback={null}>
+        <div>Odometer</div>
+      </PermissionGate>
+    ),
+    cell: ({ row }) => (
+      <PermissionGate feature="FEATURE_TRIPS_ODOMETER_VIEW" fallback={null}>
+        <OdometerReadingsCell row={row} />
+      </PermissionGate>
+    ),
   },
   {
     accessorKey: 'voucher',
-    header: 'Voucher',
-    cell: VoucherCell,
+    header: () => (
+      <PermissionGate feature="FEATURE_TRIPS_HANDLE_VOUCHER" fallback={null}>
+        <div>Voucher</div>
+      </PermissionGate>
+    ),
+    cell: ({ row }) => (
+      <PermissionGate feature="FEATURE_TRIPS_HANDLE_VOUCHER" fallback={null}>
+        <VoucherCell row={row} />
+      </PermissionGate>
+    ),
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate features={['FEATURE_TRIPS_EDIT', 'FEATURE_TRIPS_DELETE']}>
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
-    cell: ActionCell,
+    cell: ({ row }) => (
+      <PermissionGate features={['FEATURE_TRIPS_EDIT', 'FEATURE_TRIPS_DELETE']}>
+        <ActionCell row={row} />
+      </PermissionGate>
+    ),
   },
 ];
 

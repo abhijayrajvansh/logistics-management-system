@@ -7,6 +7,7 @@ import { useState } from 'react';
 import useUsers from '@/hooks/useUsers';
 import useTrucks from '@/hooks/useTrucks';
 import { Timestamp } from 'firebase/firestore';
+import { PermissionGate } from '@/components/PermissionGate';
 
 interface ViewDriverDetailsProps {
   driver: Driver;
@@ -52,12 +53,14 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
 
   return (
     <>
+    <PermissionGate feature="FEATURE_DRIVERS_DOCUMENTS_VIEW">
       <button
         className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray hover:text-white"
         onClick={() => setIsOpen(true)}
       >
         <IconEye size={15} />
       </button>
+      </PermissionGate>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -137,107 +140,109 @@ export function ViewDriverDetails({ driver }: ViewDriverDetailsProps) {
             </div>
 
             {/* Documents */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Documents</h3>
-              {!driver.driverDocuments || driver.driverDocuments === 'NA' ? (
-                <p className="text-sm text-muted-foreground">No documents provided</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold">Aadhar Number</label>
-                    <p className="text-sm text-muted-foreground">
-                      {driver.driverDocuments.aadhar_number}
-                    </p>
+            <PermissionGate feature="FEATURE_DRIVERS_DOCUMENTS_VIEW">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Documents</h3>
+                {!driver.driverDocuments || driver.driverDocuments === 'NA' ? (
+                  <p className="text-sm text-muted-foreground">No documents provided</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-semibold">Aadhar Number</label>
+                      <p className="text-sm text-muted-foreground">
+                        {driver.driverDocuments.aadhar_number}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold">License Number</label>
+                      <p className="text-sm text-muted-foreground">
+                        {driver.driverDocuments.license_number}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold">Date of Birth</label>
+                      <p className="text-sm text-muted-foreground">
+                        {getFormattedDate(driver.driverDocuments.dob)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold">License Expiry</label>
+                      <p className="text-sm text-muted-foreground">
+                        {getFormattedDate(driver.driverDocuments.license_expiry)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-lg font-semibold">Document Status</label>
+                      <Badge
+                        className={
+                          driver.driverDocuments.status === 'Verified'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }
+                      >
+                        {driver.driverDocuments.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-semibold">License Number</label>
-                    <p className="text-sm text-muted-foreground">
-                      {driver.driverDocuments.license_number}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold">Date of Birth</label>
-                    <p className="text-sm text-muted-foreground">
-                      {getFormattedDate(driver.driverDocuments.dob)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold">License Expiry</label>
-                    <p className="text-sm text-muted-foreground">
-                      {getFormattedDate(driver.driverDocuments.license_expiry)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-lg font-semibold">Document Status</label>
-                    <Badge
-                      className={
-                        driver.driverDocuments.status === 'Verified'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }
-                    >
-                      {driver.driverDocuments.status}
-                    </Badge>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Document Links */}
-              {isDriverDocuments(driver.driverDocuments) && (
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  {driver.driverDocuments.aadhar_front && (
-                    <a
-                      href={driver.driverDocuments.aadhar_front}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View Aadhar Front
-                    </a>
-                  )}
-                  {driver.driverDocuments.aadhar_back && (
-                    <a
-                      href={driver.driverDocuments.aadhar_back}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View Aadhar Back
-                    </a>
-                  )}
-                  {driver.driverDocuments.license && (
-                    <a
-                      href={driver.driverDocuments.license}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View License
-                    </a>
-                  )}
-                  {driver.driverDocuments.medicalCertificate && (
-                    <a
-                      href={driver.driverDocuments.medicalCertificate}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View Medical Certificate
-                    </a>
-                  )}
-                  {driver.driverDocuments.dob_certificate && (
-                    <a
-                      href={driver.driverDocuments.dob_certificate}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      View DOB Certificate
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
+                {/* Document Links */}
+                {isDriverDocuments(driver.driverDocuments) && (
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    {driver.driverDocuments.aadhar_front && (
+                      <a
+                        href={driver.driverDocuments.aadhar_front}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View Aadhar Front
+                      </a>
+                    )}
+                    {driver.driverDocuments.aadhar_back && (
+                      <a
+                        href={driver.driverDocuments.aadhar_back}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View Aadhar Back
+                      </a>
+                    )}
+                    {driver.driverDocuments.license && (
+                      <a
+                        href={driver.driverDocuments.license}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View License
+                      </a>
+                    )}
+                    {driver.driverDocuments.medicalCertificate && (
+                      <a
+                        href={driver.driverDocuments.medicalCertificate}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View Medical Certificate
+                      </a>
+                    )}
+                    {driver.driverDocuments.dob_certificate && (
+                      <a
+                        href={driver.driverDocuments.dob_certificate}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View DOB Certificate
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </PermissionGate>
 
             {/* Emergency Contact */}
             <div className="space-y-4">

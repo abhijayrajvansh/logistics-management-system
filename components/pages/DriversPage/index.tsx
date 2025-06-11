@@ -4,6 +4,7 @@ import { columns } from './columns';
 import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
 import useDrivers from '@/hooks/useDrivers';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export default function DriversPage() {
   const { drivers, isLoading, error } = useDrivers();
@@ -20,7 +21,10 @@ export default function DriversPage() {
   }
 
   return (
-    <>
+    <PermissionGate
+      feature="FEATURE_DRIVERS_VIEW"
+      fallback={<div className="p-8 text-center">You don't have permission to view drivers.</div>}
+    >
       <SiteHeader title="Drivers" />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
@@ -29,6 +33,6 @@ export default function DriversPage() {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 }

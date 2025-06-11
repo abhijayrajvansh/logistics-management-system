@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PermissionGate } from '@/components/PermissionGate';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
 import { ReceiverDetails } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
@@ -30,18 +32,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_RECEIVERS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+
+      <PermissionGate feature="FEATURE_RECEIVERS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* Edit Receiver Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -69,6 +76,20 @@ const ActionCell = ({ row }: { row: any }) => {
       />
     </div>
   );
+};
+
+// Component for conditional Actions header
+const ActionsHeader = () => {
+  const { can } = useFeatureAccess();
+  const hasEditPermission = can('FEATURE_RECEIVERS_EDIT');
+  const hasDeletePermission = can('FEATURE_RECEIVERS_DELETE');
+
+  // Only show Actions header if user has either edit or delete permissions
+  if (hasEditPermission || hasDeletePermission) {
+    return <div className="text-center">Actions</div>;
+  }
+
+  return null;
 };
 
 export const columns: ColumnDef<ReceiverDetails>[] = [
@@ -110,7 +131,7 @@ export const columns: ColumnDef<ReceiverDetails>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: ActionsHeader,
     id: 'actions',
     cell: ActionCell,
   },

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PermissionGate } from '@/components/PermissionGate';
 import {
   Table,
   TableBody,
@@ -110,23 +111,26 @@ export function DataTable<TData, TValue>({
             Create and manage TAT (Turn-Around Time) mappings for centers, clients, and receivers.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Create TAT Mapping</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New TAT Mapping</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new TAT mapping. Click submit when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateTATForm onSuccess={handleTATSuccess} />
-          </DialogContent>
-        </Dialog>
+        <PermissionGate feature="FEATURE_TATS_CREATE">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Create TAT Mapping</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create New TAT Mapping</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new TAT mapping. Click submit when you're
+                  done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateTATForm onSuccess={handleTATSuccess} />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <TabsContent

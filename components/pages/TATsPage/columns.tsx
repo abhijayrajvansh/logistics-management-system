@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PermissionGate } from '@/components/PermissionGate';
+import { useFeatureAccess } from '@/app/context/PermissionsContext';
 import useCenters from '@/hooks/useCenters';
 import useClients from '@/hooks/useClients';
 import useReceivers from '@/hooks/useReceivers';
@@ -30,18 +32,23 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_TATS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+
+      <PermissionGate feature="FEATURE_TATS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* Edit TAT Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -68,6 +75,20 @@ const ActionCell = ({ row }: { row: any }) => {
       />
     </div>
   );
+};
+
+// Component for conditional Actions header
+const ActionsHeader = () => {
+  const { can } = useFeatureAccess();
+  const hasEditPermission = can('FEATURE_TATS_EDIT');
+  const hasDeletePermission = can('FEATURE_TATS_DELETE');
+
+  // Only show Actions header if user has either edit or delete permissions
+  if (hasEditPermission || hasDeletePermission) {
+    return <div className="text-center">Actions</div>;
+  }
+
+  return null;
 };
 
 const formatDate = (timestamp: Timestamp) => {
@@ -102,7 +123,7 @@ const EntityCell = ({
 
   return (
     <div className="flex flex-col">
-      <span className=''>{name}</span>
+      <span className="">{name}</span>
       <span className="text-xs text-gray-500 hidden">{pincode}</span>
     </div>
   );
@@ -152,7 +173,7 @@ export const columns: ColumnDef<TAT_Mapping>[] = [
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: ActionsHeader,
     id: 'actions',
     cell: ActionCell,
   },

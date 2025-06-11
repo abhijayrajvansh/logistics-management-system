@@ -49,6 +49,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CreateTripForm } from './create-trip';
+import { PermissionGate } from '@/components/PermissionGate';
 
 export function DataTable<TData, TValue>({
   columns,
@@ -268,10 +269,14 @@ export function DataTable<TData, TValue>({
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
+            
+            <PermissionGate feature='FEATURE_TRIPS_CREATE'>
             <Button variant="default" size="sm" className="rounded-lg">
               <PlusIcon />
               <span className="hidden font-semibold lg:inline">Create Trip</span>
             </Button>
+          </PermissionGate>
+          
           </DialogTrigger>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>

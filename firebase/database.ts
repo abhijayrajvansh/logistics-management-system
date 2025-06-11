@@ -5,7 +5,7 @@ import env from '@/constants';
 const initializeDatabase = (): Firestore => {
   try {
     const isProd = env.DATABASE_ENV === 'prod';
-    console.log(`Initializing Firestore in ${isProd ? 'production' : 'development'} mode`);
+    console.log(`\x1b[1m\x1b[32m ✓\x1b[0m Initializing database: ${isProd ? 'production' : 'development'}`);
 
     return isProd ? getFirestore(firebaseApp, 'production') : getFirestore(firebaseApp);
   } catch (error) {

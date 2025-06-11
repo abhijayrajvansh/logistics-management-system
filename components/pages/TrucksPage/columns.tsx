@@ -1,5 +1,7 @@
 'use client';
 
+import { PermissionGate } from '@/components/PermissionGate';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -7,20 +9,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import useTrucks from '@/hooks/useTrucks';
+import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import { Truck, TruckMaintenanceHistory } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import { MdDeleteOutline, MdEdit, MdBuildCircle, MdRemoveRedEye } from 'react-icons/md';
+import { FaClock } from 'react-icons/fa6';
+import { MdBuildCircle, MdDeleteOutline, MdEdit, MdRemoveRedEye } from 'react-icons/md';
+import { TbTools } from 'react-icons/tb';
+import AuditHistoryDialog from './AuditHistoryDialog';
 import DeleteTruckDialog from './delete-truck';
 import UpdateTruckForm from './update-truck';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import useTrucks from '@/hooks/useTrucks';
-import { formatFirestoreDate } from '@/lib/fomatTimestampToDate';
 import ViewTruckDetails from './ViewTruckDetails';
-import { TbTools } from 'react-icons/tb';
-import { FaClock } from 'react-icons/fa6';
-import AuditHistoryDialog from './AuditHistoryDialog';
 
 // MaintenanceHistoryDialog component
 const MaintenanceHistoryDialog = ({
@@ -102,101 +102,121 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="text-center space-x-2">
-      <button
-        className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray-500 hover:text-white"
-        onClick={() => setIsViewDetailsOpen(true)}
-        title="View Details"
-      >
-        <MdRemoveRedEye size={15} />
-      </button>
-      <button
-        className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
-        onClick={() => setIsEditDialogOpen(true)}
-        title="Edit Truck"
-      >
-        <MdEdit size={15} />
-      </button>
-      <button
-        className={`p-1 rounded-lg cursor-pointer border ${
-          hasMaintenanceHistory
-            ? 'hover:bg-blue-500 border-blue-500 text-blue-500 hover:text-white'
-            : 'border-gray-300 text-gray-300 cursor-not-allowed'
-        }`}
-        onClick={() => hasMaintenanceHistory && setIsMaintenanceDialogOpen(true)}
-        title={
-          hasMaintenanceHistory ? 'View Maintenance History' : 'No maintenance history available'
-        }
-        disabled={!hasMaintenanceHistory}
-      >
-        <MdBuildCircle size={15} />
-      </button>
-      <button
-        className={`p-1 rounded-lg cursor-pointer border ${
-          hasAuditHistory
-            ? 'hover:bg-violet-500 border-violet-500 text-violet-500 hover:text-white'
-            : 'border-gray-300 text-gray-300 cursor-not-allowed'
-        }`}
-        onClick={() => hasAuditHistory && setIsAuditHistoryDialogOpen(true)}
-        title={hasAuditHistory ? 'View Audit History' : 'No audit history available'}
-        disabled={!hasAuditHistory}
-      >
-        <FaClock size={15} />
-      </button>
-      <button
-        className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
-        onClick={() => setIsDeleteDialogOpen(true)}
-        title="Delete Truck"
-      >
-        <MdDeleteOutline size={15} />
-      </button>
+      <PermissionGate feature="FEATURE_TRUCKS_VIEW_DETAILS">
+        <button
+          className="hover:bg-gray-500 p-1 rounded-lg cursor-pointer border border-gray-500 text-gray-500 hover:text-white"
+          onClick={() => setIsViewDetailsOpen(true)}
+          title="View Details"
+        >
+          <MdRemoveRedEye size={15} />
+        </button>
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRUCKS_EDIT">
+        <button
+          className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
+          onClick={() => setIsEditDialogOpen(true)}
+          title="Edit Truck"
+        >
+          <MdEdit size={15} />
+        </button>
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRUCKS_MAINTENANCE_HISTORY">
+        <button
+          className={`p-1 rounded-lg cursor-pointer border ${
+            hasMaintenanceHistory
+              ? 'hover:bg-blue-500 border-blue-500 text-blue-500 hover:text-white'
+              : 'border-gray-300 text-gray-300 cursor-not-allowed'
+          }`}
+          onClick={() => hasMaintenanceHistory && setIsMaintenanceDialogOpen(true)}
+          title={
+            hasMaintenanceHistory ? 'View Maintenance History' : 'No maintenance history available'
+          }
+          disabled={!hasMaintenanceHistory}
+        >
+          <MdBuildCircle size={15} />
+        </button>
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRUCKS_AUDIT_HISTORY">
+        <button
+          className={`p-1 rounded-lg cursor-pointer border ${
+            hasAuditHistory
+              ? 'hover:bg-violet-500 border-violet-500 text-violet-500 hover:text-white'
+              : 'border-gray-300 text-gray-300 cursor-not-allowed'
+          }`}
+          onClick={() => hasAuditHistory && setIsAuditHistoryDialogOpen(true)}
+          title={hasAuditHistory ? 'View Audit History' : 'No audit history available'}
+          disabled={!hasAuditHistory}
+        >
+          <FaClock size={15} />
+        </button>
+      </PermissionGate>
+      <PermissionGate feature="FEATURE_TRUCKS_DELETE">
+        <button
+          className="hover:bg-red-500 p-1 rounded-lg cursor-pointer border border-red-500 text-red-500 hover:text-white"
+          onClick={() => setIsDeleteDialogOpen(true)}
+          title="Delete Truck"
+        >
+          <MdDeleteOutline size={15} />
+        </button>
+      </PermissionGate>
 
       {/* View Details Dialog */}
-      <ViewTruckDetails
-        isOpen={isViewDetailsOpen}
-        onClose={() => setIsViewDetailsOpen(false)}
-        truck={truck}
-      />
+      <PermissionGate feature="FEATURE_TRUCKS_VIEW_DETAILS">
+        <ViewTruckDetails
+          isOpen={isViewDetailsOpen}
+          onClose={() => setIsViewDetailsOpen(false)}
+          truck={truck}
+        />
+      </PermissionGate>
 
       {/* Edit Truck Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Truck</DialogTitle>
-            <DialogDescription>
-              Update the truck details below. Click update when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <UpdateTruckForm
-            truckId={truck.id}
-            onSuccess={handleUpdateSuccess}
-            onCancel={() => setIsEditDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <PermissionGate feature="FEATURE_TRUCKS_EDIT">
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Truck</DialogTitle>
+              <DialogDescription>
+                Update the truck details below. Click update when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <UpdateTruckForm
+              truckId={truck.id}
+              onSuccess={handleUpdateSuccess}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      </PermissionGate>
 
       {/* Delete Truck Dialog */}
-      <DeleteTruckDialog
-        truckId={truck.id}
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-      />
+      <PermissionGate feature="FEATURE_TRUCKS_DELETE">
+        <DeleteTruckDialog
+          truckId={truck.id}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+        />
+      </PermissionGate>
 
       {/* Maintenance History Dialog */}
       {hasMaintenanceHistory && (
-        <MaintenanceHistoryDialog
-          isOpen={isMaintenanceDialogOpen}
-          onClose={() => setIsMaintenanceDialogOpen(false)}
-          maintenanceHistory={truck.maintainanceHistory}
-        />
+        <PermissionGate feature="FEATURE_TRUCKS_MAINTENANCE_HISTORY">
+          <MaintenanceHistoryDialog
+            isOpen={isMaintenanceDialogOpen}
+            onClose={() => setIsMaintenanceDialogOpen(false)}
+            maintenanceHistory={truck.maintainanceHistory}
+          />
+        </PermissionGate>
       )}
 
       {/* Audit History Dialog */}
       {hasAuditHistory && (
-        <AuditHistoryDialog
-          isOpen={isAuditHistoryDialogOpen}
-          onClose={() => setIsAuditHistoryDialogOpen(false)}
-          auditHistory={truck.auditHistory}
-        />
+        <PermissionGate feature="FEATURE_TRUCKS_AUDIT_HISTORY">
+          <AuditHistoryDialog
+            isOpen={isAuditHistoryDialogOpen}
+            onClose={() => setIsAuditHistoryDialogOpen(false)}
+            auditHistory={truck.auditHistory}
+          />
+        </PermissionGate>
       )}
     </div>
   );
@@ -416,78 +436,99 @@ export const columns: ColumnDef<Truck>[] = [
     },
   },
   {
+    id: 'toolkitCount',
     accessorKey: 'toolkitCount',
-    header: 'Toolkits',
+    header: () => (
+      <PermissionGate feature="FEATURE_TRUCKS_TOOLKIT_DETAILS">
+        <div>Toolkits</div>
+      </PermissionGate>
+    ),
     cell: ({ row }) => {
       const [isDialogOpen, setIsDialogOpen] = useState(false);
       const toolkits = row.original.toolkitCount;
 
-      // Handle undefined, null, or 'NA' cases
-      if (!toolkits || toolkits === 'NA') {
+      const content = () => {
+        // Handle undefined, null, or 'NA' cases
+        if (!toolkits || toolkits === 'NA') {
+          return (
+            <button
+              className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
+              disabled
+              title="No toolkits added"
+            >
+              <span className="text-sm">0</span>
+              <TbTools size={15} />
+            </button>
+          );
+        }
+
+        const count = toolkits.length;
+
         return (
-          <button
-            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1 opacity-50"
-            disabled
-            title="No toolkits added"
-          >
-            <span className="text-sm">0</span>
-            <TbTools size={15} />
-          </button>
-        );
-      }
+          <>
+            <button
+              className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
+              onClick={() => setIsDialogOpen(true)}
+              disabled={count === 0}
+              title={count === 0 ? 'No toolkits added' : 'View toolkits'}
+            >
+              <span className="text-sm">{count}</span>
+              <TbTools size={15} />
+            </button>
 
-      const count = toolkits.length;
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Truck Toolkits</DialogTitle>
+                  <DialogDescription>Photos of all toolkits present in the truck</DialogDescription>
+                </DialogHeader>
 
-      return (
-        <>
-          <button
-            className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white flex items-center justify-center gap-1"
-            onClick={() => setIsDialogOpen(true)}
-            disabled={count === 0}
-            title={count === 0 ? 'No toolkits added' : 'View toolkits'}
-          >
-            <span className="text-sm">{count}</span>
-            <TbTools size={15} />
-          </button>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Truck Toolkits</DialogTitle>
-                <DialogDescription>Photos of all toolkits present in the truck</DialogDescription>
-              </DialogHeader>
-
-              {Array.isArray(toolkits) ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {toolkits.map((url, index) => (
-                    <div key={index} className="border rounded-md p-2">
-                      <div className="relative aspect-square">
-                        <img
-                          src={url}
-                          alt={`Toolkit ${index + 1}`}
-                          className="object-cover rounded-md w-full h-full"
-                        />
+                {Array.isArray(toolkits) ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {toolkits.map((url, index) => (
+                      <div key={index} className="border rounded-md p-2">
+                        <div className="relative aspect-square">
+                          <img
+                            src={url}
+                            alt={`Toolkit ${index + 1}`}
+                            className="object-cover rounded-md w-full h-full"
+                          />
+                        </div>
+                        <p className="text-center mt-2 text-sm text-muted-foreground">
+                          Toolkit {index + 1}
+                        </p>
                       </div>
-                      <p className="text-center mt-2 text-sm text-muted-foreground">
-                        Toolkit {index + 1}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No toolkit photos available
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        </>
-      );
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No toolkit photos available
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </>
+        );
+      };
+
+      return <PermissionGate feature="FEATURE_TRUCKS_TOOLKIT_DETAILS">{content()}</PermissionGate>;
     },
   },
   {
     accessorKey: 'actions',
-    header: () => <div className="text-center">Actions</div>,
+    header: () => (
+      <PermissionGate
+        features={[
+          'FEATURE_TRUCKS_VIEW_DETAILS',
+          'FEATURE_TRUCKS_EDIT',
+          'FEATURE_TRUCKS_DELETE',
+          'FEATURE_TRUCKS_MAINTENANCE_HISTORY',
+          'FEATURE_TRUCKS_AUDIT_HISTORY',
+        ]}
+      >
+        <div className="text-center">Actions</div>
+      </PermissionGate>
+    ),
     id: 'actions',
     cell: ActionCell,
   },

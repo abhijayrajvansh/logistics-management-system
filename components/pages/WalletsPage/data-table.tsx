@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PermissionGate } from '@/components/PermissionGate';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -111,23 +112,25 @@ export function DataTable<TData, TValue>({
             Create, view and manage your wallets at ease.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm" className="rounded-lg">
-              <PlusIcon />
-              <span className="hidden font-semibold lg:inline">Create Wallet</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Wallet</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new wallet. Click submit when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <CreateWalletForm onSuccess={handleWalletSuccess} />
-          </DialogContent>
-        </Dialog>
+        <PermissionGate feature="FEATURE_WALLETS_CREATE">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="rounded-lg">
+                <PlusIcon />
+                <span className="hidden font-semibold lg:inline">Create Wallet</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create New Wallet</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to create a new wallet. Click submit when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateWalletForm onSuccess={handleWalletSuccess} />
+            </DialogContent>
+          </Dialog>
+        </PermissionGate>
       </div>
 
       <TabsContent

@@ -5,6 +5,7 @@ import { columns } from './columns';
 import { DataTable } from './data-table';
 import { SiteHeader } from '@/components/site-header';
 import useAttendance from '@/hooks/useAttendance';
+import { PermissionGate } from '@/components/PermissionGate';
 
 const AttendancePage = () => {
   const { attendance, isLoading, error } = useAttendance();
@@ -43,7 +44,17 @@ const AttendancePage = () => {
   }
 
   return (
-    <>
+    <PermissionGate
+      feature="FEATURE_ATTENDANCE_VIEW"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600 mt-2">You don't have permission to view attendance.</p>
+          </div>
+        </div>
+      }
+    >
       <SiteHeader title="Attendance" />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
@@ -52,7 +63,7 @@ const AttendancePage = () => {
           </div>
         </div>
       </div>
-    </>
+    </PermissionGate>
   );
 };
 

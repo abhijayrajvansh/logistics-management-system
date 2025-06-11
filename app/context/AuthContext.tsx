@@ -2,7 +2,7 @@
 
 import { auth } from '@/firebase/auth';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/firebase/database';
 import { User } from '@/types';
@@ -24,17 +24,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const clearUserData = useCallback(() => {
+    setUserData(null);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (!user) {
-        setUserData(null);
-        setLoading(false);
+        clearUserData();
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [clearUserData]);
 
   // Subscribe to user data in Firestore when auth state changes
   useEffect(() => {
@@ -46,15 +50,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (doc) => {
         if (doc.exists()) {
           const data = doc.data();
-          setUserData({
+          const userData = {
             userId: doc.id,
             email: data.email || '',
             password: data.password || '',
             displayName: data.displayName || '',
             location: data.location || '',
             role: data.role || '',
+            walletId: data.walletId || 'NA',
             createdAt: data.createdAt.toDate() || '',
-          } as User);
+          } as User;
+
+          setUserData(userData);
         }
         setLoading(false);
       },

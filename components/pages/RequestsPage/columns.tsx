@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react';
 import { Driver, DriversRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { ProofCell } from './ProofCell';
+import { PermissionGate } from '@/components/PermissionGate';
 
 type RequestColumnsProps = {
   onApprove: (id: string) => Promise<void>;
@@ -185,30 +186,41 @@ export const columns = ({
     },
     {
       id: 'actions',
+      header: () => (
+        <PermissionGate
+          features={['FEATURE_REQUESTS_APPROVE', 'FEATURE_REQUESTS_REJECT']}
+        >
+          <div className="text-center">Actions</div>
+        </PermissionGate>
+      ),
       cell: ({ row }) => {
         const request = row.original;
 
         if (request.status === 'pending') {
           return (
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 w-8 p-0 text-green-500 hover:text-green-600"
-                onClick={() => onApprove(request.id)}
-                title="Approve Request"
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                onClick={() => onReject(request.id)}
-                title="Reject Request"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <PermissionGate feature="FEATURE_REQUESTS_APPROVE">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 p-0 text-green-500 hover:text-green-600"
+                  onClick={() => onApprove(request.id)}
+                  title="Approve Request"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+              </PermissionGate>
+              <PermissionGate feature="FEATURE_REQUESTS_REJECT">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                  onClick={() => onReject(request.id)}
+                  title="Reject Request"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </PermissionGate>
             </div>
           );
         }

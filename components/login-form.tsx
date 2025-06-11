@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useCallback } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { IoIosWarning } from 'react-icons/io';
 import { IconLoader } from '@tabler/icons-react';
@@ -30,6 +30,14 @@ export function LoginForm({
     email: '',
     password: '',
   });
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, email: e.target.value }));
+  }, []);
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, password: e.target.value }));
+  }, []);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,7 +82,7 @@ export function LoginForm({
                   required
                   disabled={login.isPending}
                   value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  onChange={handleEmailChange}
                 />
               </div>
               <div className="grid gap-2">
@@ -92,7 +100,7 @@ export function LoginForm({
                   required
                   disabled={login.isPending}
                   value={formData.password}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                  onChange={handlePasswordChange}
                 />
               </div>
 
