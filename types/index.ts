@@ -126,7 +126,7 @@ export type TripOrders = {
 export type Driver = {
   id: string;
   driverId: string;
-  assignedManagerId: string | "NA"; // ID of the manager who is assigned to the driver
+  assignedManagerId: string | 'NA'; // ID of the manager who is assigned to the driver
   driverName: string;
   status: 'Active' | 'Inactive' | 'OnLeave' | 'OnTrip' | 'Suspended' | 'Deleted' | 'Stuck';
   phoneNumber: string;
@@ -372,4 +372,91 @@ export type RolePermissions = {
   permissions: string[]; // Array of feature IDs
   updatedAt: Date;
   updatedBy: string; // User ID who last updated the permissions
+};
+
+export type Tyre = {
+  id: string;
+  company: string;
+  size: keyof TyreSizePositionMap;
+  purchaseDate: Timestamp;
+  status: 'ACTIVE' | 'RETIRED' | 'UNDER_RETRADING' | 'READY_TO_USE';
+
+  currentPosition: {
+    truckNumber: string;
+    truckType: string;
+    position: string;
+  } | "NA"; // Current position of the tyre, when Tyre status !== 'ACTIVE' then, 'NA'. i.e., if the tyre is not mounted on any .truck
+
+  history: (
+    | {
+        type: 'onTrip';
+        truckNumber: string;
+        truckType: string;
+        mount: {
+          timestamp: Timestamp;
+          odometer: number;
+          position: string;
+        };
+        unmount: {
+          timestamp: Timestamp;
+          odometer: number;
+        };
+        service: {
+          serviceType: string;
+          amount: number;
+          timestamp: Timestamp;
+          notes?: string;
+        }[] | "NA"; // Service history, can be 'NA' if no service has been done
+      }
+    | {
+        type: 'retrading';
+        retradingDate: Timestamp;
+        vendor: string;
+        readyToUseDate: Timestamp;
+      }
+  )[] | "NA"; // History of the tyre, can be 'NA' if no history exists
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};
+
+// Mapping of tyre sizes to their positions
+export type TyreSizePositionMap = {
+  // '10 R 20': Tyre sizes and their corresponding positions
+  '10 R 20':
+    | 'FL'
+    | 'FR'
+    | 'DLO'
+    | 'DLI'
+    | 'DRI'
+    | 'DRO'
+    | 'LL'
+    | 'LR'
+    | 'SLO'
+    | 'SLI'
+    | 'SRI'
+    | 'SRO'
+    | 'SFL'
+    | 'SFR'
+    | 'SRL'
+    | 'SRR'
+    | 'LLO'
+    | 'LLI'
+    | 'LRI'
+    | 'LRO';
+
+  // '10 R 20': Tyre sizes and their corresponding positions
+  '9 R 20':
+    | 'FSLO'
+    | 'FSLI'
+    | 'FSRI'
+    | 'FSRO'
+    | 'RSLO'
+    | 'RSLI'
+    | 'RSRI'
+    | 'RSRO'
+    | 'LLO'
+    | 'LLI'
+    | 'LRI'
+    | 'LRO';
 };
