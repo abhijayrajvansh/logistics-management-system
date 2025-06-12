@@ -92,6 +92,8 @@ export const useRequests = (managerId?: string) => {
             // Handle backward compatibility
             type: doc.data().type || doc.data().requestType,
             status: doc.data().status === 'declined' ? 'rejected' : doc.data().status,
+            // Handle amount field - default to "NA" if not present
+            amount: doc.data().amount !== undefined ? doc.data().amount : "NA",
           })) as DriversRequest[];
 
           setRequests(requestsData);

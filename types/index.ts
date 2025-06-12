@@ -277,6 +277,7 @@ export type DriversRequest = {
   managerId: string; // reference to the manager who will approve/reject the request
   type: 'Leave' | 'Money' | 'Food' | 'Others' | 'Maintenance' | 'Toll';
   proofImageUrl?: string; // URL of the proof image
+  amount: number | "NA"; // amount requested, if type is 'Money' or 'Toll', otherwise 'NA'
 
   reason: string;
   startDate: Timestamp; // timestamp or some other format

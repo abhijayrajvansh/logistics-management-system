@@ -26,6 +26,7 @@ type EnhancedRequest = DriversRequest & {
   } | null;
   // Legacy fields for backward compatibility
   requestType?: string;
+  amount?: number | "NA";
 };
 
 // Helper function to format dates consistently
@@ -124,6 +125,28 @@ export const columns = ({
     {
       accessorKey: 'reason',
       header: 'Reason',
+    },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => {
+        const request = row.original;
+        const amount = request.amount;
+        
+        // Only show amount for Money and Toll request types
+        if (request.type === 'Money' || request.type === 'Toll') {
+          if (amount === "NA" || amount === undefined || amount === null) {
+            return <span className="text-muted-foreground text-xs">Not specified</span>;
+          }
+          return (
+            <div className="font-medium">
+              ₹{typeof amount === 'number' ? amount.toLocaleString() : amount}
+            </div>
+          );
+        }
+        
+        return <span className="text-muted-foreground text-xs">N/A</span>;
+      },
     },
     {
       accessorKey: 'startDate',
