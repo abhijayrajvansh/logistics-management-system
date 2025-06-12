@@ -23,6 +23,7 @@ import { FaClock } from 'react-icons/fa6';
 import { FaHandHoldingMedical } from 'react-icons/fa';
 import { FaWallet } from 'react-icons/fa';
 import { FaCogs } from 'react-icons/fa';
+import { GiFlatTire } from "react-icons/gi";
 
 interface NavItem {
   title: string;
@@ -55,6 +56,12 @@ const navMain: NavItem[] = [
     url: '/dashboard/trucks',
     icon: FaTruck,
     permission: 'FEATURE_TRUCKS_VIEW' as FeatureId,
+  },
+  {
+    title: 'Tyres',
+    url: '/dashboard/tyres',
+    icon: GiFlatTire,
+    permission: 'FEATURE_TYRES_VIEW' as FeatureId,
   },
   {
     title: 'Drivers',

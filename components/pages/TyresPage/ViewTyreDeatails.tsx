@@ -62,7 +62,9 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground">Truck Type:</span>
-                      <p className="font-medium">{tyre.currentPosition.truckType || 'Not specified'}</p>
+                      <p className="font-medium">
+                        {tyre.currentPosition.truckType || 'Not specified'}
+                      </p>
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground">Position:</span>
@@ -70,7 +72,9 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
                     </div>
                   </>
                 ) : (
-                  <p className="text-muted-foreground">Tyre is not currently mounted on any truck</p>
+                  <p className="text-muted-foreground">
+                    Tyre is not currently mounted on any truck
+                  </p>
                 )}
               </div>
             </div>
@@ -80,7 +84,10 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
           <div className="space-y-4">
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">History</h3>
-              {tyre.history && tyre.history !== 'NA' && Array.isArray(tyre.history) && tyre.history.length > 0 ? (
+              {tyre.history &&
+              tyre.history !== 'NA' &&
+              Array.isArray(tyre.history) &&
+              tyre.history.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {tyre.history.map((entry, index) => (
                     <div key={index} className="border rounded-md p-3 space-y-2">
@@ -117,29 +124,37 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
                               </>
                             )}
                           </div>
-                          
+
                           {/* Service History */}
-                          {entry.service && entry.service !== 'NA' && Array.isArray(entry.service) && entry.service.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-sm font-medium mb-1">Service Records:</div>
-                              <div className="space-y-1">
-                                {entry.service.map((service, serviceIndex) => (
-                                  <div key={serviceIndex} className="text-xs bg-gray-50 p-2 rounded">
-                                    <div className="flex justify-between">
-                                      <span>{service.serviceType}</span>
-                                      <span>₹{service.amount}</span>
+                          {entry.service &&
+                            entry.service !== 'NA' &&
+                            Array.isArray(entry.service) &&
+                            entry.service.length > 0 && (
+                              <div className="mt-2">
+                                <div className="text-sm font-medium mb-1">Service Records:</div>
+                                <div className="space-y-1">
+                                  {entry.service.map((service, serviceIndex) => (
+                                    <div
+                                      key={serviceIndex}
+                                      className="text-xs bg-gray-50 p-2 rounded"
+                                    >
+                                      <div className="flex justify-between">
+                                        <span>{service.serviceType}</span>
+                                        <span>₹{service.amount}</span>
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        {formatFirestoreDate(service.timestamp)}
+                                      </div>
+                                      {service.notes && (
+                                        <div className="text-muted-foreground mt-1">
+                                          {service.notes}
+                                        </div>
+                                      )}
                                     </div>
-                                    <div className="text-muted-foreground">
-                                      {formatFirestoreDate(service.timestamp)}
-                                    </div>
-                                    {service.notes && (
-                                      <div className="text-muted-foreground mt-1">{service.notes}</div>
-                                    )}
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </>
                       ) : entry.type === 'retrading' ? (
                         <>

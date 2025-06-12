@@ -101,15 +101,43 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
   const getAvailablePositions = (size: string): string[] => {
     const sizeMap: Record<string, string[]> = {
       '10 R 20': [
-        'FL', 'FR', 'DLO', 'DLI', 'DRI', 'DRO', 'LL', 'LR', 'SLO', 'SLI', 
-        'SRI', 'SRO', 'SFL', 'SFR', 'SRL', 'SRR', 'LLO', 'LLI', 'LRI', 'LRO'
+        'FL',
+        'FR',
+        'DLO',
+        'DLI',
+        'DRI',
+        'DRO',
+        'LL',
+        'LR',
+        'SLO',
+        'SLI',
+        'SRI',
+        'SRO',
+        'SFL',
+        'SFR',
+        'SRL',
+        'SRR',
+        'LLO',
+        'LLI',
+        'LRI',
+        'LRO',
       ],
       '9 R 20': [
-        'FSLO', 'FSLI', 'FSRI', 'FSRO', 'RSLO', 'RSLI', 'RSRI', 'RSRO', 
-        'LLO', 'LLI', 'LRI', 'LRO'
+        'FSLO',
+        'FSLI',
+        'FSRI',
+        'FSRO',
+        'RSLO',
+        'RSLI',
+        'RSRI',
+        'RSRO',
+        'LLO',
+        'LLI',
+        'LRI',
+        'LRO',
       ],
     };
-    
+
     return sizeMap[size] || [];
   };
 

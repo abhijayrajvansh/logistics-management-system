@@ -78,23 +78,24 @@ const ActionCell = ({ row }: { row: any }) => {
   };
 
   // Check if tyre has service history
-  const hasServiceHistory = 
+  const hasServiceHistory =
     tyre.history &&
     tyre.history !== 'NA' &&
     Array.isArray(tyre.history) &&
-    tyre.history.some((entry: any) => 
-      entry.type === 'onTrip' && 
-      entry.service && 
-      entry.service !== 'NA' && 
-      Array.isArray(entry.service) && 
-      entry.service.length > 0
+    tyre.history.some(
+      (entry: any) =>
+        entry.type === 'onTrip' &&
+        entry.service &&
+        entry.service !== 'NA' &&
+        Array.isArray(entry.service) &&
+        entry.service.length > 0,
     );
 
   // Extract service history from tyre history
-  const serviceHistory = hasServiceHistory ? 
-    tyre.history
-      .filter((entry: any) => entry.type === 'onTrip' && entry.service && entry.service !== 'NA')
-      .flatMap((entry: any) => entry.service)
+  const serviceHistory = hasServiceHistory
+    ? tyre.history
+        .filter((entry: any) => entry.type === 'onTrip' && entry.service && entry.service !== 'NA')
+        .flatMap((entry: any) => entry.service)
     : [];
 
   return (
@@ -212,7 +213,7 @@ export const columns: ColumnDef<Tyre>[] = [
         UNDER_RETRADING: 'bg-yellow-200 text-yellow-800 border-yellow-500',
         READY_TO_USE: 'bg-blue-200 text-blue-800 border-blue-500',
       };
-      
+
       return (
         <Badge
           variant="default"
@@ -244,7 +245,11 @@ export const columns: ColumnDef<Tyre>[] = [
     header: 'Purchase Date',
     cell: ({ row }) => {
       const purchaseDate: Date = row.getValue('purchaseDate');
-      return <div className="text-left font-medium">{purchaseDate ? purchaseDate.toLocaleDateString() : 'N/A'}</div>;
+      return (
+        <div className="text-left font-medium">
+          {purchaseDate ? purchaseDate.toLocaleDateString() : 'N/A'}
+        </div>
+      );
     },
   },
   {

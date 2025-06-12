@@ -19,7 +19,9 @@ export function useTyres() {
             return {
               id: doc.id,
               ...data,
-              purchaseDate: data.purchaseDate?.toDate ? data.purchaseDate.toDate() : data.purchaseDate,
+              purchaseDate: data.purchaseDate?.toDate
+                ? data.purchaseDate.toDate()
+                : data.purchaseDate,
               createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
               updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
             } as Tyre;

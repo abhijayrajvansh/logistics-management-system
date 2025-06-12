@@ -61,17 +61,17 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
             size: data.size || '',
             status: data.status || 'READY_TO_USE',
             purchaseDate: formattedPurchaseDate,
-            currentTruckNumber: 
-              data.currentPosition && data.currentPosition !== 'NA' 
-                ? data.currentPosition.truckNumber || '' 
+            currentTruckNumber:
+              data.currentPosition && data.currentPosition !== 'NA'
+                ? data.currentPosition.truckNumber || ''
                 : '',
-            currentTruckType: 
-              data.currentPosition && data.currentPosition !== 'NA' 
-                ? data.currentPosition.truckType || '' 
+            currentTruckType:
+              data.currentPosition && data.currentPosition !== 'NA'
+                ? data.currentPosition.truckType || ''
                 : '',
-            currentPosition: 
-              data.currentPosition && data.currentPosition !== 'NA' 
-                ? data.currentPosition.position || '' 
+            currentPosition:
+              data.currentPosition && data.currentPosition !== 'NA'
+                ? data.currentPosition.position || ''
                 : '',
           });
         } else {
@@ -143,15 +143,43 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
   const getAvailablePositions = (size: string): string[] => {
     const sizeMap: Record<string, string[]> = {
       '10 R 20': [
-        'FL', 'FR', 'DLO', 'DLI', 'DRI', 'DRO', 'LL', 'LR', 'SLO', 'SLI', 
-        'SRI', 'SRO', 'SFL', 'SFR', 'SRL', 'SRR', 'LLO', 'LLI', 'LRI', 'LRO'
+        'FL',
+        'FR',
+        'DLO',
+        'DLI',
+        'DRI',
+        'DRO',
+        'LL',
+        'LR',
+        'SLO',
+        'SLI',
+        'SRI',
+        'SRO',
+        'SFL',
+        'SFR',
+        'SRL',
+        'SRR',
+        'LLO',
+        'LLI',
+        'LRI',
+        'LRO',
       ],
       '9 R 20': [
-        'FSLO', 'FSLI', 'FSRI', 'FSRO', 'RSLO', 'RSLI', 'RSRI', 'RSRO', 
-        'LLO', 'LLI', 'LRI', 'LRO'
+        'FSLO',
+        'FSLI',
+        'FSRI',
+        'FSRO',
+        'RSLO',
+        'RSLI',
+        'RSRI',
+        'RSRO',
+        'LLO',
+        'LLI',
+        'LRI',
+        'LRO',
       ],
     };
-    
+
     return sizeMap[size] || [];
   };
 

@@ -55,7 +55,7 @@ const TyreIconCell: React.FC<TyreIconCellProps> = ({ tyre }) => {
                 <p className="font-medium">{formatFirestoreDate(tyre.purchaseDate)}</p>
               </div>
             </div>
-            
+
             {tyre.currentPosition && tyre.currentPosition !== 'NA' && (
               <div>
                 <span className="text-sm text-muted-foreground">Current Position:</span>
