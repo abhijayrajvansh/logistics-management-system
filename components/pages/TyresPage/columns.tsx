@@ -18,7 +18,6 @@ import { MdDeleteOutline, MdEdit, MdRemoveRedEye } from 'react-icons/md';
 import DeleteTyreDialog from './delete-tyre';
 import UpdateTyreForm from './update-tyre';
 import ViewTyreDetails from './ViewTyreDeatails';
-import TyreIconCell from './TyreIconCell';
 
 // ServiceHistoryDialog component
 const ServiceHistoryDialog = ({
@@ -221,7 +220,7 @@ export const columns: ColumnDef<Tyre>[] = [
           variant="default"
           className={`${statusColors[status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800 border-gray-500'}`}
         >
-          {status.replace('_', ' ')}
+          {status.replace(/_/g, ' ')}
         </Badge>
       );
     },
@@ -251,22 +250,6 @@ export const columns: ColumnDef<Tyre>[] = [
         <div className="text-left font-medium">
           {purchaseDate ? purchaseDate.toLocaleDateString() : 'N/A'}
         </div>
-      );
-    },
-  },
-  {
-    id: 'tyreIcon',
-    header: () => (
-      <PermissionGate feature="FEATURE_TYRES_STATUS">
-        <div>Tyre</div>
-      </PermissionGate>
-    ),
-    cell: ({ row }) => {
-      const tyre = row.original;
-      return (
-        <PermissionGate feature="FEATURE_TYRES_STATUS">
-          <TyreIconCell tyre={tyre} />
-        </PermissionGate>
       );
     },
   },
