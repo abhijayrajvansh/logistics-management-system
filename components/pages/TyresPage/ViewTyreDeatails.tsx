@@ -27,7 +27,7 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Basic Information */}
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto">
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">Basic Information</h3>
               <div className="space-y-2">
@@ -46,6 +46,14 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
                 <div>
                   <span className="text-sm text-muted-foreground">Purchase Date:</span>
                   <p className="font-medium">{formatFirestoreDate(tyre.purchaseDate)}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Created At:</span>
+                  <p className="font-medium">{formatFirestoreDate(tyre.createdAt)}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Updated At:</span>
+                  <p className="font-medium">{formatFirestoreDate(tyre.updatedAt)}</p>
                 </div>
               </div>
             </div>
@@ -81,14 +89,14 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
           </div>
 
           {/* History Information */}
-          <div className="space-y-4">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-3">History</h3>
+          <div className="flex flex-col h-full">
+            <div className="border rounded-lg p-4 flex flex-col h-full">
+              <h3 className="font-semibold mb-3 flex-shrink-0">History</h3>
               {tyre.history &&
               tyre.history !== 'NA' &&
               Array.isArray(tyre.history) &&
               tyre.history.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[580px]">
                   {tyre.history.map((entry, index) => (
                     <div key={index} className="border rounded-md p-3 space-y-2">
                       {entry.type === 'onTrip' ? (
@@ -179,23 +187,10 @@ const ViewTyreDetails = ({ isOpen, onClose, tyre }: ViewTyreDetailsProps) => {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No history available</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-muted-foreground">No history available</p>
+                </div>
               )}
-            </div>
-
-            {/* Timestamps */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Timestamps</h3>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm text-muted-foreground">Created At:</span>
-                  <p className="font-medium">{formatFirestoreDate(tyre.createdAt)}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-muted-foreground">Updated At:</span>
-                  <p className="font-medium">{formatFirestoreDate(tyre.updatedAt)}</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
