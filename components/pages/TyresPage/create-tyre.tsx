@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTrucks } from '@/hooks/useTrucks';
 
 interface CreateTyreFormProps {
   onSuccess?: () => void;
@@ -42,6 +43,8 @@ type TyreHistoryEntry = {
 };
 
 export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
+  const { trucks, isLoading: trucksLoading } = useTrucks();
+
   const [formData, setFormData] = useState({
     company: '',
     size: '',
@@ -309,13 +312,23 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="currentTruckNumber">Truck Number</Label>
-                  <Input
-                    id="currentTruckNumber"
-                    placeholder="e.g. TN-01-AB-1234"
+                  <Select
                     value={formData.currentTruckNumber}
-                    onChange={(e) => handleInputChange('currentTruckNumber', e.target.value)}
-                    required={formData.status === 'ACTIVE'}
-                  />
+                    onValueChange={(value) => handleInputChange('currentTruckNumber', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={trucksLoading ? 'Loading trucks...' : 'Select truck number'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {trucks.map((truck) => (
+                        <SelectItem key={truck.id} value={truck.regNumber}>
+                          {truck.regNumber} ({truck.axleConfig})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currentTruckType">Truck Type</Label>
@@ -352,7 +365,9 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
         {/* History Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-normal"><span className='font-semibold'>Tyre History</span> (Optional)</h3>
+            <h3 className="font-normal">
+              <span className="font-semibold">Tyre History</span> (Optional)
+            </h3>
             <Button type="button" variant="outline" size="sm" onClick={addHistoryEntry}>
               Add History Entry
             </Button>
@@ -362,7 +377,7 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
             <div key={index} className="py-4 border rounded-md bg-white shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">History Entry:  {index + 1}</CardTitle>
+                  <CardTitle className="text-base">History Entry: {index + 1}</CardTitle>
                   <Button
                     type="button"
                     variant="destructive"
@@ -397,11 +412,25 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Truck Number</Label>
-                        <Input
-                          placeholder="e.g. TN-01-AB-1234"
+                        <Select
                           value={entry.truckNumber || ''}
-                          onChange={(e) => updateHistoryEntry(index, 'truckNumber', e.target.value)}
-                        />
+                          onValueChange={(value) => updateHistoryEntry(index, 'truckNumber', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                trucksLoading ? 'Loading trucks...' : 'Select truck number'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {trucks.map((truck) => (
+                              <SelectItem key={truck.id} value={truck.regNumber}>
+                                {truck.regNumber} ({truck.axleConfig})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Truck Type</Label>

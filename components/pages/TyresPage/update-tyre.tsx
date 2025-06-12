@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Tyre } from '@/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTrucks } from '@/hooks/useTrucks';
 
 interface UpdateTyreFormProps {
   tyreId: string;
@@ -45,6 +46,8 @@ type TyreHistoryEntry = {
 };
 
 export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormProps) {
+  const { trucks, isLoading: trucksLoading } = useTrucks();
+
   const [formData, setFormData] = useState({
     company: '',
     size: '',
@@ -421,13 +424,23 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="currentTruckNumber">Truck Number</Label>
-                  <Input
-                    id="currentTruckNumber"
-                    placeholder="e.g. TN-01-AB-1234"
+                  <Select
                     value={formData.currentTruckNumber}
-                    onChange={(e) => handleInputChange('currentTruckNumber', e.target.value)}
-                    required={formData.status === 'ACTIVE'}
-                  />
+                    onValueChange={(value) => handleInputChange('currentTruckNumber', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={trucksLoading ? 'Loading trucks...' : 'Select truck number'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {trucks.map((truck) => (
+                        <SelectItem key={truck.id} value={truck.regNumber}>
+                          {truck.regNumber} ({truck.axleConfig})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currentTruckType">Truck Type</Label>
@@ -509,11 +522,25 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Truck Number</Label>
-                        <Input
-                          placeholder="e.g. TN-01-AB-1234"
+                        <Select
                           value={entry.truckNumber || ''}
-                          onChange={(e) => updateHistoryEntry(index, 'truckNumber', e.target.value)}
-                        />
+                          onValueChange={(value) => updateHistoryEntry(index, 'truckNumber', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                trucksLoading ? 'Loading trucks...' : 'Select truck number'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {trucks.map((truck) => (
+                              <SelectItem key={truck.id} value={truck.regNumber}>
+                                {truck.regNumber} ({truck.axleConfig})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Truck Type</Label>
