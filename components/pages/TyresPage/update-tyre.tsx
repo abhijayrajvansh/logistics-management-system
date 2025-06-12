@@ -471,7 +471,7 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
           </div>
 
           {historyEntries.map((entry, index) => (
-            <Card key={index} className="p-4">
+            <div key={index} className="py-4 border rounded-md bg-white shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm">History Entry {index + 1}</CardTitle>
@@ -692,7 +692,7 @@ export function UpdateTyreForm({ tyreId, onSuccess, onCancel }: UpdateTyreFormPr
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </div>
           ))}
         </div>
 

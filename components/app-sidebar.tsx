@@ -28,9 +28,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img
                     src="/logo/jaiz-logistics-logo.png"
                     alt="jaiz-logistics-logo"
-                    className="h-8 rounded-lg"
+                    className="h-8 rounded"
                   />
-                  <span className="text-base font-medium text-lg">Jaiz Logistics Inc.</span>
+                  <span className="text-base font-medium">Jaiz Logistics Inc.</span>
                 </div>
               </a>
             </SidebarMenuButton>

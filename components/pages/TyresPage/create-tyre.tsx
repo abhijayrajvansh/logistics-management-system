@@ -352,17 +352,17 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
         {/* History Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">Tyre History (Optional)</h3>
+            <h3 className="font-normal"><span className='font-semibold'>Tyre History</span> (Optional)</h3>
             <Button type="button" variant="outline" size="sm" onClick={addHistoryEntry}>
               Add History Entry
             </Button>
           </div>
 
           {historyEntries.map((entry, index) => (
-            <Card key={index} className="p-4">
+            <div key={index} className="py-4 border rounded-md bg-white shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">History Entry {index + 1}</CardTitle>
+                  <CardTitle className="text-base">History Entry:  {index + 1}</CardTitle>
                   <Button
                     type="button"
                     variant="destructive"
@@ -580,7 +580,7 @@ export function CreateTyreForm({ onSuccess }: CreateTyreFormProps) {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </div>
           ))}
         </div>
 
