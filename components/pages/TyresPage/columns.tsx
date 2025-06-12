@@ -100,7 +100,8 @@ const ActionCell = ({ row }: { row: any }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <PermissionGate feature="FEATURE_TYRES_VIEW_DETAILS">
+      <div className='w-full items-center flex justify-center gap-2'>
+        <PermissionGate feature="FEATURE_TYRES_VIEW_DETAILS">
         <button
           className="hover:bg-primary p-1 rounded-lg cursor-pointer border border-primary text-primary hover:text-white"
           onClick={() => setIsViewDetailsOpen(true)}
@@ -142,6 +143,7 @@ const ActionCell = ({ row }: { row: any }) => {
         </button>
       </PermissionGate>
 
+      </div>
       {/* View Details Dialog */}
       <PermissionGate feature="FEATURE_TYRES_VIEW_DETAILS">
         <ViewTyreDetails
